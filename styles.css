@@ -1,0 +1,177 @@
+/* Geeky Modern Styles for leodeng.dev */
+
+:root {
+    --bg-dark: #0a0a0a;
+    --bg-secondary: #1a1a1a;
+    --text-light: #e0e0e0;
+    --neon-green: #00ff00;
+    --neon-cyan: #00ffff;
+    --border-color: #333;
+}
+
+body {
+    font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    line-height: 1.6;
+    padding-top: 0; /* Removed since sections handle spacing */
+}
+
+.navbar {
+    background-color: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--neon-green);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: var(--neon-green) !important;
+    text-shadow: 0 0 10px var(--neon-green);
+}
+
+.nav-link {
+    color: var(--text-light) !important;
+    transition: color 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--neon-green) !important;
+    text-shadow: 0 0 5px var(--neon-green);
+}
+
+.hero {
+    background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-secondary) 100%);
+    position: relative;
+}
+
+.hero .container {
+    position: relative;
+    z-index: 1;
+}
+
+.bg-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    color: var(--neon-green);
+    opacity: 0.1;
+    font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+    font-size: 165px;
+    line-height: 1.1;
+    white-space: pre;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    display: block;
+    text-align: center;
+}
+
+.text-neon {
+    color: var(--neon-green);
+    text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+}
+
+.terminal {
+    background-color: #000;
+    border: 1px solid var(--neon-green);
+    border-radius: 5px;
+    padding: 20px;
+    font-family: 'Courier New', monospace;
+    color: var(--neon-green);
+    margin-top: 20px;
+    position: relative;
+}
+
+.terminal-header {
+    font-size: 1.2em;
+}
+
+.cursor {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+section {
+    padding: 60px 0;
+}
+
+.card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--neon-green);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+}
+
+.btn-neon {
+    background-color: transparent;
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    transition: all 0.3s;
+}
+
+.btn-neon:hover {
+    background-color: var(--neon-green);
+    color: var(--bg-dark);
+    box-shadow: 0 0 10px var(--neon-green);
+}
+
+.border-neon {
+    border-color: var(--neon-green) !important;
+}
+
+.form-control {
+    background-color: var(--bg-dark) !important;
+    color: var(--text-light) !important;
+    border-color: var(--neon-green) !important;
+}
+
+.form-control:focus {
+    border-color: var(--neon-cyan) !important;
+    box-shadow: 0 0 5px var(--neon-cyan);
+}
+
+footer {
+    border-top: 1px solid var(--neon-green);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero {
+        min-height: 80vh;
+        text-align: center;
+    }
+    .terminal {
+        font-size: 0.9em;
+    }
+}
+
+/* Page transition effects */
+#content {
+    position: relative;
+    min-height: 100vh;
+}
+
+#content section {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    opacity: 0;
+    transition: opacity 0.8s ease-out;
+}
+
+#content section.active {
+    opacity: 1;
+}
