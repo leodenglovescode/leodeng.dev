@@ -42,3 +42,6 @@ Since this is a static website, you can simply open `index.html` in any modern w
 
 ## Credits
 I wrote all the prompts, but still,many thanks goes to Github Copilot, it saved me **tons** of time and work lol. :)
+
+
+oh btw i decided to use good ol' html/css cause thats what I started my coding journey with 😄
