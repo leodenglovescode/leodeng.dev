@@ -48,6 +48,7 @@ body {
     z-index: 1;
 }
 
+
 .bg-text {
     position: absolute;
     top: 50%;
@@ -176,4 +177,10 @@ footer {
 
 #content section.active {
     opacity: 1;
+}
+
+.profile-img {
+    border-radius: 50%;
+    height: 256px;
+    width: 256px;
 }
