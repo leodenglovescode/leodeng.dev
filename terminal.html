@@ -114,7 +114,7 @@
                 const key = el.getAttribute('data-i18n');
                 if (locale[key]) {
                     if (el.tagName === 'TITLE') document.title = locale[key];
-                    else el.textContent = locale[key];
+                    else el.innerHTML = locale[key];
                 }
             });
             document.documentElement.lang = lang;

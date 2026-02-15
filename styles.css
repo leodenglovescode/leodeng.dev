@@ -107,6 +107,19 @@ section {
     background-color: var(--bg-secondary);
     border: 1px solid var(--neon-green);
     transition: transform 0.3s, box-shadow 0.3s;
+    color: white;
+}
+
+.card-title {
+    color: white;
+}
+
+.card-text {
+    color: white;
+}
+
+.card-body {
+    color: white;
 }
 
 
