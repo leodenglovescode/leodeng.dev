@@ -104,7 +104,7 @@
                     if (el.tagName === 'TITLE') {
                         document.title = locale[key];
                     } else {
-                        el.textContent = locale[key];
+                        el.innerHTML = locale[key];
                     }
                 }
             });

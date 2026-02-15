@@ -42,18 +42,18 @@
                 <div class="col-md-4 mb-4">
                     <div class="card bg-terminal border-neon">
                         <div class="card-body">
-                            <h5 class="card-title" data-i18n="project1Title">Project 1</h5>
-                            <p class="card-text" data-i18n="project1Text">A cool web app built with React.</p>
-                            <a href="#" class="btn btn-neon" data-i18n="btnViewCode">View Code</a>
+                            <h5 class="card-title" data-i18n="project1Title">ShutterWingPhotos</h5>
+                            <p class="card-text" data-i18n="project1Text">An aviation/railway photography website built with React+Vite</p>
+                            <a href="https://shutterwingphotos.cn" class="btn btn-neon">View Website</a>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4">
                     <div class="card bg-terminal border-neon">
                         <div class="card-body">
-                            <h5 class="card-title" data-i18n="project2Title">Project 2</h5>
-                            <p class="card-text" data-i18n="project2Text">Python script for data analysis.</p>
-                            <a href="#" class="btn btn-neon" data-i18n="btnViewCode">View Code</a>
+                            <h5 class="card-title" data-i18n="project2Title">DragonSeaMC</h5>
+                            <p class="card-text" data-i18n="project2Text">A City-Builder Modded Minecraft Server</p>
+                            <a href="https://mcd.shutterwingphotos.cn" class="btn btn-neon">View Website</a>
                         </div>
                     </div>
                 </div>
@@ -106,7 +106,7 @@
                     if (el.tagName === 'TITLE') {
                         document.title = locale[key];
                     } else {
-                        el.textContent = locale[key];
+                        el.innerHTML = locale[key];
                     }
                 }
             });
