@@ -1,0 +1,22 @@
+{
+  "name": "leodeng_website",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vite build --ssr src/entry-server.js --outDir dist-ssr && node prerender.js",
+    "build:client": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vue/server-renderer": "^3.5.30",
+    "vue": "^3.5.25"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "@vitejs/plugin-vue": "^6.0.2",
+    "tailwindcss": "^4.2.1",
+    "vite": "^7.3.1"
+  }
+}
