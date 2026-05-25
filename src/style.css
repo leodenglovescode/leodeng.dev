@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "highlight.js/styles/github-dark.css";
 
 @theme {
   --color-accent: #6366f1;
@@ -27,5 +28,76 @@ body {
 a {
   text-decoration-style: wavy;
   text-underline-offset: 4px;
+}
+
+.prose {
+  color: #aaa;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.prose h2 {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.prose p {
+  margin-bottom: 1.25rem;
+}
+.prose ul, .prose ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.prose li {
+  margin-bottom: 0.35rem;
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: #1e1e1e;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: #ccc;
+}
+.prose pre {
+  position: relative;
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 1.25rem;
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+.copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #555;
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.copy-btn:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* Page transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
