@@ -41,7 +41,7 @@ onMounted(() => {
   <header class="pt-20 sm:pt-32 pb-20">
     <p class="text-muted text-sm font-mono mb-6">{{ time }} CST</p>
 
-    <h1 class="text-3xl sm:text-4xl font-bold text-white leading-tight mb-4">
+    <h1 class="text-3xl sm:text-4xl font-bold text-fg leading-tight mb-4">
       Hey, I'm Leo<span class="text-accent">.</span>
     </h1>
 
@@ -55,13 +55,13 @@ onMounted(() => {
     </p>
 
     <div class="flex gap-8 mt-12">
-      <RouterLink to="/projects" class="text-sm font-mono text-muted hover:text-white transition-colors">
+      <RouterLink to="/projects" class="text-sm font-mono text-muted hover:text-fg transition-colors">
         → Projects
       </RouterLink>
-      <RouterLink to="/blog" class="text-sm font-mono text-muted hover:text-white transition-colors">
+      <RouterLink to="/blog" class="text-sm font-mono text-muted hover:text-fg transition-colors">
         → Blog
       </RouterLink>
-      <RouterLink to="/about" class="text-sm font-mono text-muted hover:text-white transition-colors">
+      <RouterLink to="/about" class="text-sm font-mono text-muted hover:text-fg transition-colors">
         → About
       </RouterLink>
     </div>

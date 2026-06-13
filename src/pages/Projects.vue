@@ -41,9 +41,9 @@ onMounted(() => {
         @mouseenter="hoveredProject = 'ShutterWingPhotos'"
         @mouseleave="hoveredProject = null"
       >
-        <img src="/projects_screenshots/shutterwingphotos_screenshot.png" alt="ShutterWingPhotos screenshot" class="w-full rounded-lg mb-4 border border-white/8 group-hover:border-accent/20 transition-colors" />
+        <img src="/projects_screenshots/shutterwingphotos_screenshot.png" alt="ShutterWingPhotos screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-white font-semibold group-hover:text-accent transition-colors">ShutterWingPhotos</h3>
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">ShutterWingPhotos</h3>
           <span class="text-xs font-mono text-muted/40 shrink-0">↗ website</span>
         </div>
         <p class="text-sm text-muted leading-relaxed">
@@ -53,7 +53,7 @@ onMounted(() => {
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['react', 'javascript', 'self-hosting', 'aviation', 'railway', 'photography']" :key="t"
-            class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-muted/70"
+            class="text-[11px] font-mono px-2 py-0.5 rounded bg-fg/5 text-muted/70"
           >{{ t }}</span>
         </div>
       </a>
@@ -66,9 +66,9 @@ onMounted(() => {
         @mouseenter="hoveredProject = 'llmgps'"
         @mouseleave="hoveredProject = null"
       >
-        <img src="/projects_screenshots/llmgps_screenshot.png" alt="llmgps screenshot" class="w-full rounded-lg mb-4 border border-white/8 group-hover:border-accent/20 transition-colors" />
+        <img src="/projects_screenshots/llmgps_screenshot.png" alt="llmgps screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-white font-semibold group-hover:text-accent transition-colors">llmgps</h3>
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">llmgps</h3>
           <span class="text-xs font-mono text-muted/40 shrink-0">↗ github</span>
         </div>
         <p class="text-sm text-muted leading-relaxed">
@@ -77,7 +77,7 @@ onMounted(() => {
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['next.js', 'typescript', 'ollama', 'docker']" :key="t"
-            class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-muted/70"
+            class="text-[11px] font-mono px-2 py-0.5 rounded bg-fg/5 text-muted/70"
           >{{ t }}</span>
         </div>
       </a>
@@ -90,9 +90,9 @@ onMounted(() => {
         @mouseenter="hoveredProject = 'DragonSea'"
         @mouseleave="hoveredProject = null"
       >
-        <img src="/projects_screenshots/dragonsea_website.png" alt="DragonSea MC screenshot" class="w-full rounded-lg mb-4 border border-white/8 group-hover:border-accent/20 transition-colors" />
+        <img src="/projects_screenshots/dragonsea_website.png" alt="DragonSea MC screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-white font-semibold group-hover:text-accent transition-colors">龙海 DragonSea MC</h3>
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">龙海 DragonSea MC</h3>
           <span class="text-xs font-mono text-muted/40 shrink-0">↗ website</span>
         </div>
         <p class="text-sm text-muted leading-relaxed">
@@ -102,7 +102,7 @@ onMounted(() => {
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['minecraft', 'forge', 'city-building', 'community', 'self-hosting']" :key="t"
-            class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-muted/70"
+            class="text-[11px] font-mono px-2 py-0.5 rounded bg-fg/5 text-muted/70"
           >{{ t }}</span>
         </div>
       </a>
@@ -113,9 +113,9 @@ onMounted(() => {
         rel="noopener noreferrer"
         class="group block"
       >
-        <img src="/projects_screenshots/leodeng_dev_website.png" alt="leodeng.dev screenshot" class="w-full rounded-lg mb-4 border border-white/8 group-hover:border-accent/20 transition-colors" />
+        <img src="/projects_screenshots/leodeng_dev_website.png" alt="leodeng.dev screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-white font-semibold group-hover:text-accent transition-colors">This website</h3>
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">This website</h3>
           <span class="text-xs font-mono text-muted/40 shrink-0">↗ github</span>
         </div>
         <p class="text-sm text-muted leading-relaxed">
@@ -123,7 +123,7 @@ onMounted(() => {
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['vue', 'vite', 'tailwind']" :key="t"
-            class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-muted/70"
+            class="text-[11px] font-mono px-2 py-0.5 rounded bg-fg/5 text-muted/70"
           >{{ t }}</span>
         </div>
       </a>
@@ -134,9 +134,9 @@ onMounted(() => {
         rel="noopener noreferrer"
         class="group block"
       >
-        <img src="/projects_screenshots/carbonpanel_screenshot.png" alt="CarbonPanel screenshot" class="w-full rounded-lg mb-4 border border-white/8 group-hover:border-accent/20 transition-colors" />
+        <img src="/projects_screenshots/carbonpanel_screenshot.png" alt="CarbonPanel screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-white font-semibold group-hover:text-accent transition-colors">CarbonPanel</h3>
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">CarbonPanel</h3>
           <span class="text-xs font-mono text-muted/40 shrink-0">↗ github</span>
         </div>
         <p class="text-sm text-muted leading-relaxed">
@@ -145,7 +145,7 @@ onMounted(() => {
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['python', 'self-hosting', 'monitoring', 'docker']" :key="t"
-            class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-muted/70"
+            class="text-[11px] font-mono px-2 py-0.5 rounded bg-fg/5 text-muted/70"
           >{{ t }}</span>
         </div>
       </a>
@@ -156,9 +156,9 @@ onMounted(() => {
         rel="noopener noreferrer"
         class="group block"
       >
-        <img src="/projects_screenshots/pm2webmanager_screenshot.png" alt="pm2-webmanager screenshot" class="w-full rounded-lg mb-4 border border-white/8 group-hover:border-accent/20 transition-colors" />
+        <img src="/projects_screenshots/pm2webmanager_screenshot.png" alt="pm2-webmanager screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-white font-semibold group-hover:text-accent transition-colors">pm2-webmanager</h3>
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">pm2-webmanager</h3>
           <span class="text-xs font-mono text-muted/40 shrink-0">↗ github</span>
         </div>
         <p class="text-sm text-muted leading-relaxed">
@@ -166,7 +166,7 @@ onMounted(() => {
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['node.js', 'pm2', 'self-hosting']" :key="t"
-            class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-muted/70"
+            class="text-[11px] font-mono px-2 py-0.5 rounded bg-fg/5 text-muted/70"
           >{{ t }}</span>
         </div>
       </a>
@@ -177,9 +177,9 @@ onMounted(() => {
         rel="noopener noreferrer"
         class="group block"
       >
-        <img src="/projects_screenshots/esp32s3_voice_screenshot.png" alt="ESP32-S3 Assist Satellite screenshot" class="w-full rounded-lg mb-4 border border-white/8 group-hover:border-accent/20 transition-colors" />
+        <img src="/projects_screenshots/esp32s3_voice_screenshot.png" alt="ESP32-S3 Assist Satellite screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-white font-semibold group-hover:text-accent transition-colors">ESP32-S3 Assist Satellite</h3>
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">ESP32-S3 Assist Satellite</h3>
           <span class="text-xs font-mono text-muted/40 shrink-0">↗ github</span>
         </div>
         <p class="text-sm text-muted leading-relaxed">
@@ -188,7 +188,7 @@ onMounted(() => {
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['esp32', 'homeassistant', 'iot', 'c++']" :key="t"
-            class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-muted/70"
+            class="text-[11px] font-mono px-2 py-0.5 rounded bg-fg/5 text-muted/70"
           >{{ t }}</span>
         </div>
       </a>
