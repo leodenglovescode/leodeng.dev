@@ -83,6 +83,31 @@ onMounted(() => {
       </a>
 
       <a
+        href="https://dragonsea.shutterwingphotos.cn/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="group block"
+        @mouseenter="hoveredProject = 'DragonSea'"
+        @mouseleave="hoveredProject = null"
+      >
+        <img src="/projects_screenshots/dragonsea_website.png" alt="DragonSea MC screenshot" class="w-full rounded-lg mb-4 border border-white/8 group-hover:border-accent/20 transition-colors" />
+        <div class="flex items-baseline justify-between gap-4 mb-1">
+          <h3 class="text-white font-semibold group-hover:text-accent transition-colors">龙海 DragonSea MC</h3>
+          <span class="text-xs font-mono text-muted/40 shrink-0">↗ website</span>
+        </div>
+        <p class="text-sm text-muted leading-relaxed">
+          DragonSea MC is a Forge-based city-building community. We're currently in active development,
+          working to build a fully fictional nation and city. Whether you're an architect or an explorer,
+          there's a place for you here.
+        </p>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span v-for="t in ['minecraft', 'forge', 'city-building', 'community', 'self-hosting']" :key="t"
+            class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-muted/70"
+          >{{ t }}</span>
+        </div>
+      </a>
+
+      <a
         href="https://github.com/leodenglovescode/leodeng.dev"
         target="_blank"
         rel="noopener noreferrer"
