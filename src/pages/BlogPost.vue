@@ -74,7 +74,7 @@ onUnmounted(() => {
       ← Back to blog
     </RouterLink>
 
-    <h1 class="text-2xl sm:text-3xl font-bold text-white mb-3">{{ post.title }}</h1>
+    <h1 class="text-2xl sm:text-3xl font-bold text-fg mb-3">{{ post.title }}</h1>
     <p class="text-xs font-mono text-muted/50 mb-12">
       {{ post.date }} · {{ post.readingTime }} min read
     </p>
@@ -82,14 +82,14 @@ onUnmounted(() => {
     <div class="prose" v-html="post.html" />
 
     <!-- Prev / Next -->
-    <div class="flex justify-between gap-6 mt-16 pt-8 border-t border-white/5">
+    <div class="flex justify-between gap-6 mt-16 pt-8 border-t border-fg/5">
       <RouterLink
         v-if="prev"
         :to="`/blog/${prev.slug}`"
         class="group flex flex-col gap-1 max-w-[45%]"
       >
         <span class="text-xs font-mono text-muted/40">← Older</span>
-        <span class="text-sm text-muted group-hover:text-white transition-colors">{{ prev.title }}</span>
+        <span class="text-sm text-muted group-hover:text-fg transition-colors">{{ prev.title }}</span>
       </RouterLink>
       <div v-else />
 
@@ -99,7 +99,7 @@ onUnmounted(() => {
         class="group flex flex-col gap-1 items-end max-w-[45%]"
       >
         <span class="text-xs font-mono text-muted/40">Newer →</span>
-        <span class="text-sm text-muted group-hover:text-white transition-colors text-right">{{ next.title }}</span>
+        <span class="text-sm text-muted group-hover:text-fg transition-colors text-right">{{ next.title }}</span>
       </RouterLink>
       <div v-else />
     </div>

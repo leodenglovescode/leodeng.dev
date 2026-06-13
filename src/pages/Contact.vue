@@ -39,11 +39,11 @@ const links = [
         :href="link.url"
         target="_blank"
         rel="noopener noreferrer"
-        class="group flex items-center justify-between py-4 border-b border-white/5 hover:border-accent/20 transition-colors"
+        class="group flex items-center justify-between py-4 border-b border-fg/5 hover:border-accent/20 transition-colors"
       >
         <div class="flex items-center gap-3">
           <span class="w-4 h-4 text-muted/50 group-hover:text-accent transition-colors shrink-0" v-html="link.icon" />
-          <span class="text-muted group-hover:text-white transition-colors">{{ link.label }}</span>
+          <span class="text-muted group-hover:text-fg transition-colors">{{ link.label }}</span>
         </div>
         <span class="text-xs font-mono text-muted/30 group-hover:text-accent transition-colors">↗</span>
       </a>

@@ -1,14 +1,26 @@
 @import "tailwindcss";
 @import "highlight.js/styles/github-dark.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-accent: #6366f1;
   --color-accent-soft: #818cf8;
+  --color-bg: #f7f7f7;
+  --color-surface: #fff;
+  --color-muted: #767676;
+  --color-fg: #111;
+  --color-text: #333;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.dark {
   --color-bg: #111;
   --color-surface: #191919;
   --color-muted: #888;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-fg: #fff;
+  --color-text: #ccc;
 }
 
 html { scroll-behavior: smooth; }
@@ -16,8 +28,9 @@ html { scroll-behavior: smooth; }
 body {
   font-family: var(--font-sans);
   background: var(--color-bg);
-  color: #ccc;
+  color: var(--color-text);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 ::selection {
@@ -31,12 +44,12 @@ a {
 }
 
 .prose {
-  color: #aaa;
+  color: var(--color-muted);
   font-size: 15px;
   line-height: 1.8;
 }
 .prose h2 {
-  color: #fff;
+  color: var(--color-fg);
   font-size: 1.1rem;
   font-weight: 600;
   margin-top: 2rem;
@@ -100,4 +113,3 @@ a {
 .fade-leave-to {
   opacity: 0;
 }
-

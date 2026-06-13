@@ -1,6 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
+    <script>
+      (function () {
+        var stored = localStorage.getItem('theme');
+        var dark = stored ? stored === 'dark' : !window.matchMedia('(prefers-color-scheme: light)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

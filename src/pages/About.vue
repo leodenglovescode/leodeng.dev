@@ -34,7 +34,7 @@
           'linux', 'prompt engineering', 'self-hosting',
           'typescript', 'tailwind', 'next.js', 'esp32', 'homeassistant'
         ]" :key="s"
-          class="text-xs font-mono px-3 py-1.5 rounded-full border border-white/8 text-muted/80 hover:text-white hover:border-accent/30 transition-all cursor-default"
+          class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted/80 hover:text-fg hover:border-accent/30 transition-all cursor-default"
         >{{ s }}</span>
       </div>
     </section>
