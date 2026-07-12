@@ -26,3 +26,7 @@ dist-ssr
 #AI Stuff
 CLAUDE.md
 .claude/
+
+#Obsidian Files
+.obsidian/
+src/posts/.obsidian/
