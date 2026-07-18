@@ -80,5 +80,19 @@ const age = Math.floor((new Date() - new Date(2010, 1, 1)) / 31557600000)
       </div>
     </section>
 
+    <section>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">Languages</h2>
+      <div class="flex flex-wrap gap-2">
+        <span
+          v-for="l in [
+            { flag: '🇨🇳', name: 'Chinese', level: 'native' },
+            { flag: '🇬🇧', name: 'English', level: 'fluent' },
+          ]"
+          :key="l.name"
+          class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted/80 hover:text-fg hover:border-accent/30 transition-all cursor-default"
+        >{{ l.flag }} {{ l.name }} · {{ l.level }}</span>
+      </div>
+    </section>
+
   </div>
 </template>
