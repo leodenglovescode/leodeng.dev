@@ -63,45 +63,47 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- Scroll progress bar -->
-  <div
-    class="fixed top-14 left-0 h-0.5 bg-accent z-40 transition-none"
-    :style="{ width: scrollProgress + '%' }"
-  />
+  <div>
+    <!-- Scroll progress bar -->
+    <div
+      class="fixed top-14 left-0 h-0.5 bg-accent z-40 transition-none"
+      :style="{ width: scrollProgress + '%' }"
+    />
 
-  <article v-if="post" class="pt-20 sm:pt-32 pb-20">
-    <RouterLink to="/blog" class="text-xs font-mono text-muted/50 hover:text-muted transition-colors mb-10 block">
-      ← Back to blog
-    </RouterLink>
-
-    <h1 class="text-2xl sm:text-3xl font-bold text-fg mb-3">{{ post.title }}</h1>
-    <p class="text-xs font-mono text-muted/50 mb-12">
-      {{ post.date }} · {{ post.readingTime }} min read
-    </p>
-
-    <div class="prose" v-html="post.html" />
-
-    <!-- Prev / Next -->
-    <div class="flex justify-between gap-6 mt-16 pt-8 border-t border-fg/5">
-      <RouterLink
-        v-if="prev"
-        :to="`/blog/${prev.slug}`"
-        class="group flex flex-col gap-1 max-w-[45%]"
-      >
-        <span class="text-xs font-mono text-muted/40">← Older</span>
-        <span class="text-sm text-muted group-hover:text-fg transition-colors">{{ prev.title }}</span>
+    <article v-if="post" class="pt-20 sm:pt-32 pb-20">
+      <RouterLink to="/blog" class="text-xs font-mono text-muted/50 hover:text-muted transition-colors mb-10 block">
+        ← Back to blog
       </RouterLink>
-      <div v-else />
 
-      <RouterLink
-        v-if="next"
-        :to="`/blog/${next.slug}`"
-        class="group flex flex-col gap-1 items-end max-w-[45%]"
-      >
-        <span class="text-xs font-mono text-muted/40">Newer →</span>
-        <span class="text-sm text-muted group-hover:text-fg transition-colors text-right">{{ next.title }}</span>
-      </RouterLink>
-      <div v-else />
-    </div>
-  </article>
+      <h1 class="text-2xl sm:text-3xl font-bold text-fg mb-3">{{ post.title }}</h1>
+      <p class="text-xs font-mono text-muted/50 mb-12">
+        {{ post.date }} · {{ post.readingTime }} min read
+      </p>
+
+      <div class="prose" v-html="post.html" />
+
+      <!-- Prev / Next -->
+      <div class="flex justify-between gap-6 mt-16 pt-8 border-t border-fg/5">
+        <RouterLink
+          v-if="prev"
+          :to="`/blog/${prev.slug}`"
+          class="group flex flex-col gap-1 max-w-[45%]"
+        >
+          <span class="text-xs font-mono text-muted/40">← Older</span>
+          <span class="text-sm text-muted group-hover:text-fg transition-colors">{{ prev.title }}</span>
+        </RouterLink>
+        <div v-else />
+
+        <RouterLink
+          v-if="next"
+          :to="`/blog/${next.slug}`"
+          class="group flex flex-col gap-1 items-end max-w-[45%]"
+        >
+          <span class="text-xs font-mono text-muted/40">Newer →</span>
+          <span class="text-sm text-muted group-hover:text-fg transition-colors text-right">{{ next.title }}</span>
+        </RouterLink>
+        <div v-else />
+      </div>
+    </article>
+  </div>
 </template>
