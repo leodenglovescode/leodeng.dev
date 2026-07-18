@@ -26,6 +26,18 @@ const age = Math.floor((new Date() - new Date(2010, 1, 1)) / 31557600000)
     </section>
 
     <section>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">My Fav Rock Playlist</h2>
+      <iframe
+        allow="autoplay *; encrypted-media *;"
+        frameborder="0"
+        height="450"
+        style="width:100%;max-width:660px;overflow:hidden;background:transparent;"
+        sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
+        src="https://embed.music.apple.com/cn/playlist/rock-essentials/pl.u-XkD0vBBs2bRAkr6?l=en"
+      ></iframe>
+    </section>
+
+    <section>
       <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">Tools I Use</h2>
       <p class="text-sm text-muted leading-relaxed mb-4">
         Not a skill tree, just tools and tech I use regularly.
