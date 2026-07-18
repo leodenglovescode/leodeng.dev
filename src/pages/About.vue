@@ -85,8 +85,8 @@ const age = Math.floor((new Date() - new Date(2010, 1, 1)) / 31557600000)
       <div class="flex flex-wrap gap-2">
         <span
           v-for="l in [
-            { flag: '🇨🇳', name: 'Chinese', level: 'native' },
-            { flag: '🇬🇧', name: 'English', level: 'fluent' },
+            { flag: '🇨🇳', name: 'Chinese', level: '1st language' },
+            { flag: '🇬🇧', name: 'English', level: '2nd language' },
           ]"
           :key="l.name"
           class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted/80 hover:text-fg hover:border-accent/30 transition-all cursor-default"
