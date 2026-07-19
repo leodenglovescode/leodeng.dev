@@ -10,13 +10,13 @@ const age = Math.floor((new Date() - new Date(2010, 1, 1)) / 31557600000)
       <div class="space-y-4 text-[15px] leading-relaxed text-muted">
         <p>
           I'm Leo, {{ age }}, from Beijing. I build full-stack web apps and like building with IoT
-          on the side. Got into coding by just making random stuff, broke a lot of it, learned from that,
+          on the side, Got into coding by just making random small projects, broke things, learned a lot of valuable lessons,
           and somewhere along the way it became my hobby.
         </p>
         <p>
-          Outside of code I planespot and do aviation photography (that's where ShutterWingPhotos came from),
+          Outside of code I like planespotting & aviation photography (that's where ShutterWingPhotos came from),
           watch some F1, and bike around the city when the weather lets me. I also self-host
-          more services than I probably need to: Home Servers, Docker, Home Assistant, the usual rabbit hole.
+          a bunch of services: Home Servers, Docker, Home Assistant, the usual rabbit hole.
         </p>
         <p>
           I mostly build with React, Vue, Node.js, and Python right now, and I lean on AI tools a lot
@@ -26,7 +26,7 @@ const age = Math.floor((new Date() - new Date(2010, 1, 1)) / 31557600000)
     </section>
 
     <section>
-      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">My Fav Rock Playlist</h2>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">My Favorite Rock Playlist</h2>
       <iframe
         allow="autoplay *; encrypted-media *;"
         frameborder="0"
