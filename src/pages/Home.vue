@@ -14,6 +14,11 @@ const statuses = [
   'writing prompts that are too long',
   'refactoring code i wrote yesterday',
   'convincing javascript to cooperate',
+  'asking ai obvious questions',
+  'trying to remember what i was doing',
+  'fixing a bug that isn\'t even there',
+  'spotting planes and taking photos of them',
+  'watching F1 and complaining about the cars',
 ]
 
 function pickStatus() {
@@ -47,7 +52,7 @@ onMounted(() => {
       </h1>
 
       <p class="text-lg text-muted leading-relaxed mb-3">
-        {{ age }}-year-old full-stack dev from Beijing who builds things with code + AI. I make stuff, break stuff, learn stuff (hopefully). This is my corner of the internet to share what I'm up to and maybe connect with cool people.
+        {{ age }}-year-old full-stack dev & avgeek from Beijing who builds things with code + AI. I make stuff, break stuff, learn stuff (hopefully). This is my place in the world wide web to share what I'm up to and make friends with people who likes the same stuff I do! :)
       </p>
       <br/>
       <p class="text-lg text-muted leading-relaxed mb-3">What I'm up to (maybe):</p>
