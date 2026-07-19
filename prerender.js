@@ -54,6 +54,17 @@ async function prerender() {
     fs.writeFileSync(outPath, page)
     console.log(`✓ Pre-rendered ${route.path}`)
   }
+
+  const sitemap = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...routes.map(r => `  <url><loc>https://leodeng.dev${r.path}</loc></url>`),
+    '</urlset>',
+    '',
+  ].join('\n')
+
+  fs.writeFileSync(path.join(__dirname, 'dist/sitemap.xml'), sitemap)
+  console.log('✓ Generated sitemap.xml')
 }
 
 prerender().catch(err => {
