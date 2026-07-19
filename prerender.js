@@ -48,7 +48,7 @@ async function prerender() {
 
     const outPath = route.path === '/'
       ? templatePath
-      : path.join(__dirname, 'dist', route.path.slice(1), 'index.html')
+      : path.join(__dirname, 'dist', `${route.path.slice(1)}.html`)
 
     fs.mkdirSync(path.dirname(outPath), { recursive: true })
     fs.writeFileSync(outPath, page)
