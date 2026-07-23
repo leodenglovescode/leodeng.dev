@@ -75,7 +75,10 @@ const age = Math.floor((new Date() - new Date(2010, 1, 1)) / 31557600000)
         </div>
         <div class="flex gap-4">
           <span class="text-muted/30 font-mono shrink-0 w-14 text-right">2026 (now)</span>
-          <p class="text-muted">Continuously updating ShutterWingPhotos, building llmgps, and getting into IoT</p>
+          <p class="text-muted">
+            Continuously updating ShutterWingPhotos, building llmgps, and getting into IoT —
+            more on the <RouterLink to="/now" class="text-fg hover:text-accent transition-colors">/now page</RouterLink>.
+          </p>
         </div>
       </div>
     </section>

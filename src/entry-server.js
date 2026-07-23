@@ -4,7 +4,7 @@ import App from './App.vue'
 import { renderToString } from 'vue/server-renderer'
 import routes from './router/routes.js'
 
-export { getAllPosts } from './utils/posts.js'
+export { getAllPosts, getPost } from './utils/posts.js'
 
 export async function render(url = '/') {
   const app = createSSRApp(App)
