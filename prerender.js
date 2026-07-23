@@ -9,9 +9,14 @@ const staticRoutes = [
   { path: '/about',     title: 'About' },
   { path: '/projects',  title: 'Projects' },
   { path: '/gallery',   title: 'Gallery' },
+  { path: '/now',       title: 'Now' },
   { path: '/blog',      title: 'Blog' },
   { path: '/contact',   title: 'Contact' },
 ]
+
+function escapeXml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
 
 function withMeta(html, { title, description }) {
   const fullTitle = title ? `${title} — leodeng.dev` : 'leodeng.dev'
@@ -27,7 +32,7 @@ function withMeta(html, { title, description }) {
 }
 
 async function prerender() {
-  const { render, getAllPosts } = await import('./dist-ssr/entry-server.js')
+  const { render, getAllPosts, getPost } = await import('./dist-ssr/entry-server.js')
 
   const templatePath = path.join(__dirname, 'dist/index.html')
   const template = fs.readFileSync(templatePath, 'utf-8')
@@ -66,6 +71,38 @@ async function prerender() {
 
   fs.writeFileSync(path.join(__dirname, 'dist/sitemap.xml'), sitemap)
   console.log('✓ Generated sitemap.xml')
+
+  const rssItems = postRoutes.map(r => {
+    const post = getPost(r.path.replace('/blog/', ''))
+    const link = `https://leodeng.dev${r.path}`
+    return [
+      '  <item>',
+      `    <title>${escapeXml(r.title)}</title>`,
+      `    <link>${link}</link>`,
+      `    <guid>${link}</guid>`,
+      `    <pubDate>${new Date(post.date).toUTCString()}</pubDate>`,
+      r.description ? `    <description>${escapeXml(r.description)}</description>` : '',
+      `    <content:encoded><![CDATA[${post.html}]]></content:encoded>`,
+      '  </item>',
+    ].filter(Boolean).join('\n')
+  })
+
+  const rss = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">',
+    '  <channel>',
+    '    <title>leodeng.dev</title>',
+    '    <link>https://leodeng.dev/blog</link>',
+    '    <description>Leo Deng\'s blog: self-hosting, IoT, and building things.</description>',
+    '    <language>en</language>',
+    ...rssItems,
+    '  </channel>',
+    '</rss>',
+    '',
+  ].join('\n')
+
+  fs.writeFileSync(path.join(__dirname, 'dist/rss.xml'), rss)
+  console.log('✓ Generated rss.xml')
 }
 
 prerender().catch(err => {
