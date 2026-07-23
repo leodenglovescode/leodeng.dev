@@ -74,7 +74,7 @@ onMounted(() => {
     </div>
 
     <img
-      src="/leo_profilepic.png"
+      src="/leo_profilepic.webp"
       alt="Leo Deng"
       class="w-32 h-32 sm:w-48 sm:h-48 rounded-full object-cover border-2 border-accent shrink-0"
     />
