@@ -77,7 +77,7 @@ onUnmounted(() => {
 
       <h1 class="text-2xl sm:text-3xl font-bold text-fg mb-3">{{ post.title }}</h1>
       <p class="text-xs font-mono text-muted/50 mb-12">
-        {{ post.date }} · {{ post.readingTime }} min read
+        {{ post.displayDate }} · {{ post.readingTime }} min read
       </p>
 
       <div class="prose" v-html="post.html" />

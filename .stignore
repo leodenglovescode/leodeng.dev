@@ -1,0 +1,21 @@
+// Syncthing ignore patterns for this project.
+//
+// .git is excluded on purpose: this folder is a git repo synced between two
+// machines that both run git commands against it. If Syncthing mirrors .git
+// file-by-file while git on either side is mid-write to the index/refs/
+// objects, you can end up with a corrupted repo. Git itself (push/pull) is
+// what should move committed history between machines — Syncthing should
+// only mirror working-tree content, not git's internal state.
+.git
+
+// Regenerable build/dependency output — no reason to sync, and node_modules
+// churns constantly during npm install, which just creates sync noise.
+node_modules
+dist
+dist-ssr
+src/photos/**/_generated
+
+// OS/editor cruft
+.DS_Store
+.vscode
+.idea

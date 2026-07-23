@@ -1,6 +1,6 @@
 ---
 title: Hello, World!
-date: 2026-05-26
+date: 2026-05-26T04:09:55+08:00
 description: First post in the NEW blog!
 ---
 

@@ -1,0 +1,29 @@
+backend:
+  name: github
+  repo: leodenglovescode/leodeng.dev
+  branch: main
+  base_url: https://leodeng.dev
+  auth_endpoint: /api/auth
+
+# Publishing a post here commits straight to `main`, same as a manual git
+# push — Cloudflare Pages rebuilds automatically afterward.
+publish_mode: simple
+
+media_folder: 'public/blog-media'
+public_folder: '/blog-media'
+
+collections:
+  - name: 'blog'
+    label: 'Blog Posts'
+    folder: 'src/posts'
+    create: true
+    slug: '{{slug}}'
+    extension: 'md'
+    format: 'frontmatter'
+    editor:
+      preview: false
+    fields:
+      - { label: 'Title', name: 'title', widget: 'string' }
+      - { label: 'Publish Date', name: 'date', widget: 'datetime', format: 'YYYY-MM-DDTHH:mm:ssZ', picker_utc: false }
+      - { label: 'Description', name: 'description', widget: 'string' }
+      - { label: 'Body', name: 'body', widget: 'markdown' }
