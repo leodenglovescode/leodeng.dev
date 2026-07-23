@@ -22,7 +22,7 @@ const posts = getAllPosts()
           <h3 class="text-fg font-semibold group-hover:text-accent transition-colors mb-1">{{ post.title }}</h3>
           <p v-if="post.description" class="text-sm text-muted">{{ post.description }}</p>
         </div>
-        <span class="text-xs font-mono text-muted/40 shrink-0 mt-1">{{ post.date }}</span>
+        <span class="text-xs font-mono text-muted/40 shrink-0 mt-1">{{ post.displayDate }}</span>
       </RouterLink>
     </div>
   </section>
