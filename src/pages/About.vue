@@ -1,7 +1,27 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const age = Math.floor((new Date() - new Date(2010, 1, 1)) / 31557600000)
+
+// Site theme is a manual toggle (see Navbar.vue), not tied to OS
+// prefers-color-scheme, so the Apple Music embed has to watch the actual
+// `.dark` class on <html> rather than assume a fixed or system theme.
+// Starts true to match index.html's default class="dark" — `document` isn't
+// available during SSR, so the real value is only read once mounted.
+const isDark = ref(true)
+let themeObserver
+
+onMounted(() => {
+  isDark.value = document.documentElement.classList.contains('dark')
+  themeObserver = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains('dark')
+  })
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+})
+
+onUnmounted(() => {
+  themeObserver?.disconnect()
+})
 
 const GITHUB_LOGIN = 'leodenglovescode'
 
@@ -310,7 +330,7 @@ onMounted(() => {
         height="450"
         style="width:100%;max-width:660px;overflow:hidden;background:transparent;"
         sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
-        src="https://embed.music.apple.com/cn/playlist/rock-essentials/pl.u-XkD0vBBs2bRAkr6?l=en"
+        :src="`https://embed.music.apple.com/cn/playlist/rock-essentials/pl.u-XkD0vBBs2bRAkr6?l=en&theme=${isDark ? 'dark' : 'light'}`"
       ></iframe>
     </section>
 
