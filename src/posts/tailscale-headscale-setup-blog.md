@@ -1,6 +1,6 @@
 ---
 title: Setting Up Headscale for Remote Access to My Home Server
-date: 2026-07-12
+date: 2026-07-12T18:36:24+08:00
 description: What actually broke while getting my Mac, Windows PC, and phone to reach my home server remotely, and how I fixed each one.
 ---
 
