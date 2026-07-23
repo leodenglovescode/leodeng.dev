@@ -8,6 +8,7 @@ const staticRoutes = [
   { path: '/',          title: null },
   { path: '/about',     title: 'About' },
   { path: '/projects',  title: 'Projects' },
+  { path: '/gallery',   title: 'Gallery' },
   { path: '/blog',      title: 'Blog' },
   { path: '/contact',   title: 'Contact' },
 ]
