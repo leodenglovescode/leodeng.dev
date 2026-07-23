@@ -10,6 +10,7 @@ const staticRoutes = [
   { path: '/projects',  title: 'Projects' },
   { path: '/gallery',   title: 'Gallery' },
   { path: '/now',       title: 'Now' },
+  { path: '/feed',      title: 'RSS Feed' },
   { path: '/blog',      title: 'Blog' },
   { path: '/contact',   title: 'Contact' },
 ]
