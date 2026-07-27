@@ -12,8 +12,8 @@
     "build:client": "vite build",
     "preview": "vite preview",
     "photos:optimize": "node scripts/optimize-photos.js",
-    "photos:rename": "node scripts/rename-planespotting-photos.js",
-    "photos:rename:apply": "node scripts/rename-planespotting-photos.js --apply"
+    "photos:rename": "node scripts/rename-photos.js",
+    "photos:rename:apply": "node scripts/rename-photos.js --apply"
   },
   "dependencies": {
     "@vue/server-renderer": "^3.5.30",

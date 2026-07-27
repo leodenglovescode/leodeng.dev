@@ -5,6 +5,7 @@ import { renderToString } from 'vue/server-renderer'
 import routes from './router/routes.js'
 
 export { getAllPosts, getPost } from './utils/posts.js'
+export { collections } from './utils/gallery.js'
 
 export async function render(url = '/') {
   const app = createSSRApp(App)

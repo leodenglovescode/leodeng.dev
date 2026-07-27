@@ -1,8 +1,10 @@
 import Home from '../pages/Home.vue'
 import Projects from '../pages/Projects.vue'
 import Gallery from '../pages/Gallery.vue'
+import GalleryCollection from '../pages/GalleryCollection.vue'
 import About from '../pages/About.vue'
 import Now from '../pages/Now.vue'
+import Stack from '../pages/Stack.vue'
 import Feed from '../pages/Feed.vue'
 import Contact from '../pages/Contact.vue'
 import Blog from '../pages/Blog.vue'
@@ -14,7 +16,9 @@ export default [
   { path: '/about',     component: About,    meta: { title: 'About' } },
   { path: '/projects',  component: Projects, meta: { title: 'Projects' } },
   { path: '/gallery',   component: Gallery,  meta: { title: 'Gallery' } },
+  { path: '/gallery/:slug', component: GalleryCollection, meta: { title: 'Gallery' } },
   { path: '/now',       component: Now,      meta: { title: 'Now' } },
+  { path: '/stack',     component: Stack,    meta: { title: 'Stack' } },
   { path: '/feed',      component: Feed,     meta: { title: 'RSS Feed' } },
   { path: '/blog',      component: Blog,     meta: { title: 'Blog' } },
   { path: '/blog/:slug',component: BlogPost, meta: { title: 'Blog' } },
