@@ -1,47 +1,60 @@
 ---
 title: Setting Up Headscale for Remote Access to My Home Server
 date: 2026-07-12T18:36:24+08:00
-description: What actually broke while getting my Mac, Windows PC, and phone to reach my home server remotely, and how I fixed each one.
+description: What actually broke while getting my Mac, Windows PC, and phone to
+  reach my home server remotely, and how I fixed each one.
 ---
+
 
 **The problem:** I wanted remote access to my homelab. Not "port forward SSH and hope for the best" remote access, actual private mesh networking between my server, my Mac, my Windows PC, and my phone, so any of them can reach any other one like they're on the same LAN, from anywhere. Concretely, the things I actually needed this for: **remote video streaming** from cameras at home, controlling **Home Assistant** without exposing it to the open internet, a **secure SSH tunnel** into the server without punching random ports through my router, and being able to **remotely edit and debug code** running on the server as if I were sitting in front of it.
 
-Tailscale is the obvious tool for this, but self-hosting made more sense for my situation. Going through Tailscale's cloud-hosted coordination means every connection first has to find its way to whichever regional relay is closest to their infrastructure, and depending on routing, that can mean bouncing traffic across borders before it ever reaches a server sitting in the same city as me. Headscale is the open-source reimplementation of Tailscale's control server: same official clients on every device, just pointed at infrastructure I run myself, in the same place my server actually lives.
+
+Tailscale is the obvious tool for this, but self-hosting made more sense for my situation. One important distinction I originally got wrong: **Tailscale's coordination server is control plane, not data plane** ([official explanation](https://tailscale.com/docs/concepts/control-data-planes)). It distributes keys, peer information, policy, and connection metadata; it does **not** normally carry my actual traffic. Tailscale tries to move peer traffic directly over WireGuard/UDP, and DERP is the fallback when a direct path can't be established. I still wanted Headscale because I preferred to run the control plane myself, and I also wanted the option to place a relay close to my server for the network combinations that really did need one. Headscale is the open-source reimplementation of Tailscale's control server: same official clients on every device, just pointed at infrastructure I run myself.
+
 
 Here's what actually happened, roughly in the order I hit it. Also, full transparency upfront: AI tools were a big part of actually working through most of these issues (reading logs, narrowing down root causes, sanity checking fixes before running them), and this writeup itself was drafted with the same kind of help.
+
+> **Update / correction note:** I later went back through this against the current Headscale, Tailscale, and Apple documentation. A couple of my original explanations were too confident: I had conflated the control plane with the data path, and I had Apple's 398-day certificate rule wrong. The version below keeps what I actually observed, but separates confirmed behavior from what was only correlation.
+
 
 ## Attempt 1: Just set it up normally
 
 Got Headscale running, got my Mac connected, called it done. Except every time I restarted my Mac, it came back as a completely different device: new tailnet IP, new machine key, no memory of ever having connected before. My node list in Headscale started filling up with duplicate ghost entries with random suffixes, and any script that assumed a stable IP for my server broke constantly.
 
-**What went wrong:** Headscale nodes **expire by default**, same as Tailscale's real service. Once the key expires, the client doesn't complain, it just quietly re-registers as a brand new node the next time it connects. Makes sense for a multi-tenant SaaS product. Makes no sense when you're the only user on your own network and don't need periodic re-auth as a security measure.
+**What fixed it in my setup:** finite node expiry was enabled in the configuration I was using. Current Headscale's base default is actually `node.expiry: 0` (no default expiry); its example config notes that Tailscale's hosted service uses finite key expiry ([Headscale config](https://github.com/juanfont/headscale/blob/main/config-example.yaml)). Also, expiry by itself should normally force reauthentication rather than magically erase a client's local identity, so if a machine appears as a brand-new node after *every* reboot, client-state persistence is another thing worth checking.
 
-**Fix:** one config line.
+In my case, disabling default node expiry stopped the re-registration mess:
 
 ```yaml
 node:
   expiry: 0
 ```
 
-Nodes stop expiring, same device stays the same device forever. Had to manually clean out the ghost entries afterward, but that was it.
+After that I manually cleaned out the ghost entries.
+
+So I would not phrase the lesson as "Headscale nodes expire by default." The safer lesson is: **check both the server-side node expiry and whether the client is actually preserving its local state.**
 
 ## Attempt 2: TLS just didn't work
 
-Headscale needs HTTPS, not a preference, a hard requirement, since the DERP relay protocol won't function without TLS in place. I've got my own private CA for internal stuff already, so I signed a cert the normal way and expected it to work.
+Headscale needs to be reachable over **HTTPS** by Tailscale clients, and TCP/443 is also required if you're using Headscale's embedded DERP server ([Headscale requirements](https://headscale.net/stable/setup/requirements/)). I already had a private CA for internal services, so I signed a server certificate, trusted the CA on my Mac, and expected that to be the end of it.
 
-It didn't. Every client failed TLS verification with "self signed certificate in certificate chain," even after trusting the CA in the system keychain with "Always Trust" checked on everything.
+It wasn't. The client still failed TLS verification, with an error that made it look like the trust chain itself was the problem.
 
-**What went wrong:** the cert I signed had a **10 year validity period**, and modern platforms (macOS included) flat out reject any TLS server cert valid for more than **398 days**, regardless of whether the CA itself is trusted. A trusted CA doesn't rescue a leaf cert that individually breaks the platform's own lifetime rule, it just gets silently dropped, with an error message that points you in the wrong direction entirely.
+**What I had wrong in the original writeup:** I blamed Apple's modern **398-day** certificate rule. That's not the right rule for this case. Apple's 398-day limit applies to TLS server certificates chaining to roots that ship in Apple's trust store, and Apple explicitly says that limit **does not apply** to user-added or administrator-added root CAs ([Apple](https://support.apple.com/en-asia/102028)).
 
-**Fix:** reissue with `-days 397`. Worked instantly. If you're running your own PKI and something verifies fine with `openssl s_client` but fails everywhere else, check the cert's validity window before assuming the trust chain is broken.
+The older macOS 10.15 / iOS 13 TLS requirements are different: for TLS server certificates issued after July 1, 2019, Apple requires a validity period of **825 days or fewer**, along with SAN, serverAuth EKU, SHA-2 signatures, and adequate key sizes ([Apple](https://support.apple.com/en-ie/103769)). My leaf certificate had a ridiculous **10-year** lifetime, so it violated that 825-day requirement even though I trusted the private root CA.
+
+**Fix:** reissue the leaf certificate with a validity period under 825 days. I used a much shorter certificate and the client immediately started accepting it.
+
+So if you're running your own PKI and OpenSSL is happy while an Apple client is not, don't just stare at the CA chain. Check the leaf certificate's SAN, EKU, signature/key requirements, **and lifetime**.
 
 ## Attempt 3: Testing outside my LAN, connections just died
 
-Took my Mac off the home network to actually test remote access, and sometimes it couldn't establish any connection to the server at all. No direct path, no fallback, just dead.
+Took my Mac off the home network to actually test remote access, and sometimes it couldn't establish a direct connection to the server at all.
 
-**What went wrong:** my server only had a **public IPv6 address, no public IPv4**. Whatever network I was testing from was IPv4 only. Two endpoints that don't share an IP family can't do NAT traversal to reach each other directly, someone has to relay the traffic. The default fallback is Tailscale's public relay servers, and depending which one you land on, that can add a lot of latency if it's not geographically close to you.
+**What went wrong:** my server only had a **public IPv6 address, no public IPv4**, while the network I was testing from was IPv4-only. Without some translation layer, those two endpoints don't have a shared IP family for a direct UDP path. DERP is useful here because Tailscale's DERP servers are dual-stack and can relay between IPv4-only and IPv6-only clients ([Tailscale DERP docs](https://tailscale.com/docs/reference/derp-servers)).
 
-**Fix:** Headscale supports custom relay regions, plus ships an embedded relay you can run yourself. I stood up a second one on a small VPS in the same city as my server, purely as a low latency fallback:
+**Fix:** I added a nearby self-hosted DERP option so that when a direct path really wasn't possible, the fallback didn't have to take an unnecessarily long route.
 
 ```yaml
 derp:
@@ -52,19 +65,23 @@ derp:
     - /etc/headscale/derp.yaml
 ```
 
-Headscale automatically prefers whichever relay measures lowest latency, so this didn't need any manual switching. It just quietly became the better option whenever a direct connection wasn't possible.
+One wording correction from my original version: **Headscale itself isn't "choosing the lowest-latency relay."** Headscale distributes the DERP map; the Tailscale client measures regions and selects a preferred/home DERP based largely on latency and reachability.
 
-## Background: how my Mac was actually staying fast this whole time
+Direct is still the goal. DERP is the fallback.
+
+## Background: how my Mac kept reaching Headscale reliably
 
 Before getting into the next problem, worth explaining something I'd already built and mostly forgotten I was relying on.
 
-My Mac was connecting to Headscale through an internal only hostname, and getting a fast, direct connection from anywhere, because I had a small script keeping that hostname's entry in `/etc/hosts` pointed at my server's current public IPv6 address at all times. Something like:
+My Mac was reaching the **Headscale control server** through an internal hostname. Because my ISP's public IPv6 prefix can change, I had a small script that kept an `/etc/hosts` entry pointed at the server's current public IPv6 address:
 
-```
+```text
 2409:xxxx:xxxx:xxxx::1 headscale.lan
 ```
 
-The IPv6 my ISP hands out isn't static, so the script checks periodically whether the current entry still works, and if not, pulls the fresh address from a small authenticated endpoint I run (client certificate required, not something publicly queryable) and rewrites the hosts entry:
+Important correction: this only changes **how the Mac reaches Headscale's control-plane hostname**. It does **not** choose the peer-to-peer WireGuard path and it does not, by itself, make Tailscale data traffic "direct." Peer traffic uses endpoint discovery/NAT traversal separately.
+
+My earlier version of the script also used `tailscale ping` as a test before refreshing the address. That's not a great validity check for this purpose: a Tailscale ping can succeed over DERP even when the `/etc/hosts` entry is stale. The cleaner version is simply to query the authenticated source of truth periodically and update only when the address changed:
 
 ```bash
 #!/usr/bin/env bash
@@ -75,74 +92,114 @@ SECRET="YOUR_SECRET_HERE"
 CA_CERT="YOUR_CERT_PATH/ca.crt"
 CLIENT_CERT="YOUR_CERT_PATH/client.crt"
 CLIENT_KEY="YOUR_CERT_PATH/client.key"
-STATE_FILE="YOUR_STATE_FILE_PATH"
 HOSTNAME_ENTRY="headscale.lan"
 
-CURRENT_IPV6=$(grep "$HOSTNAME_ENTRY" /etc/hosts | awk '{print $1}' | head -1 || true)
-
-if [[ -n "$CURRENT_IPV6" ]]; then
-    if ping -c1 -W1 100.64.0.2 &>/dev/null; then
-        exit 0   # still reachable, nothing to do
-    fi
-fi
+CURRENT_IPV6=$(grep -E "[[:space:]]${HOSTNAME_ENTRY}([[:space:]]|$)" /etc/hosts \
+  | awk '{print $1}' | head -1 || true)
 
 RESPONSE=$(curl --silent --fail --max-time 15 \
-     --cacert "$CA_CERT" --cert "$CLIENT_CERT" --key "$CLIENT_KEY" \
-     -H "X-Sync-Secret: $SECRET" "$ENDPOINT")
+  --cacert "$CA_CERT" \
+  --cert "$CLIENT_CERT" \
+  --key "$CLIENT_KEY" \
+  -H "X-Sync-Secret: $SECRET" \
+  "$ENDPOINT")
 
-NEW_IPV6=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['ipv6'])")
+NEW_IPV6=$(printf '%s' "$RESPONSE" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['ipv6'])")
 
-OLD_IPV6=$(cat "$STATE_FILE" 2>/dev/null || echo "")
-if [[ "$NEW_IPV6" == "$OLD_IPV6" ]]; then
-    exit 0
+if [[ -z "$NEW_IPV6" || "$NEW_IPV6" == "$CURRENT_IPV6" ]]; then
+  exit 0
 fi
 
 sudo /bin/sh -c "
-    grep -v '$HOSTNAME_ENTRY' /etc/hosts > /tmp/hosts.tmp
-    echo '$NEW_IPV6 $HOSTNAME_ENTRY' >> /tmp/hosts.tmp
-    mv /tmp/hosts.tmp /etc/hosts
+  awk -v host='$HOSTNAME_ENTRY' '\$2 != host { print }' /etc/hosts > /tmp/hosts.tmp
+  printf '%s %s\n' '$NEW_IPV6' '$HOSTNAME_ENTRY' >> /tmp/hosts.tmp
+  cat /tmp/hosts.tmp > /etc/hosts
+  rm -f /tmp/hosts.tmp
 "
-echo "$NEW_IPV6" > "$STATE_FILE"
 ```
 
-Wired into a launchd job so it runs every few seconds in the background. I hadn't originally set this up specifically for Headscale, it was a general purpose "keep this hostname pointed at my server's current address" script I'd already put together with some help from AI tooling while working through an earlier project, and I just reused the same pattern here without thinking too hard about it, which turned out to matter a lot for what happened next.
+That endpoint is authenticated with a client certificate; by "private" here I mean it is **not anonymously queryable**, not that the URL necessarily has to be unreachable from the public internet.
+
+I wired the script into `launchd` so it runs periodically. I hadn't originally built it specifically for Headscale; it was a general-purpose "keep this hostname pointed at my changing server address" helper I'd made for an earlier project, and I reused the pattern here.
 
 ## Attempt 4: Adding Windows and Android broke everything
 
-Mac was solid. Tried adding Windows and my phone next, and both got stuck on "connecting" forever, no useful error, just endless retries.
+Mac was solid. Tried adding Windows and my phone next, and both got stuck on "connecting" forever, with very little useful UI feedback.
 
-**What went wrong:** the internal only hostname I was using doesn't exist anywhere in public DNS, and it turns out Tailscale clients need to resolve the control server hostname through a **bootstrapping step that only works against real public DNS**. It's a chicken and egg thing: before the client has a trusted network path at all, it asks a hardcoded list of Tailscale's own infrastructure to resolve the hostname on its behalf, and that only works for names that are actually delegated publicly. My Mac never hit this wall because its hosts file entry short circuited the lookup before Tailscale ever needed to resolve anything itself. Windows and Android had no such override, so they hit the real problem head on and looped forever.
+**What went wrong:** the hostname I was using existed only in my Mac's `/etc/hosts`. Windows and Android had no way to resolve it before they had joined the tailnet.
 
-**Fix:** register a real subdomain, issue it a proper certificate through a DNS-01 challenge, and use that as the control server hostname instead. Windows and Android both connected on the first try after that.
+Tailscale clients do have a **bootstrap DNS fallback**: if normal DNS resolution is broken, the client can ask known Tailscale/DERP infrastructure to resolve a name. That is useful for public DNS names, but it obviously cannot invent a private-only name that has never been delegated in public DNS. The important correction is that Tailscale does **not** require every custom control-server hostname to be public in all circumstances; a private name can work if the device's normal system DNS (or hosts file) can already resolve it. Mine couldn't.
+
+My Mac never hit the problem because `/etc/hosts` short-circuited DNS. Windows and Android hit it immediately.
+
+**Fix:** use a real domain/subdomain for the control server and issue a proper certificate for that name. I used DNS-01 for certificate issuance. After the hostname became resolvable on those devices, Windows and Android could reach the custom control server normally.
 
 ## Attempt 5: Fixed that, then lost all my connection speed
 
-Connections that used to be fast and direct started going through the relay permanently, even from places that should've supported a direct connection just fine.
+After the hostname migration, I saw connections that had previously been direct showing up as relayed, and throughput got much worse.
 
-**What went wrong:** once I had a real public hostname working, I pointed its DNS record at my server's **private internal address** rather than its public one, since I didn't want my home address sitting in a lookup anyone on the internet could query. That part was a deliberate decision. Where I actually got stuck for a bit afterward was assuming that record was now the only thing controlling where each device routed to, since it was the thing doing the resolving. It took some going back and forth to properly notice that **the hosts file override wasn't something the old setup needed instead of DNS, it was something that had been quietly layered on top of DNS the whole time**, and there was nothing stopping me from doing the exact same thing on top of the new real domain too.
+My original explanation here was:
 
-**Fix:** pointed the sync script at the new hostname instead of the old one, same mechanism, same authenticated endpoint, just updating a different entry:
+> "The public DNS record changed, therefore Tailscale started relaying. Restoring an `/etc/hosts` override made it direct again."
 
+That explanation was too confident and, architecturally, mostly wrong.
+
+**Why:** the hostname of the Headscale server is part of the **control plane**. It determines how the client reaches Headscale for registration, keys, peer information, policy, DERP maps, and updates. It is **not** the address used for normal peer-to-peer WireGuard data traffic.
+
+The actual peer path is negotiated separately. Tailscale learns candidate peer endpoints, uses STUN/NAT traversal, and tries direct UDP. If a direct path can't be established, the connection can fall back to a relay such as DERP ([connection types](https://tailscale.com/docs/reference/connection-types)). Changing:
+
+```text
+ts.example.com -> some address
 ```
-2409:xxxx:xxxx:xxxx::1 ts.example.com
+
+can absolutely make the **control server** reachable or unreachable, but it should not by itself convert a healthy direct peer path into a DERP path.
+
+So the correct troubleshooting path for "why am I relayed?" is things like:
+
+```bash
+tailscale status
+tailscale ping <peer>
+tailscale netcheck
+tailscale debug derp-map
 ```
 
-Same public hostname, same real certificate either way, the override just changes which address that specific device personally routes to. Nothing about it is visible to anyone else or to public DNS.
+Then check UDP reachability, NAT behavior, firewalls, the peer's discovered endpoints, and which DERP region is being selected.
 
-My Windows PC never needed any of this. It's a stationary desktop sitting on the same LAN as the server, so it always gets a direct local connection regardless of what the public DNS record says, no hosts file entry required there at all.
+In my case, the relay-only behavior changed around the same time as the DNS migration, and the hosts override appeared to "fix" it, but I didn't capture enough state to prove that DNS was the cause. The honest conclusion is: **correlation, not a confirmed root cause.**
 
-Android is the one device that's stuck without a real fix. No root means no hosts file access at all, and every no root DNS override app I checked was either years out of maintenance or couldn't do actual address rewriting in the first place, since most of them are ad blocker or firewall tools, not hosts file replacements. For that one device, I just accepted the fallback behavior. Worst case it sits on the relay or waits until it touches a network that can reach the server, but the underlying connection never actually breaks or needs re-authentication.
+I still use a hosts/split-DNS override where it is useful for reaching the Headscale control server at the right address. I just no longer describe that as a data-plane performance optimization.
+
+My Windows desktop is simpler because it sits on the same LAN as the server. When both peers can reach each other locally and UDP isn't being blocked, Tailscale can establish a local direct path regardless of what hostname I use for the control server.
+
+Android is also where the distinction matters most: without root I can't casually rewrite `/etc/hosts`. If the public DNS record for the Headscale hostname points only to an unroutable/private address, an Android phone away from home may be unable to reach the **control plane at all**. Cached tailnet state can keep some existing connectivity working when the coordination server is unavailable, but new peer information, policy changes, key operations, and other control-plane updates won't work reliably until the control server is reachable again ([Tailscale's coordination-outage behavior](https://tailscale.com/docs/reference/coordination-server-down)).
+
+So for a real deployment, the cleaner choices are a genuinely reachable public control-plane endpoint, a reverse proxy/VPS in front of Headscale, or proper split-horizon DNS rather than pretending an unreachable public record is harmless.
 
 ## Attempt 6: Windows straight up ignored me
 
-After the whole hostname migration, Windows kept trying to connect to the old control address no matter what I told it. Explicit login server flags, full resets, none of it mattered.
+After the hostname migration, Windows kept trying to connect to the old control address no matter what I told it. Explicit login-server flags and the resets I tried weren't enough.
 
-**What went wrong:** the old address was **saved inside Windows's local state file**, not just a setting the command line flags could override. A registry key I'd set earlier didn't help either, since that only applies to a fresh, never registered install, not one that already has a saved profile.
+**What went wrong:** the old control-server information was persisted in the client's local state, so changing a command-line flag wasn't necessarily equivalent to giving the client a completely fresh identity/configuration.
 
-**Fix:** stopped the service, killed both client processes, deleted the entire state directory, let it start completely clean. Sometimes a "reset" flag genuinely doesn't reset everything, and the real fix is just wiping it and starting over.
+**Fix:** I stopped the Tailscale service, made sure the client processes were gone, removed the relevant local Tailscale state, and re-enrolled the machine against the new control server.
+
+The important warning: **wiping the state directory is destructive.** It signs the client out and throws away local Tailscale state, so don't present it as a harmless first-line "reset" command. Use the normal logout/reset/re-login path first; only wipe local state when you are intentionally okay with treating the machine as a fresh client.
+
+Sometimes a reset really does not mean "delete every persisted bit of state."
 
 ## Where things ended up
 
-Every device now points at one real, publicly resolvable hostname with one real certificate. What that hostname resolves to publicly is intentionally meaningless to anyone outside my own network, it only matters to whichever device happens to be on that network, or to the ones running the private hosts override on top of it to get a direct connection from further away. A self hosted relay covers the rest.
+The setup is now much easier for me to reason about because I keep the two planes separate in my head:
 
-None of this was really "bugs," every single one was a documented (or at least discoverable) piece of how the stack actually works that I just hadn't run into yet because I'd only ever tested it from one device on one network.
+- **Control plane:** Headscale over one real hostname and a valid TLS certificate. Any device that needs to manage/join/update remotely must actually be able to reach that hostname somehow: public address, reverse proxy, VPN-independent tunnel, split DNS, or an explicit local override.
+- **Data plane:** Tailscale/WireGuard peer traffic tries to go direct over UDP. If that is impossible (for example, an IPv4-only client talking to an IPv6-only server with no translation path), a relay handles the traffic.
+
+The self-hosted DERP exists for the second problem. The hostname and TLS work exist for the first one. They are related because the control server distributes network information, but they are not the same path.
+
+That was the biggest conceptual mistake in my first version of this post: I treated "where the Headscale hostname resolves" as if it were also "where my Tailscale traffic flows." It isn't.
+
+None of the failures were magic. Some were configuration mistakes, some were platform requirements I hadn't read carefully enough, and at least one "root cause" was me seeing a fix happen at the same time as a network-path change and assuming one caused the other.
+
+Which, honestly, is a pretty normal homelab debugging session.
+
