@@ -11,6 +11,7 @@ const navLinks = [
   { label: 'About',    path: '/about' },
   { label: 'Projects', path: '/projects' },
   { label: 'Gallery',  path: '/gallery' },
+  { label: 'Stack',    path: '/stack' },
   { label: 'Blog',     path: '/blog' },
   { label: 'Contact',  path: '/contact' },
 ]

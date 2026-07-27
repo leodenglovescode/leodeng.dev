@@ -10,6 +10,7 @@ const staticRoutes = [
   { path: '/projects',  title: 'Projects' },
   { path: '/gallery',   title: 'Gallery' },
   { path: '/now',       title: 'Now' },
+  { path: '/stack',     title: 'Stack' },
   { path: '/feed',      title: 'RSS Feed' },
   { path: '/blog',      title: 'Blog' },
   { path: '/contact',   title: 'Contact' },
@@ -33,7 +34,7 @@ function withMeta(html, { title, description }) {
 }
 
 async function prerender() {
-  const { render, getAllPosts, getPost } = await import('./dist-ssr/entry-server.js')
+  const { render, getAllPosts, getPost, collections } = await import('./dist-ssr/entry-server.js')
 
   const templatePath = path.join(__dirname, 'dist/index.html')
   const template = fs.readFileSync(templatePath, 'utf-8')
@@ -44,7 +45,13 @@ async function prerender() {
     description: p.description,
   }))
 
-  const routes = [...staticRoutes, ...postRoutes]
+  const collectionRoutes = collections.map(c => ({
+    path: `/gallery/${c.slug}`,
+    title: c.title,
+    description: c.description,
+  }))
+
+  const routes = [...staticRoutes, ...postRoutes, ...collectionRoutes]
 
   for (const route of routes) {
     const appHtml = await render(route.path)

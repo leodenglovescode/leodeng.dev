@@ -1,13 +1,14 @@
 #!/usr/bin/env node
-// Renames photos in src/photos/planespotting to a sortable date-based filename.
-// Date source, in priority order: EXIF capture date -> file mtime -> file atime.
+// Renames photos in each src/photos/<collection>/ folder to a sortable
+// date-based filename. Date source, in priority order: EXIF capture date ->
+// file mtime -> file atime.
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import exifr from 'exifr'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const PHOTOS_DIR = path.join(__dirname, '../src/photos/planespotting')
+const PHOTOS_ROOT = path.join(__dirname, '../src/photos')
 const EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
 const NAMED_PATTERN = /^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(-\d+)?$/
 // Defaults to a dry run. `npm run photos:rename --dry-run` looks like it would
@@ -41,29 +42,23 @@ async function getDate(filePath) {
   return { date: stat.atime, source: 'atime' }
 }
 
-async function main() {
-  if (!fs.existsSync(PHOTOS_DIR)) {
-    console.error(`Not found: ${PHOTOS_DIR}`)
-    process.exit(1)
-  }
+async function renameCollection(collectionDir) {
+  const label = path.basename(collectionDir)
+  const files = fs.readdirSync(collectionDir, { withFileTypes: true })
+    .filter(f => f.isFile() && EXTENSIONS.has(path.extname(f.name).toLowerCase()))
+    .map(f => f.name)
 
-  const files = fs.readdirSync(PHOTOS_DIR)
-    .filter(f => EXTENSIONS.has(path.extname(f).toLowerCase()))
+  if (!files.length) return
 
-  if (!files.length) {
-    console.log('No photos found in src/photos/planespotting.')
-    return
-  }
-
-  const usedNames = new Set(fs.readdirSync(PHOTOS_DIR))
+  const usedNames = new Set(files)
 
   for (const file of files) {
     if (NAMED_PATTERN.test(path.parse(file).name)) {
-      console.log(`= ${file} (already named, skipped)`)
+      console.log(`= ${label}/${file} (already named, skipped)`)
       continue
     }
 
-    const filePath = path.join(PHOTOS_DIR, file)
+    const filePath = path.join(collectionDir, file)
     const ext = path.extname(file).toLowerCase()
     const { date, source } = await getDate(filePath)
 
@@ -78,10 +73,30 @@ async function main() {
     usedNames.delete(file)
     usedNames.add(newName)
 
-    console.log(`${dryRun ? '[dry-run] ' : ''}${file} -> ${newName}  (${source})`)
+    console.log(`${dryRun ? '[dry-run] ' : ''}${label}/${file} -> ${newName}  (${source})`)
     if (!dryRun) {
-      fs.renameSync(filePath, path.join(PHOTOS_DIR, newName))
+      fs.renameSync(filePath, path.join(collectionDir, newName))
     }
+  }
+}
+
+async function main() {
+  if (!fs.existsSync(PHOTOS_ROOT)) {
+    console.error(`Not found: ${PHOTOS_ROOT}`)
+    process.exit(1)
+  }
+
+  const collectionDirs = fs.readdirSync(PHOTOS_ROOT, { withFileTypes: true })
+    .filter(f => f.isDirectory() && !f.name.startsWith('_'))
+    .map(f => path.join(PHOTOS_ROOT, f.name))
+
+  if (!collectionDirs.length) {
+    console.log('No photo collections found in src/photos.')
+    return
+  }
+
+  for (const dir of collectionDirs) {
+    await renameCollection(dir)
   }
 
   if (dryRun) {
