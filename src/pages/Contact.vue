@@ -1,4 +1,43 @@
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const email = 'leodeng@leodeng.dev'
+const copied = ref(false)
+
+const statuses = [
+  'Coding...',
+  'Debugging...',
+  'Breaking things...',
+  'Fixing what I broke...',
+  'Drinking coffee...',
+  'Staring at error logs...',
+  'Shipping features...',
+  'Probably procrastinating...',
+]
+const statusIndex = ref(0)
+let statusTimer
+
+onMounted(() => {
+  statusTimer = setInterval(() => {
+    statusIndex.value = (statusIndex.value + 1) % statuses.length
+  }, 1000)
+})
+
+onUnmounted(() => {
+  clearInterval(statusTimer)
+})
+
+async function copyEmail() {
+  try {
+    await navigator.clipboard.writeText(email)
+    copied.value = true
+    setTimeout(() => (copied.value = false), 1800)
+  } catch {
+    // clipboard API unavailable/blocked — mailto link below still works
+    window.location.href = `mailto:${email}`
+  }
+}
+
 const links = [
   {
     label: 'GitHub',
@@ -9,11 +48,6 @@ const links = [
     label: 'X',
     url: 'https://x.com/@Leodeng14',
     icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
-  },
-  {
-    label: 'Email',
-    url: 'mailto:leodeng@leodeng.dev',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>`,
   },
   {
     label: 'YouTube',
@@ -30,22 +64,44 @@ const links = [
 
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
-    <h2 class="text-xs font-mono text-muted uppercase tracking-widest mb-10">Find Me</h2>
+    <h2 class="text-xs font-mono text-muted uppercase tracking-widest mb-3">Get In Touch</h2>
 
-    <div class="flex flex-col">
+    <div class="flex items-center gap-2 mb-10">
+      <span class="relative flex w-2 h-2">
+        <span class="absolute inline-flex w-full h-full rounded-full bg-accent opacity-60 animate-ping"></span>
+        <span class="relative inline-flex w-2 h-2 rounded-full bg-accent"></span>
+      </span>
+      <span class="text-xs font-mono text-muted/70 w-44">{{ statuses[statusIndex] }}</span>
+    </div>
+
+    <button
+      type="button"
+      @click="copyEmail"
+      class="group w-full flex items-center justify-between gap-4 px-5 py-5 mb-8 rounded-lg border border-fg/8 hover:border-accent/30 transition-colors text-left cursor-pointer"
+    >
+      <div class="min-w-0">
+        <div class="text-[11px] font-mono text-muted/50 uppercase tracking-widest mb-1">Email</div>
+        <div class="text-lg sm:text-xl text-fg font-medium truncate">{{ email }}</div>
+      </div>
+      <span
+        class="shrink-0 text-xs font-mono px-3 py-1.5 rounded-full border transition-colors"
+        :class="copied ? 'border-accent/40 text-accent' : 'border-fg/10 text-muted group-hover:text-accent group-hover:border-accent/30'"
+      >
+        {{ copied ? 'copied ✓' : 'copy' }}
+      </span>
+    </button>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <a
         v-for="link in links"
         :key="link.label"
         :href="link.url"
         target="_blank"
         rel="noopener noreferrer"
-        class="group flex items-center justify-between py-4 border-b border-fg/5 hover:border-accent/20 transition-colors"
+        class="group flex flex-col items-center gap-3 px-4 py-6 rounded-lg border border-fg/8 hover:border-accent/30 transition-colors text-center"
       >
-        <div class="flex items-center gap-3">
-          <span class="w-4 h-4 text-muted/50 group-hover:text-accent transition-colors shrink-0" v-html="link.icon" />
-          <span class="text-muted group-hover:text-fg transition-colors">{{ link.label }}</span>
-        </div>
-        <span class="text-xs font-mono text-muted/30 group-hover:text-accent transition-colors">↗</span>
+        <span class="w-6 h-6 text-muted/60 group-hover:text-accent transition-colors" v-html="link.icon" />
+        <span class="text-sm text-muted group-hover:text-fg transition-colors">{{ link.label }}</span>
       </a>
     </div>
   </section>
