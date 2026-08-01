@@ -19,7 +19,7 @@ const ICONS = {
 const devices = [
   {
     category: 'Microphone',
-    model: 'Audio-Technica AT2032',
+    model: 'Audio-Technica AT2035',
     icon: 'mic',
     specs: [
       { label: 'Type', value: 'Condenser' },
