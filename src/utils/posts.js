@@ -13,22 +13,66 @@ marked.use({
 
 const modules = import.meta.glob('../posts/*.md', { query: '?raw', import: 'default', eager: true })
 
-function parseFrontmatter(raw) {
-  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/)
+// Strips surrounding quotes — the admin panel quotes values that contain a
+// colon or other YAML-ambiguous characters.
+function unquote(value) {
+  if (value.startsWith('"') && value.endsWith('"') && value.length > 1) {
+    return value.slice(1, -1).replace(/\\(["\\])/g, '$1')
+  }
+  if (value.startsWith("'") && value.endsWith("'") && value.length > 1) {
+    return value.slice(1, -1).replace(/''/g, "'")
+  }
+  return value
+}
+
+export function parseFrontmatter(raw) {
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)
   if (!match) return { meta: {}, content: raw }
+
   const meta = {}
-  match[1].split('\n').forEach(line => {
-    const [key, ...val] = line.split(':')
-    if (!key.trim()) return
-    let value = val.join(':').trim()
-    // Strip surrounding quotes — the CMS admin panel quotes values that
-    // contain a colon or other YAML-ambiguous characters.
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1)
+  const lines = match[1].split(/\r?\n/)
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i++]
+    if (!line.trim() || line.trimStart().startsWith('#')) continue
+
+    const sep = line.indexOf(':')
+    if (sep === -1) continue
+    const key = line.slice(0, sep).trim()
+    let value = line.slice(sep + 1).trim()
+
+    // A YAML value doesn't have to fit on one line. Block scalars (`>`, `|`,
+    // with optional chomping indicators like `>-`) and plain multi-line
+    // scalars both continue onto the following *indented* lines — which is
+    // exactly what a text editor emits when it wraps a long description.
+    // Reading only the first line silently truncated those mid-sentence.
+    const block = value.match(/^([>|])[-+]?\d*$/)
+    const continuation = []
+    while (i < lines.length && (/^\s+\S/.test(lines[i]) || (!lines[i].trim() && block))) {
+      continuation.push(lines[i].trim())
+      i++
     }
-    meta[key.trim()] = value
-  })
+
+    if (continuation.length) {
+      // `|` keeps the line breaks; `>` folds them, as does a plain scalar.
+      const literal = block && block[1] === '|'
+      const rest = literal
+        ? continuation.join('\n').trim()
+        : continuation.filter(Boolean).join(' ').trim()
+      value = block ? rest : `${value} ${rest}`.trim()
+    }
+
+    meta[key] = unquote(value)
+  }
+
   return { meta, content: match[2] }
+}
+
+// Shared with the /admin live preview so what you type there renders through
+// the same pipeline (and highlight.js theme) as the published post.
+export function renderMarkdown(content) {
+  return marked(content)
 }
 
 function readingTime(text) {
@@ -43,6 +87,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 // displayed date is always the author's date, not shifted by the reader's
 // browser timezone.
 function formatDate(dateStr) {
+  if (!dateStr) return ''
   const [year, month, day] = dateStr.slice(0, 10).split('-')
   return `${MONTHS[Number(month) - 1]} ${Number(day)}, ${year}`
 }
