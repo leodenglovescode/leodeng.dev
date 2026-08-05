@@ -263,3 +263,6 @@ That last one is my actual takeaway. Not "AI good" or "AI bad." The tool is extr
 - A pin is not a bypass, but the bypass is always right there next to it
 
 Anyway. My phone finds my house from anywhere now, and my home address isn't in public DNS. Took a while.
+
+## P.S.
+The repo is [here](https://github.com/leodenglovescode/headlink-android) if anybody is interested :)
