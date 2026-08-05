@@ -1,0 +1,21 @@
+# Copy to `.dev.vars` (gitignored) for local `wrangler pages dev` runs.
+#
+# These must come from a SEPARATE GitHub OAuth app registered for local dev.
+# GitHub matches redirect_uri against the registered callback's host and port
+# exactly, so the production app (callback https://leodeng.dev/api/callback)
+# can never redirect back to localhost.
+#
+# Register at https://github.com/settings/developers with:
+#   Homepage URL:              http://localhost:8788
+#   Authorization callback URL: http://localhost:8788/api/callback
+#
+# Testing from a phone on the LAN instead? Register that exact origin
+# (e.g. http://192.168.3.61:8788/api/callback) and serve with
+# `npx wrangler pages dev dist --ip 0.0.0.0`.
+
+GITHUB_CLIENT_ID=your_dev_app_client_id
+GITHUB_CLIENT_SECRET=your_dev_app_client_secret
+
+# Optional — both default to the production values in lib/auth.js.
+# GITHUB_ALLOWED_USER=leodenglovescode
+# GITHUB_REPO=leodenglovescode/leodeng.dev

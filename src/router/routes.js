@@ -23,5 +23,9 @@ export default [
   { path: '/blog',      component: Blog,     meta: { title: 'Blog' } },
   { path: '/blog/:slug',component: BlogPost, meta: { title: 'Blog' } },
   { path: '/contact',   component: Contact,  meta: { title: 'Contact' } },
+  // Lazy so the editor (and its markdown/preview weight) never lands in the
+  // bundle a normal reader downloads. `chrome: false` drops the site navbar and
+  // footer — the editor wants the full viewport.
+  { path: '/admin',     component: () => import('../pages/Admin.vue'), meta: { title: 'Admin', chrome: false } },
   { path: '/:pathMatch(.*)*', component: NotFound, meta: { title: '404' } },
 ]
