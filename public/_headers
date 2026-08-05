@@ -1,0 +1,18 @@
+# The admin editor must never be cached at the edge or in the browser.
+#
+# The old Decap panel got stuck in Cloudflare's cache with a 7-day s-maxage
+# after it was deleted, so /admin/ kept serving a dead page long after the
+# deploy that removed it. Nothing under /admin is worth caching anyway — it's
+# a single-user editor, and a stale copy is always wrong.
+/admin
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
+
+/admin/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
+
+# Auth and the GitHub proxy: never store a response that depends on a session.
+/api/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
