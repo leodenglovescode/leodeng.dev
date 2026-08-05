@@ -1,5 +1,11 @@
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Navbar from './components/Navbar.vue'
+
+const route = useRoute()
+// /admin opts out of the navbar, footer and reading-width column.
+const chrome = computed(() => route.meta?.chrome !== false)
 
 const socialLinks = [
   {
@@ -30,15 +36,15 @@ const socialLinks = [
 </script>
 
 <template>
-  <Navbar />
-  <main class="max-w-3xl mx-auto px-6">
+  <Navbar v-if="chrome" />
+  <main :class="chrome && 'max-w-3xl mx-auto px-6'">
     <RouterView v-slot="{ Component }">
       <Transition name="fade" mode="out-in">
         <component :is="Component" />
       </Transition>
     </RouterView>
   </main>
-  <footer class="max-w-3xl mx-auto px-6 py-8 border-t border-fg/5 flex flex-wrap items-center justify-between gap-4">
+  <footer v-if="chrome" class="max-w-3xl mx-auto px-6 py-8 border-t border-fg/5 flex flex-wrap items-center justify-between gap-4">
     <p class="text-xs text-muted/30 font-mono">
       2026 © Leo Deng — Built with Vue, Vite, Tailwind.
     </p>
