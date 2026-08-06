@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import MarkdownEditor from '../components/admin/MarkdownEditor.vue'
 import MediaManager from '../components/admin/MediaManager.vue'
 import { deleteFile, getFile, getSession, listDir, logout, putFile, encodeBase64 } from '../utils/adminApi.js'
@@ -27,6 +28,102 @@ const editor = ref(null)
 
 const form = ref(null)
 const pristine = ref('')
+
+/* ---------- local recovery ---------- */
+
+// Everything above commits to GitHub, which means unsaved work only exists in
+// this tab. A crash, a stray back gesture or a mis-clicked "leave anyway" used
+// to take it with them. The editor buffer is mirrored into localStorage on a
+// debounce and offered back on the next visit.
+const RECOVERY_PREFIX = 'leodeng:admin:recovery:'
+const RECOVERY_MAX_AGE = 30 * 24 * 60 * 60 * 1000
+
+const recoveries = ref([])
+// Captured when the form opens, so renaming the post mid-edit doesn't strand
+// the entry under its old key.
+const activeRecoveryKey = ref(null)
+
+function readRecoveries() {
+  const found = []
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i)
+      if (!key?.startsWith(RECOVERY_PREFIX)) continue
+      const entry = JSON.parse(localStorage.getItem(key) || 'null')
+      if (!entry?.form) continue
+      if (Date.now() - entry.savedAt > RECOVERY_MAX_AGE) {
+        localStorage.removeItem(key)
+        continue
+      }
+      found.push({ key, ...entry })
+    }
+  } catch {
+    // Storage can be unavailable (private mode, quota, corrupt JSON).
+    // Recovery is a safety net, never a hard dependency.
+    return []
+  }
+  return found.sort((a, b) => b.savedAt - a.savedAt)
+}
+
+function writeRecovery() {
+  if (!activeRecoveryKey.value || !form.value) return
+  try {
+    localStorage.setItem(
+      activeRecoveryKey.value,
+      // `pristine` rides along so a restored buffer still knows what the repo
+      // held, and the unsaved badge stays accurate.
+      JSON.stringify({ savedAt: Date.now(), form: form.value, pristine: pristine.value }),
+    )
+  } catch { /* out of quota — nothing useful to do here */ }
+}
+
+function dropRecovery(key) {
+  if (!key) return
+  try {
+    localStorage.removeItem(key)
+  } catch { /* ignore */ }
+  recoveries.value = recoveries.value.filter((r) => r.key !== key)
+}
+
+let persistTimer = null
+
+// Sources are evaluated during setup, so this watches `form` alone and reads
+// `isDirty` inside the callback — the computed is declared further down, and
+// naming it here would touch it before initialisation. Every `pristine` update
+// is paired with a mutation of `form`, so nothing is missed.
+watch(
+  form,
+  () => {
+    clearTimeout(persistTimer)
+    if (!form.value) return
+    // A clean buffer matches the repo, so any stored copy is now just stale.
+    if (!isDirty.value) {
+      dropRecovery(activeRecoveryKey.value)
+      return
+    }
+    persistTimer = setTimeout(writeRecovery, 500)
+  },
+  { deep: true },
+)
+
+function restoreRecovery(entry) {
+  form.value = { ...entry.form }
+  pristine.value = entry.pristine ?? ''
+  activeRecoveryKey.value = entry.key
+  recoveries.value = recoveries.value.filter((r) => r.key !== entry.key)
+  view.value = 'edit'
+  notice.value = ''
+}
+
+function savedAgo(ts) {
+  const mins = Math.round((Date.now() - ts) / 60000)
+  if (mins < 1) return 'moments ago'
+  if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`
+  const hours = Math.round(mins / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  const days = Math.round(hours / 24)
+  return `${days} day${days === 1 ? '' : 's'} ago`
+}
 
 /* ---------- frontmatter <-> form ---------- */
 
@@ -90,22 +187,43 @@ function slugify(text) {
 onMounted(async () => {
   try {
     session.value = await getSession()
-    if (session.value) await loadPosts()
+    if (session.value) {
+      await loadPosts()
+      recoveries.value = readRecoveries()
+    }
   } catch (err) {
     error.value = err.message
   } finally {
     booting.value = false
   }
   window.addEventListener('beforeunload', warnIfDirty)
+
+  // A two-finger sideways slide on a macOS trackpad becomes a browser back
+  // navigation, which inside an SPA is a silent route change — no beforeunload,
+  // no prompt, and a half-written post gone. Containing horizontal overscroll
+  // stops the gesture from turning into navigation at all. Scoped to /admin, so
+  // swipe-back keeps working everywhere else on the site.
+  document.documentElement.style.overscrollBehaviorX = 'contain'
 })
 
-onBeforeUnmount(() => window.removeEventListener('beforeunload', warnIfDirty))
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', warnIfDirty)
+  document.documentElement.style.overscrollBehaviorX = ''
+})
 
+// Covers leaving the page entirely: reload, tab close, navigating off-site.
 function warnIfDirty(event) {
   if (!isDirty.value) return
   event.preventDefault()
   event.returnValue = ''
 }
+
+// Covers navigation that stays inside the SPA — the back gesture, the browser's
+// back button, any in-app link. beforeunload never fires for these.
+onBeforeRouteLeave(() => {
+  if (!isDirty.value) return true
+  return confirm('You have unsaved changes. Leave the editor? They stay on this device and are offered back when you return.')
+})
 
 function signIn() {
   window.location.href = '/api/auth'
@@ -193,6 +311,7 @@ function newPost() {
     slugTouched: false,
   }
   pristine.value = snapshot(form.value)
+  activeRecoveryKey.value = `${RECOVERY_PREFIX}new`
   view.value = 'edit'
   notice.value = ''
 }
@@ -210,6 +329,7 @@ function editPost(post) {
     slugTouched: true,
   }
   pristine.value = snapshot(form.value)
+  activeRecoveryKey.value = `${RECOVERY_PREFIX}${post.dir}/${post.slug}`
   view.value = 'edit'
   notice.value = ''
 }
@@ -219,7 +339,10 @@ const isPublished = computed(() => form.value?.dir === POSTS_DIR)
 
 function backToList() {
   if (isDirty.value && !confirm('Discard unsaved changes?')) return
+  // An explicit discard means exactly that — don't offer it back later.
+  dropRecovery(activeRecoveryKey.value)
   form.value = null
+  activeRecoveryKey.value = null
   view.value = 'list'
   notice.value = ''
 }
@@ -369,7 +492,9 @@ async function deleteCurrent() {
   const list = isDraft.value ? drafts.value : posts.value
   const post = list.find((p) => p.slug === form.value.originalSlug)
   if (await removePost(post)) {
+    dropRecovery(activeRecoveryKey.value)
     form.value = null
+    activeRecoveryKey.value = null
     view.value = 'list'
   }
 }
@@ -442,6 +567,34 @@ function displayDate(iso) {
 
       <!-- post list -->
       <section v-else-if="view === 'list'">
+        <!-- Unsaved work from a previous visit, mirrored to localStorage. -->
+        <div
+          v-for="entry in recoveries"
+          :key="entry.key"
+          class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-accent/20 bg-accent/5 px-4 py-3"
+        >
+          <div class="min-w-0 flex-1">
+            <p class="text-sm text-fg truncate">
+              Unsaved changes to “{{ entry.form.title || 'Untitled' }}”
+            </p>
+            <p class="text-[11px] font-mono text-muted/50 mt-0.5">
+              kept on this device · {{ savedAgo(entry.savedAt) }}
+            </p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              class="h-8 px-3 rounded-md bg-accent text-white text-xs font-medium hover:bg-accent-soft transition-colors"
+              @click="restoreRecovery(entry)"
+            >Restore</button>
+            <button
+              type="button"
+              class="text-xs text-muted/50 hover:text-red-400 transition-colors"
+              @click="dropRecovery(entry.key)"
+            >Discard</button>
+          </div>
+        </div>
+
         <div class="flex items-center gap-3 mb-6">
           <div class="flex items-center gap-1">
             <button
