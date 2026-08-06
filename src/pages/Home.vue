@@ -48,7 +48,7 @@ onMounted(() => {
       <p class="text-muted text-sm font-mono mb-6">{{ time }} CST</p>
 
       <h1 class="text-3xl sm:text-4xl font-bold text-fg leading-tight mb-4">
-        Hey, I'm Leo<span class="text-accent">.</span>
+        Hey, I'm Leo<span class="text-highlight">.</span>
       </h1>
 
       <p class="text-lg text-muted leading-relaxed mb-3">
