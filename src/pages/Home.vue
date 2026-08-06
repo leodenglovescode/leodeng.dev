@@ -1,5 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+
+// Fast enough to feel alive. Most phrases need a beat longer than this to
+// actually read, so hovering pauses it.
+const STATUS_INTERVAL = 1000
 
 const time = ref('')
 const age = ref(16)
@@ -21,8 +25,34 @@ const statuses = [
   'watching F1 and complaining about the cars',
 ]
 
+let statusTimer = null
+let clockTimer = null
+
 function pickStatus() {
-  currentStatus.value = statuses[Math.floor(Math.random() * statuses.length)]
+  // Never land on the line already showing — at a one-second cadence a random
+  // repeat just reads as the ticker having frozen.
+  let next = currentStatus.value
+  while (next === currentStatus.value) {
+    next = statuses[Math.floor(Math.random() * statuses.length)]
+  }
+  currentStatus.value = next
+}
+
+function startTicker() {
+  clearInterval(statusTimer)
+  statusTimer = setInterval(pickStatus, STATUS_INTERVAL)
+}
+
+function stopTicker() {
+  clearInterval(statusTimer)
+  statusTimer = null
+}
+
+// Clicking still rerolls, and restarts the clock so the line you asked for
+// doesn't get replaced a few milliseconds later.
+function rerollStatus() {
+  pickStatus()
+  if (statusTimer) startTicker()
 }
 
 function updateTime() {
@@ -34,11 +64,23 @@ function updateTime() {
 onMounted(() => {
   pickStatus()
   updateTime()
-  setInterval(updateTime, 60000)
+  clockTimer = setInterval(updateTime, 60000)
+
+  // Text that rewrites itself every second is exactly what "reduce motion"
+  // asks you not to do (WCAG 2.2.2). Those visitors get one status and the
+  // click-to-reroll, which is the whole joke anyway.
+  if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) startTicker()
 
   const birthday = new Date(2010, 1, 1)
   const now = new Date()
   age.value = Math.floor((now - birthday) / 31557600000)
+})
+
+// Both intervals used to outlive the page — this is a route component, so
+// navigating away left them running.
+onBeforeUnmount(() => {
+  clearInterval(statusTimer)
+  clearInterval(clockTimer)
 })
 </script>
 
@@ -56,8 +98,14 @@ onMounted(() => {
       </p>
       <br/>
       <p class="text-lg text-muted leading-relaxed mb-3">What I'm up to (maybe):</p>
-      <p class="text-sm text-muted/90 font-mono cursor-pointer hover:text-accent transition-colors" @click="pickStatus">
-        > {{ currentStatus }} <span class="animate-pulse">▊</span>
+      <p
+        class="text-sm text-muted/90 font-mono cursor-pointer hover:text-accent transition-colors"
+        title="Hover to pause, click to reroll"
+        @click="rerollStatus"
+        @mouseenter="stopTicker"
+        @mouseleave="startTicker"
+      >
+        > {{ currentStatus }} <span class="text-highlight animate-pulse">▊</span>
       </p>
 
       <div class="flex gap-8 mt-12">
