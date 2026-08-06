@@ -6,11 +6,18 @@ import { deleteFile, getFile, getSession, listDir, logout, putFile, encodeBase64
 import { parseFrontmatter } from '../utils/posts.js'
 
 const POSTS_DIR = 'src/posts'
+// Drafts are ordinary markdown files that simply live somewhere nothing globs.
+// `utils/posts.js` only imports `../posts/*.md`, so a draft is never bundled,
+// pre-rendered or listed — a `draft: true` flag inside src/posts would still
+// ship the whole text to every visitor in the client bundle.
+const DRAFTS_DIR = 'src/drafts'
 
 const session = ref(null)
 const booting = ref(true)
 const view = ref('list')
+const tab = ref('posts')
 const posts = ref([])
+const drafts = ref([])
 const loadingPosts = ref(false)
 const error = ref('')
 const notice = ref('')
@@ -18,7 +25,7 @@ const saving = ref(false)
 const mediaOpen = ref(false)
 const editor = ref(null)
 
-const draft = ref(null)
+const form = ref(null)
 const pristine = ref('')
 
 /* ---------- frontmatter <-> form ---------- */
@@ -109,7 +116,7 @@ async function signOut() {
   await logout()
   session.value = null
   posts.value = []
-  draft.value = null
+  form.value = null
   view.value = 'list'
 }
 
@@ -124,29 +131,38 @@ function handleAuthError(err) {
 
 /* ---------- posts ---------- */
 
+async function loadDir(dir) {
+  const entries = await listDir(dir)
+  const markdown = entries.filter((e) => e.type === 'file' && e.name.endsWith('.md'))
+
+  const loaded = await Promise.all(
+    markdown.map(async (entry) => {
+      const file = await getFile(`${dir}/${entry.name}`)
+      const { meta, content } = parseFrontmatter(file?.text || '')
+      return {
+        dir,
+        slug: entry.name.replace(/\.md$/, ''),
+        sha: file?.sha || entry.sha,
+        title: meta.title || entry.name,
+        date: meta.date || '',
+        description: meta.description || '',
+        body: content,
+      }
+    }),
+  )
+
+  return loaded.sort((a, b) => new Date(b.date) - new Date(a.date))
+}
+
 async function loadPosts() {
   loadingPosts.value = true
   error.value = ''
   try {
-    const entries = await listDir(POSTS_DIR)
-    const markdown = entries.filter((e) => e.type === 'file' && e.name.endsWith('.md'))
-
-    const loaded = await Promise.all(
-      markdown.map(async (entry) => {
-        const file = await getFile(`${POSTS_DIR}/${entry.name}`)
-        const { meta, content } = parseFrontmatter(file?.text || '')
-        return {
-          slug: entry.name.replace(/\.md$/, ''),
-          sha: file?.sha || entry.sha,
-          title: meta.title || entry.name,
-          date: meta.date || '',
-          description: meta.description || '',
-          body: content,
-        }
-      }),
-    )
-
-    posts.value = loaded.sort((a, b) => new Date(b.date) - new Date(a.date))
+    // listDir answers empty for a directory that doesn't exist, so src/drafts
+    // needs no bootstrapping — the first saved draft creates it.
+    const [published, unpublished] = await Promise.all([loadDir(POSTS_DIR), loadDir(DRAFTS_DIR)])
+    posts.value = published
+    drafts.value = unpublished
   } catch (err) {
     handleAuthError(err)
   } finally {
@@ -154,14 +170,19 @@ async function loadPosts() {
   }
 }
 
+const items = computed(() => (tab.value === 'drafts' ? drafts.value : posts.value))
+
 function snapshot(d) {
   return JSON.stringify([d.slug, d.title, d.description, d.date, d.body])
 }
 
-const isDirty = computed(() => !!draft.value && snapshot(draft.value) !== pristine.value)
+const isDirty = computed(() => !!form.value && snapshot(form.value) !== pristine.value)
 
 function newPost() {
-  draft.value = {
+  form.value = {
+    // `dir: null` means nothing has been written yet — the button you press
+    // decides whether it lands in src/posts or src/drafts.
+    dir: null,
     slug: '',
     originalSlug: null,
     sha: null,
@@ -171,13 +192,14 @@ function newPost() {
     body: '',
     slugTouched: false,
   }
-  pristine.value = snapshot(draft.value)
+  pristine.value = snapshot(form.value)
   view.value = 'edit'
   notice.value = ''
 }
 
 function editPost(post) {
-  draft.value = {
+  form.value = {
+    dir: post.dir,
     slug: post.slug,
     originalSlug: post.slug,
     sha: post.sha,
@@ -187,14 +209,17 @@ function editPost(post) {
     body: post.body,
     slugTouched: true,
   }
-  pristine.value = snapshot(draft.value)
+  pristine.value = snapshot(form.value)
   view.value = 'edit'
   notice.value = ''
 }
 
+const isDraft = computed(() => form.value?.dir === DRAFTS_DIR)
+const isPublished = computed(() => form.value?.dir === POSTS_DIR)
+
 function backToList() {
   if (isDirty.value && !confirm('Discard unsaved changes?')) return
-  draft.value = null
+  form.value = null
   view.value = 'list'
   notice.value = ''
 }
@@ -202,60 +227,94 @@ function backToList() {
 function onTitleInput() {
   // Auto-slug until the field is edited by hand, then leave it alone —
   // renaming a published post changes its URL.
-  if (!draft.value.slugTouched) draft.value.slug = slugify(draft.value.title)
+  if (!form.value.slugTouched) form.value.slug = slugify(form.value.title)
 }
 
-const validation = computed(() => {
-  const d = draft.value
+/**
+ * A draft only needs enough to identify it, so half-written ideas can be
+ * parked. Publishing enforces the full set, since that's what the build reads.
+ */
+function validate(d, targetDir) {
   if (!d) return null
   if (!d.title.trim()) return 'A title is required.'
   if (!d.slug.trim()) return 'A slug is required.'
   if (!/^[a-z0-9][a-z0-9-]*$/.test(d.slug)) return 'The slug can only use lowercase letters, numbers and dashes.'
-  if (!d.date) return 'A publish date is required.'
-  if (!d.body.trim()) return 'The post body is empty.'
-  const clash = posts.value.some((p) => p.slug === d.slug && p.slug !== d.originalSlug)
-  if (clash) return `A post with the slug "${d.slug}" already exists.`
-  return null
-})
 
-async function save() {
-  if (saving.value) return
-  if (validation.value) {
-    error.value = validation.value
-    return
+  if (targetDir === POSTS_DIR) {
+    if (!d.date) return 'A publish date is required.'
+    if (!d.body.trim()) return 'The post body is empty.'
+  }
+
+  const siblings = targetDir === DRAFTS_DIR ? drafts.value : posts.value
+  const noun = targetDir === DRAFTS_DIR ? 'draft' : 'post'
+  const clash = siblings.some(
+    (p) => p.slug === d.slug && !(d.dir === targetDir && p.slug === d.originalSlug),
+  )
+  if (clash) return `A ${noun} with the slug "${d.slug}" already exists.`
+  return null
+}
+
+// Drives the Publish button's disabled state and tooltip.
+const validation = computed(() => validate(form.value, POSTS_DIR))
+const draftValidation = computed(() => validate(form.value, DRAFTS_DIR))
+
+function commitMessage(d, targetDir) {
+  const title = d.title.trim()
+  if (targetDir === DRAFTS_DIR) return `content: ${d.dir === DRAFTS_DIR ? 'update' : 'save'} draft "${title}"`
+  if (d.dir === DRAFTS_DIR) return `content: publish "${title}"`
+  return `${d.dir ? 'content: update' : 'content: add'} post "${title}"`
+}
+
+/**
+ * Writes the form to `targetDir`. Moving between directories (publishing a
+ * draft, renaming a post) is a create followed by a delete — the GitHub
+ * contents API has no move — so it lands as two commits.
+ */
+async function saveTo(targetDir) {
+  if (saving.value) return false
+
+  const d = form.value
+  const problem = validate(d, targetDir)
+  if (problem) {
+    error.value = problem
+    return false
   }
 
   saving.value = true
   error.value = ''
   notice.value = ''
 
-  const d = draft.value
-  const renamed = d.originalSlug && d.originalSlug !== d.slug
+  const moved = d.dir && (d.dir !== targetDir || d.originalSlug !== d.slug)
+  const from = moved ? { dir: d.dir, slug: d.originalSlug, sha: d.sha } : null
 
   try {
     const result = await putFile({
-      path: `${POSTS_DIR}/${d.slug}.md`,
+      path: `${targetDir}/${d.slug}.md`,
       base64: encodeBase64(buildMarkdown(d)),
-      message: `${d.originalSlug ? 'content: update' : 'content: add'} post "${d.title.trim()}"`,
-      sha: renamed ? undefined : d.sha || undefined,
+      message: commitMessage(d, targetDir),
+      // A move writes a brand new file, so it must not carry the old sha.
+      sha: moved ? undefined : d.sha || undefined,
     })
 
-    if (renamed) {
-      const old = posts.value.find((p) => p.slug === d.originalSlug)
-      if (old) {
-        await deleteFile({
-          path: `${POSTS_DIR}/${d.originalSlug}.md`,
-          sha: old.sha,
-          message: `content: rename post to "${d.slug}"`,
-        })
-      }
+    if (from) {
+      await deleteFile({
+        path: `${from.dir}/${from.slug}.md`,
+        sha: from.sha,
+        message: from.dir === targetDir
+          ? `content: rename ${from.dir === DRAFTS_DIR ? 'draft' : 'post'} to "${d.slug}"`
+          : `content: clear draft "${from.slug}" after publishing`,
+      })
     }
 
     d.sha = result.content.sha
+    d.dir = targetDir
     d.originalSlug = d.slug
     pristine.value = snapshot(d)
-    notice.value = 'Saved — Cloudflare Pages will rebuild in a minute or two.'
+    notice.value = targetDir === DRAFTS_DIR
+      ? 'Draft saved. It stays out of the build until you publish it.'
+      : 'Published — Cloudflare Pages will rebuild in a minute or two.'
     await loadPosts()
+    return true
   } catch (err) {
     // 409 means the file moved under us: someone (or a git push) changed it
     // after this editor loaded its sha.
@@ -264,22 +323,40 @@ async function save() {
     } else {
       handleAuthError(err)
     }
+    return false
   } finally {
     saving.value = false
   }
 }
 
+const save = () => saveTo(isPublished.value ? POSTS_DIR : DRAFTS_DIR)
+const publish = () => saveTo(POSTS_DIR)
+
+/** Publishes straight from the list, reusing the editor's validation. */
+async function publishDraft(item) {
+  if (!confirm(`Publish "${item.title}"? This commits it to main and rebuilds the site.`)) return
+  editPost(item)
+  if (await saveTo(POSTS_DIR)) {
+    form.value = null
+    view.value = 'list'
+    tab.value = 'posts'
+  }
+  // On failure the editor stays open with the reason, so it can be fixed.
+}
+
 async function removePost(post) {
   if (!post) return false
+  const noun = post.dir === DRAFTS_DIR ? 'draft' : 'post'
   if (!confirm(`Delete "${post.title}"? This commits the deletion to main.`)) return false
   error.value = ''
   try {
     await deleteFile({
-      path: `${POSTS_DIR}/${post.slug}.md`,
+      path: `${post.dir}/${post.slug}.md`,
       sha: post.sha,
-      message: `content: delete post "${post.title}"`,
+      message: `content: delete ${noun} "${post.title}"`,
     })
-    posts.value = posts.value.filter((p) => p.slug !== post.slug)
+    const list = post.dir === DRAFTS_DIR ? drafts : posts
+    list.value = list.value.filter((p) => p.slug !== post.slug)
     notice.value = `Deleted "${post.title}".`
     return true
   } catch (err) {
@@ -289,9 +366,10 @@ async function removePost(post) {
 }
 
 async function deleteCurrent() {
-  const post = posts.value.find((p) => p.slug === draft.value.originalSlug)
+  const list = isDraft.value ? drafts.value : posts.value
+  const post = list.find((p) => p.slug === form.value.originalSlug)
   if (await removePost(post)) {
-    draft.value = null
+    form.value = null
     view.value = 'list'
   }
 }
@@ -365,8 +443,22 @@ function displayDate(iso) {
       <!-- post list -->
       <section v-else-if="view === 'list'">
         <div class="flex items-center gap-3 mb-6">
-          <h2 class="text-xs font-mono text-muted uppercase tracking-widest">Posts</h2>
-          <span v-if="posts.length" class="text-xs font-mono text-muted/40">{{ posts.length }}</span>
+          <div class="flex items-center gap-1">
+            <button
+              v-for="option in [{ key: 'posts', label: 'Posts', count: posts.length },
+                                { key: 'drafts', label: 'Drafts', count: drafts.length }]"
+              :key="option.key"
+              type="button"
+              class="h-8 px-3 rounded-md text-xs font-mono uppercase tracking-widest transition-colors"
+              :class="tab === option.key
+                ? 'text-fg bg-fg/5'
+                : 'text-muted/60 hover:text-fg'"
+              @click="tab = option.key"
+            >
+              {{ option.label }}
+              <span class="ml-1.5 text-muted/40 normal-case tracking-normal">{{ option.count }}</span>
+            </button>
+          </div>
           <div class="ml-auto flex items-center gap-2">
             <button
               type="button"
@@ -382,11 +474,13 @@ function displayDate(iso) {
         </div>
 
         <p v-if="loadingPosts" class="text-sm text-muted font-mono">Loading posts…</p>
-        <p v-else-if="!posts.length" class="text-sm text-muted/60 italic py-10">No posts yet.</p>
+        <p v-else-if="!items.length" class="text-sm text-muted/60 italic py-10">
+          {{ tab === 'drafts' ? 'No drafts. Start a post and hit “Save draft” to park it here.' : 'No posts yet.' }}
+        </p>
 
         <ul v-else class="flex flex-col">
           <li
-            v-for="post in posts"
+            v-for="post in items"
             :key="post.slug"
             class="group flex items-start gap-4 py-4 border-b border-fg/5"
           >
@@ -396,16 +490,25 @@ function displayDate(iso) {
               </h3>
               <p v-if="post.description" class="text-xs text-muted mt-1 line-clamp-2">{{ post.description }}</p>
               <p class="text-[11px] font-mono text-muted/40 mt-1.5">
-                {{ displayDate(post.date) }} · /blog/{{ post.slug }}
+                {{ displayDate(post.date) }} ·
+                <template v-if="post.dir === DRAFTS_DIR">{{ post.slug }}.md · not published</template>
+                <template v-else>/blog/{{ post.slug }}</template>
               </p>
             </button>
             <div class="flex items-center gap-3 shrink-0 pt-0.5">
               <a
+                v-if="post.dir !== DRAFTS_DIR"
                 :href="`/blog/${post.slug}`"
                 target="_blank"
                 rel="noopener"
                 class="text-xs text-muted/50 hover:text-fg transition-colors no-underline"
               >View</a>
+              <button
+                v-else
+                type="button"
+                class="text-xs text-accent-soft hover:text-accent transition-colors"
+                @click="publishDraft(post)"
+              >Publish</button>
               <button type="button" class="text-xs text-muted/50 hover:text-red-400 transition-colors" @click="removePost(post)">
                 Delete
               </button>
@@ -415,23 +518,37 @@ function displayDate(iso) {
       </section>
 
       <!-- editor -->
-      <section v-else-if="draft">
+      <section v-else-if="form">
         <div class="flex items-center gap-3 mb-6">
           <button
             type="button"
             class="text-xs font-mono text-muted hover:text-fg transition-colors"
             @click="backToList"
           >← Posts</button>
+          <span v-if="isDraft" class="text-[11px] font-mono text-muted/60 border border-fg/10 rounded px-1.5 py-0.5">
+            draft
+          </span>
           <span v-if="isDirty" class="text-[11px] font-mono text-accent">unsaved</span>
           <div class="ml-auto flex items-center gap-2">
+            <!-- Only offered while the post is unpublished, so "save draft" can
+                 never quietly pull a live post off the site. -->
+            <button
+              v-if="!isPublished"
+              type="button"
+              :disabled="saving || !!draftValidation"
+              :title="draftValidation || 'Save to src/drafts without publishing (ctrl+S)'"
+              class="h-9 px-4 rounded-md border border-fg/15 text-sm text-muted hover:text-fg hover:border-fg/25
+                     disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              @click="saveTo(DRAFTS_DIR)"
+            >Save draft</button>
             <button
               type="button"
               :disabled="saving || !!validation"
               :title="validation || 'Commit to main (ctrl+S)'"
               class="h-9 px-4 rounded-md bg-accent text-white text-sm font-medium hover:bg-accent-soft
                      disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              @click="save"
-            >{{ saving ? 'Publishing…' : 'Publish' }}</button>
+              @click="publish"
+            >{{ saving ? 'Publishing…' : isPublished ? 'Update' : 'Publish' }}</button>
           </div>
         </div>
 
@@ -439,7 +556,7 @@ function displayDate(iso) {
           <label class="flex flex-col gap-1.5">
             <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Title</span>
             <input
-              v-model="draft.title"
+              v-model="form.title"
               type="text"
               placeholder="How I broke my homelab again"
               class="h-11 px-3 rounded-md bg-surface border border-fg/10 text-base text-fg
@@ -452,31 +569,31 @@ function displayDate(iso) {
             <label class="flex flex-col gap-1.5">
               <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Slug</span>
               <input
-                v-model="draft.slug"
+                v-model="form.slug"
                 type="text"
                 class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
                        outline-none focus:border-accent/50"
-                @input="draft.slugTouched = true"
+                @input="form.slugTouched = true"
               />
-              <span class="text-[11px] font-mono text-muted/40">/blog/{{ draft.slug || '…' }}</span>
+              <span class="text-[11px] font-mono text-muted/40">/blog/{{ form.slug || '…' }}</span>
             </label>
 
             <label class="flex flex-col gap-1.5">
               <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Publish date &amp; time</span>
               <input
-                v-model="draft.date"
+                v-model="form.date"
                 type="datetime-local"
                 class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
                        outline-none focus:border-accent/50"
               />
-              <span class="text-[11px] font-mono text-muted/40">saved as {{ toIsoWithOffset(draft.date || nowLocal()) }}</span>
+              <span class="text-[11px] font-mono text-muted/40">saved as {{ toIsoWithOffset(form.date || nowLocal()) }}</span>
             </label>
           </div>
 
           <label class="flex flex-col gap-1.5">
             <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Description</span>
             <textarea
-              v-model="draft.description"
+              v-model="form.description"
               rows="2"
               placeholder="The one-line summary that shows on the blog index and in link previews."
               class="px-3 py-2.5 rounded-md bg-surface border border-fg/10 text-sm text-text resize-y
@@ -487,22 +604,26 @@ function displayDate(iso) {
 
         <MarkdownEditor
           ref="editor"
-          v-model="draft.body"
+          v-model="form.body"
           @request-media="mediaOpen = true"
           @save="save"
         />
 
         <div class="flex items-center gap-4 mt-4">
           <p class="text-[11px] text-muted/40">
-            Publishing commits <code class="font-mono">{{ POSTS_DIR }}/{{ draft.slug || 'slug' }}.md</code> to
+            Publishing commits <code class="font-mono">{{ POSTS_DIR }}/{{ form.slug || 'slug' }}.md</code> to
             <code class="font-mono">main</code>.
+            <template v-if="!isPublished">
+              Saving a draft commits <code class="font-mono">{{ DRAFTS_DIR }}/{{ form.slug || 'slug' }}.md</code>
+              instead, which the build ignores.
+            </template>
           </p>
           <button
-            v-if="draft.originalSlug"
+            v-if="form.originalSlug"
             type="button"
             class="ml-auto text-xs text-muted/50 hover:text-red-400 transition-colors shrink-0"
             @click="deleteCurrent"
-          >Delete post</button>
+          >Delete {{ isDraft ? 'draft' : 'post' }}</button>
         </div>
       </section>
     </div>
