@@ -160,6 +160,20 @@ function insertLink() {
   replaceRange(start, end, text, from, to)
 }
 
+/** Wraps the selection in a GitHub-style callout, e.g. `> [!IMPORTANT]`. */
+function insertCallout(variant = 'IMPORTANT', placeholder = 'Something worth calling out.') {
+  const el = textarea.value
+  if (!el) return
+  const { selectionStart: start, selectionEnd: end } = el
+  const body = el.value.slice(start, end).trim() || placeholder
+  const quoted = body.split('\n').map((line) => `> ${line}`).join('\n')
+  const needsLeadingBreak = start > 0 && el.value[start - 1] !== '\n'
+  const prefix = `${needsLeadingBreak ? '\n\n' : ''}> [!${variant}]\n`
+  // Leave the body selected so typing replaces the placeholder outright.
+  const from = start + prefix.length + 2
+  replaceRange(start, end, `${prefix}${quoted}\n`, from, start + prefix.length + quoted.length)
+}
+
 /** Called by the parent after the media manager picks a file. */
 function insertMedia({ markdown }) {
   insertBlock(markdown)
@@ -301,6 +315,7 @@ const groups = [
   ],
   [
     { label: '“ ”', title: 'Blockquote', run: () => togglePrefix('> ') },
+    { label: '[!]', title: 'Important callout', run: () => insertCallout(), mono: true },
     { label: '• —', title: 'Bullet list', run: () => togglePrefix('- ') },
     { label: '1.', title: 'Numbered list', run: toggleOrderedList, mono: true },
   ],

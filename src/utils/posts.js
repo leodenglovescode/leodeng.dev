@@ -8,7 +8,53 @@ function escapeHtml(text) {
     .replace(/>/g, '&gt;')
 }
 
+// GitHub-style alerts: a blockquote whose first line is `[!IMPORTANT]` becomes
+// a callout box instead. Same syntax GitHub renders, so a post pasted into an
+// issue (or read on GitHub) still looks right.
+const CALLOUTS = {
+  note: 'Note',
+  tip: 'Tip',
+  important: 'Important',
+  warning: 'Warning',
+  caution: 'Caution',
+}
+
+const CALLOUT_RULE = new RegExp(
+  `^ {0,3}> ?\\[!(${Object.keys(CALLOUTS).join('|')})\\][^\\n]*(?:\\n|$)((?: {0,3}>[^\\n]*(?:\\n|$))*)`,
+  'i',
+)
+
+const calloutExtension = {
+  name: 'callout',
+  level: 'block',
+  start(src) {
+    return src.match(/^ {0,3}> ?\[!/m)?.index
+  },
+  tokenizer(src) {
+    const match = CALLOUT_RULE.exec(src)
+    if (!match) return undefined
+    const variant = match[1].toLowerCase()
+    // Strip the `>` marker off each body line before re-lexing, so the inside
+    // of a callout supports the full markdown vocabulary (lists, code, links).
+    const body = (match[2] || '').replace(/^ {0,3}> ?/gm, '')
+    return {
+      type: 'callout',
+      raw: match[0],
+      variant,
+      tokens: this.lexer.blockTokens(body, []),
+    }
+  },
+  renderer(token) {
+    const label = CALLOUTS[token.variant]
+    return `<div class="callout callout-${token.variant}">` +
+           `<p class="callout-title">${label}</p>` +
+           `${this.parser.parse(token.tokens)}` +
+           `</div>`
+  },
+}
+
 marked.use({
+  extensions: [calloutExtension],
   renderer: {
     code({ text, lang }) {
       // A ```mermaid fence only becomes a placeholder here: rendering needs a
