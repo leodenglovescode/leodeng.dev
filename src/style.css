@@ -129,6 +129,49 @@ a {
 .prose blockquote p:last-child {
   margin-bottom: 0;
 }
+
+/* GitHub-style callouts — `> [!IMPORTANT]` and friends, see utils/posts.js.
+   Each variant only sets --callout-color; everything else derives from it, so
+   the tint stays consistent and both themes stay legible. */
+.callout {
+  --callout-color: var(--color-accent);
+  border: 1px solid color-mix(in srgb, var(--callout-color) 28%, transparent);
+  border-left: 3px solid var(--callout-color);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--callout-color) 7%, transparent);
+  padding: 0.9rem 1.1rem;
+  margin: 1.5rem 0;
+}
+.callout-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--callout-color);
+  margin-bottom: 0.5rem;
+}
+.callout > p:last-child {
+  margin-bottom: 0;
+}
+.callout > ul:last-child,
+.callout > ol:last-child,
+.callout > pre:last-child {
+  margin-bottom: 0;
+}
+/* The accent at full strength on a light background, one step lighter on dark —
+   the border and tint would otherwise wash out against #111. */
+.callout-important { --callout-color: var(--color-accent); }
+.dark .callout-important { --callout-color: var(--color-accent-soft); }
+.callout-note { --callout-color: #3b82f6; }
+.dark .callout-note { --callout-color: #60a5fa; }
+.callout-tip { --callout-color: #15a34a; }
+.dark .callout-tip { --callout-color: #4ade80; }
+.callout-warning { --callout-color: #d97706; }
+.dark .callout-warning { --callout-color: #fbbf24; }
+.callout-caution { --callout-color: #dc2626; }
+.dark .callout-caution { --callout-color: #f87171; }
+
 .prose hr {
   border: 0;
   border-top: 1px solid color-mix(in srgb, var(--color-fg) 12%, transparent);
