@@ -269,28 +269,28 @@ onMounted(() => {
           :key="t.label"
           class="flex items-center gap-3 px-4 py-3 rounded-lg border border-fg/8 hover:border-accent/30 transition-colors"
         >
-          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" class="text-muted/70 shrink-0">
+          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" class="text-muted shrink-0">
             <path :d="ICON_PATHS[t.icon]" />
           </svg>
           <div>
             <div class="text-fg font-semibold leading-none">{{ formatStat(t.value) }}</div>
-            <div class="text-[11px] font-mono text-muted/60 mt-1">{{ t.label }}</div>
+            <div class="text-xs font-mono text-muted/90 mt-1">{{ t.label }}</div>
           </div>
         </div>
       </div>
 
       <div v-if="topLanguages.length" class="flex flex-wrap gap-2 mb-6">
-        <span v-for="l in topLanguages" :key="l" class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted/80">
+        <span v-for="l in topLanguages" :key="l" class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted">
           {{ l }}
         </span>
       </div>
 
       <div v-if="contributionDays.length" class="overflow-x-auto">
-        <p class="text-xs font-mono text-muted/50 mb-2">
+        <p class="text-xs font-mono text-muted/90 mb-2">
           {{ totalContributions }} {{ contributionRangeLabel }}
         </p>
         <div class="inline-grid gap-[3px] mb-1" :style="{ gridTemplateColumns: `repeat(${weeksCount}, 10px)` }">
-          <span v-for="(label, i) in monthLabels" :key="i" class="text-[10px] font-mono text-muted/40 leading-none">
+          <span v-for="(label, i) in monthLabels" :key="i" class="text-xs font-mono text-muted/90 leading-none">
             {{ label }}
           </span>
         </div>
@@ -317,7 +317,7 @@ onMounted(() => {
           :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
         >
           <div class="text-fg font-semibold">{{ tooltip.count }} contribution{{ tooltip.count === 1 ? '' : 's' }}</div>
-          <div class="text-muted/70">{{ tooltip.dateLabel }}</div>
+          <div class="text-muted">{{ tooltip.dateLabel }}</div>
         </div>
       </Teleport>
     </section>
@@ -346,7 +346,7 @@ onMounted(() => {
           'linux', 'prompt engineering', 'self-hosting',
           'typescript', 'tailwind', 'next.js', 'esp32', 'homeassistant'
         ]" :key="s"
-          class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted/80 hover:text-fg hover:border-accent/30 transition-all cursor-default"
+          class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted hover:text-fg hover:border-accent/30 transition-all cursor-default"
         >{{ s }}</span>
       </div>
     </section>
@@ -355,23 +355,23 @@ onMounted(() => {
       <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">My Journey</h2>
       <div class="space-y-6 text-sm">
         <div class="flex gap-4">
-          <span class="text-muted/30 font-mono shrink-0 w-14 text-right">2017</span>
+          <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2017</span>
           <p class="text-muted">Started coding — school projects in Scratch</p>
         </div>
         <div class="flex gap-4">
-          <span class="text-muted/30 font-mono shrink-0 w-14 text-right">2018/19</span>
+          <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2018/19</span>
           <p class="text-muted">Started learning HTML, CSS, JS and built my first personal site</p>
         </div>
         <div class="flex gap-4">
-          <span class="text-muted/30 font-mono shrink-0 w-14 text-right">2023</span>
+          <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2023</span>
           <p class="text-muted">AI boom — started using AI tools to build websites and apps</p>
         </div>
         <div class="flex gap-4">
-          <span class="text-muted/30 font-mono shrink-0 w-14 text-right">2025</span>
+          <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2025</span>
           <p class="text-muted">Built ShutterWingPhotos (React, Vite, Node.js)</p>
         </div>
         <div class="flex gap-4">
-          <span class="text-muted/30 font-mono shrink-0 w-14 text-right">2026 (now)</span>
+          <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2026 (now)</span>
           <p class="text-muted">
             Continuously updating ShutterWingPhotos, building llmgps, and getting into IoT —
             more on the <RouterLink to="/now" class="text-fg hover:text-accent transition-colors">/now page</RouterLink>.
@@ -389,7 +389,7 @@ onMounted(() => {
             { flag: '🇺🇸', name: 'English', level: '2nd language' },
           ]"
           :key="l.name"
-          class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted/80 hover:text-fg hover:border-accent/30 transition-all cursor-default"
+          class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted hover:text-fg hover:border-accent/30 transition-all cursor-default"
         >{{ l.flag }} {{ l.name }} · {{ l.level }}</span>
       </div>
     </section>

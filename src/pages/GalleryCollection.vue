@@ -66,7 +66,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
-    <RouterLink to="/gallery" class="text-xs font-mono text-muted hover:text-fg transition-colors">← Gallery</RouterLink>
+    <RouterLink to="/gallery" class="text-sm font-mono text-muted hover:text-fg transition-colors">← Gallery</RouterLink>
 
     <template v-if="collection">
       <h2 class="text-s font-mono text-muted uppercase tracking-widest mt-4 mb-2">{{ collection.title }}</h2>
@@ -88,7 +88,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         </button>
       </div>
 
-      <p v-else class="text-sm text-muted/50 italic">
+      <p v-else class="text-sm text-muted/90 italic">
         Photos coming soon.
       </p>
 
@@ -98,7 +98,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           :disabled="page <= 1"
           @click="goToPage(page - 1)"
         >← Prev</button>
-        <span class="text-xs text-muted/60">Page {{ page }} of {{ pageCount }}</span>
+        <span class="text-xs text-muted/90">Page {{ page }} of {{ pageCount }}</span>
         <button
           class="text-sm text-muted hover:text-fg transition-colors disabled:opacity-30 disabled:pointer-events-none"
           :disabled="page >= pageCount"
@@ -150,7 +150,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       </div>
     </template>
 
-    <p v-else class="text-sm text-muted/50 italic mt-6">
+    <p v-else class="text-sm text-muted/90 italic mt-6">
       Collection not found. <RouterLink to="/gallery" class="text-fg hover:text-accent transition-colors">Back to the gallery</RouterLink>.
     </p>
   </section>

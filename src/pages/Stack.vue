@@ -140,7 +140,7 @@ const software = [
         What I'm actually typing, shooting, and shipping code on.
       </p>
 
-      <h3 class="text-[11px] font-mono text-muted/50 uppercase tracking-widest mb-4">Hardware</h3>
+      <h3 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-4">Hardware</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
         <div
           v-for="d in sortedDevices"
@@ -154,7 +154,7 @@ const software = [
               </svg>
             </div>
             <div>
-              <div class="text-[11px] font-mono text-muted/60 uppercase tracking-widest">{{ d.category }}</div>
+              <div class="text-xs font-mono text-muted/90 uppercase tracking-widest">{{ d.category }}</div>
               <div class="text-fg font-semibold leading-tight">{{ d.model }}</div>
             </div>
           </div>
@@ -165,7 +165,7 @@ const software = [
               :key="`${s.label}-${s.value}`"
               class="flex items-baseline justify-between gap-4 py-1.5 border-t border-fg/5 first:border-t-0 first:pt-0"
             >
-              <dt class="text-muted/50 font-mono text-[11px] uppercase tracking-wide shrink-0">{{ s.label }}</dt>
+              <dt class="text-muted/90 font-mono text-xs uppercase tracking-wide shrink-0">{{ s.label }}</dt>
               <dd class="text-muted text-right font-mono text-xs">{{ s.value }}</dd>
             </div>
           </dl>
@@ -174,7 +174,7 @@ const software = [
     </section>
 
     <section>
-      <h3 class="text-[11px] font-mono text-muted/50 uppercase tracking-widest mb-4">Software</h3>
+      <h3 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-4">Software</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
         <div
           v-for="s in software"
@@ -196,7 +196,7 @@ const software = [
               :key="r.label"
               class="flex items-baseline justify-between gap-4 py-1.5 border-t border-fg/5 first:border-t-0 first:pt-0"
             >
-              <dt class="text-muted/50 font-mono text-[11px] uppercase tracking-wide shrink-0">{{ r.label }}</dt>
+              <dt class="text-muted/90 font-mono text-xs uppercase tracking-wide shrink-0">{{ r.label }}</dt>
               <dd class="text-muted text-right font-mono text-xs">{{ r.value }}</dd>
             </div>
           </dl>
@@ -205,7 +205,7 @@ const software = [
             <span
               v-for="t in s.tags"
               :key="t"
-              class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted/80"
+              class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted"
             >{{ t }}</span>
           </div>
         </div>

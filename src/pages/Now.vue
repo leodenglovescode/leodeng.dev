@@ -5,7 +5,7 @@ const lastUpdated = 'July 23, 2026'
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Now</h2>
-    <p class="text-xs font-mono text-muted/40 mb-10">Last updated {{ lastUpdated }}</p>
+    <p class="text-xs font-mono text-muted/90 mb-10">Last updated {{ lastUpdated }}</p>
 
     <div class="space-y-4 text-[15px] leading-relaxed text-muted mb-10">
       <p>What I'm currently focused on — a snapshot, not a resume.</p>
@@ -38,7 +38,7 @@ const lastUpdated = 'July 23, 2026'
       </li>
     </ul>
 
-    <p class="text-xs text-muted/30 font-mono mt-12">
+    <p class="text-xs text-muted/90 font-mono mt-12">
       Inspired by the <a href="https://nownownow.com" target="_blank" rel="noopener noreferrer" class="hover:text-muted transition-colors">/now page movement</a>.
     </p>
   </section>

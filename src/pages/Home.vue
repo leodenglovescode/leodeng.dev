@@ -56,7 +56,7 @@ onMounted(() => {
       </p>
       <br/>
       <p class="text-lg text-muted leading-relaxed mb-3">What I'm up to (maybe):</p>
-      <p class="text-sm text-muted/60 font-mono cursor-pointer hover:text-accent transition-colors" @click="pickStatus">
+      <p class="text-sm text-muted/90 font-mono cursor-pointer hover:text-accent transition-colors" @click="pickStatus">
         > {{ currentStatus }} <span class="animate-pulse">▊</span>
       </p>
 

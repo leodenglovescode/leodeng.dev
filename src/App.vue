@@ -45,18 +45,18 @@ const socialLinks = [
     </RouterView>
   </main>
   <footer v-if="chrome" class="max-w-3xl mx-auto px-6 py-8 border-t border-fg/5 flex flex-wrap items-center justify-between gap-4">
-    <p class="text-xs text-muted/30 font-mono">
+    <p class="text-xs text-muted/90 font-mono">
       2026 © Leo Deng — Built with Vue, Vite, Tailwind.
     </p>
     <div class="flex items-center gap-5">
-      <RouterLink to="/now" class="text-xs font-mono text-muted/50 hover:text-fg transition-colors">Now</RouterLink>
+      <RouterLink to="/now" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Now</RouterLink>
       <div class="flex items-center gap-4">
         <template v-for="link in socialLinks" :key="link.label">
           <RouterLink
             v-if="!link.external"
             :to="link.url"
             :aria-label="link.label"
-            class="text-muted/40 hover:text-accent transition-colors"
+            class="text-muted/90 hover:text-accent transition-colors"
           >
             <span class="w-4 h-4 block" v-html="link.icon" />
           </RouterLink>
@@ -66,7 +66,7 @@ const socialLinks = [
             target="_blank"
             rel="noopener noreferrer"
             :aria-label="link.label"
-            class="text-muted/40 hover:text-accent transition-colors"
+            class="text-muted/90 hover:text-accent transition-colors"
           >
             <span class="w-4 h-4 block" v-html="link.icon" />
           </a>

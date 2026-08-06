@@ -385,7 +385,7 @@ const groups = [
       >Media</button>
 
       <div class="ml-auto flex items-center gap-3">
-        <span class="text-[11px] font-mono text-muted/50 hidden sm:inline">
+        <span class="text-xs font-mono text-muted/90 hidden sm:inline">
           {{ stats.words }} words · {{ stats.minutes }} min
         </span>
         <button
@@ -406,8 +406,8 @@ const groups = [
         autocomplete="off"
         writingsuggestions="false"
         placeholder="Write in Markdown…"
-        class="min-h-[60vh] resize-y p-4 bg-transparent font-mono text-[13.5px] leading-[1.75] text-text
-               outline-none placeholder:text-muted/40 selection:bg-accent/30"
+        class="min-h-[60vh] resize-y p-4 bg-transparent font-mono text-sm leading-[1.75] text-text
+               outline-none placeholder:text-muted/90 selection:bg-accent/30"
         :class="showPreview && 'md:border-r border-fg/10'"
         @input="onInput"
         @compositionstart="onCompositionStart"

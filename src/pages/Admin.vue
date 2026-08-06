@@ -521,7 +521,7 @@ function displayDate(iso) {
         <RouterLink to="/" class="text-sm font-mono text-muted hover:text-fg transition-colors no-underline">
           leodeng.dev
         </RouterLink>
-        <span class="text-muted/30">/</span>
+        <span class="text-muted/90">/</span>
         <h1 class="text-sm font-mono text-fg">admin</h1>
 
         <div v-if="session" class="ml-auto flex items-center gap-3">
@@ -577,7 +577,7 @@ function displayDate(iso) {
             <p class="text-sm text-fg truncate">
               Unsaved changes to “{{ entry.form.title || 'Untitled' }}”
             </p>
-            <p class="text-[11px] font-mono text-muted/50 mt-0.5">
+            <p class="text-xs font-mono text-muted/90 mt-0.5">
               kept on this device · {{ savedAgo(entry.savedAt) }}
             </p>
           </div>
@@ -589,7 +589,7 @@ function displayDate(iso) {
             >Restore</button>
             <button
               type="button"
-              class="text-xs text-muted/50 hover:text-red-400 transition-colors"
+              class="text-xs text-muted/90 hover:text-red-400 transition-colors"
               @click="dropRecovery(entry.key)"
             >Discard</button>
           </div>
@@ -605,11 +605,11 @@ function displayDate(iso) {
               class="h-8 px-3 rounded-md text-xs font-mono uppercase tracking-widest transition-colors"
               :class="tab === option.key
                 ? 'text-fg bg-fg/5'
-                : 'text-muted/60 hover:text-fg'"
+                : 'text-muted/90 hover:text-fg'"
               @click="tab = option.key"
             >
               {{ option.label }}
-              <span class="ml-1.5 text-muted/40 normal-case tracking-normal">{{ option.count }}</span>
+              <span class="ml-1.5 text-muted/90 normal-case tracking-normal">{{ option.count }}</span>
             </button>
           </div>
           <div class="ml-auto flex items-center gap-2">
@@ -627,7 +627,7 @@ function displayDate(iso) {
         </div>
 
         <p v-if="loadingPosts" class="text-sm text-muted font-mono">Loading posts…</p>
-        <p v-else-if="!items.length" class="text-sm text-muted/60 italic py-10">
+        <p v-else-if="!items.length" class="text-sm text-muted/90 italic py-10">
           {{ tab === 'drafts' ? 'No drafts. Start a post and hit “Save draft” to park it here.' : 'No posts yet.' }}
         </p>
 
@@ -642,7 +642,7 @@ function displayDate(iso) {
                 {{ post.title }}
               </h3>
               <p v-if="post.description" class="text-xs text-muted mt-1 line-clamp-2">{{ post.description }}</p>
-              <p class="text-[11px] font-mono text-muted/40 mt-1.5">
+              <p class="text-xs font-mono text-muted/90 mt-1.5">
                 {{ displayDate(post.date) }} ·
                 <template v-if="post.dir === DRAFTS_DIR">{{ post.slug }}.md · not published</template>
                 <template v-else>/blog/{{ post.slug }}</template>
@@ -654,7 +654,7 @@ function displayDate(iso) {
                 :href="`/blog/${post.slug}`"
                 target="_blank"
                 rel="noopener"
-                class="text-xs text-muted/50 hover:text-fg transition-colors no-underline"
+                class="text-xs text-muted/90 hover:text-fg transition-colors no-underline"
               >View</a>
               <button
                 v-else
@@ -662,7 +662,7 @@ function displayDate(iso) {
                 class="text-xs text-accent-soft hover:text-accent transition-colors"
                 @click="publishDraft(post)"
               >Publish</button>
-              <button type="button" class="text-xs text-muted/50 hover:text-red-400 transition-colors" @click="removePost(post)">
+              <button type="button" class="text-xs text-muted/90 hover:text-red-400 transition-colors" @click="removePost(post)">
                 Delete
               </button>
             </div>
@@ -675,13 +675,13 @@ function displayDate(iso) {
         <div class="flex items-center gap-3 mb-6">
           <button
             type="button"
-            class="text-xs font-mono text-muted hover:text-fg transition-colors"
+            class="text-sm font-mono text-muted hover:text-fg transition-colors"
             @click="backToList"
           >← Posts</button>
-          <span v-if="isDraft" class="text-[11px] font-mono text-muted/60 border border-fg/10 rounded px-1.5 py-0.5">
+          <span v-if="isDraft" class="text-xs font-mono text-muted/90 border border-fg/10 rounded px-1.5 py-0.5">
             draft
           </span>
-          <span v-if="isDirty" class="text-[11px] font-mono text-accent">unsaved</span>
+          <span v-if="isDirty" class="text-xs font-mono text-accent">unsaved</span>
           <div class="ml-auto flex items-center gap-2">
             <!-- Only offered while the post is unpublished, so "save draft" can
                  never quietly pull a live post off the site. -->
@@ -707,20 +707,20 @@ function displayDate(iso) {
 
         <div class="grid gap-4 mb-5">
           <label class="flex flex-col gap-1.5">
-            <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Title</span>
+            <span class="text-xs font-mono text-muted uppercase tracking-wider">Title</span>
             <input
               v-model="form.title"
               type="text"
               placeholder="How I broke my homelab again"
               class="h-11 px-3 rounded-md bg-surface border border-fg/10 text-base text-fg
-                     outline-none focus:border-accent/50 placeholder:text-muted/40"
+                     outline-none focus:border-accent/50 placeholder:text-muted/90"
               @input="onTitleInput"
             />
           </label>
 
           <div class="grid sm:grid-cols-2 gap-4">
             <label class="flex flex-col gap-1.5">
-              <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Slug</span>
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Slug</span>
               <input
                 v-model="form.slug"
                 type="text"
@@ -728,29 +728,29 @@ function displayDate(iso) {
                        outline-none focus:border-accent/50"
                 @input="form.slugTouched = true"
               />
-              <span class="text-[11px] font-mono text-muted/40">/blog/{{ form.slug || '…' }}</span>
+              <span class="text-xs font-mono text-muted/90">/blog/{{ form.slug || '…' }}</span>
             </label>
 
             <label class="flex flex-col gap-1.5">
-              <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Publish date &amp; time</span>
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Publish date &amp; time</span>
               <input
                 v-model="form.date"
                 type="datetime-local"
                 class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
                        outline-none focus:border-accent/50"
               />
-              <span class="text-[11px] font-mono text-muted/40">saved as {{ toIsoWithOffset(form.date || nowLocal()) }}</span>
+              <span class="text-xs font-mono text-muted/90">saved as {{ toIsoWithOffset(form.date || nowLocal()) }}</span>
             </label>
           </div>
 
           <label class="flex flex-col gap-1.5">
-            <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Description</span>
+            <span class="text-xs font-mono text-muted uppercase tracking-wider">Description</span>
             <textarea
               v-model="form.description"
               rows="2"
               placeholder="The one-line summary that shows on the blog index and in link previews."
               class="px-3 py-2.5 rounded-md bg-surface border border-fg/10 text-sm text-text resize-y
-                     outline-none focus:border-accent/50 placeholder:text-muted/40"
+                     outline-none focus:border-accent/50 placeholder:text-muted/90"
             />
           </label>
         </div>
@@ -763,7 +763,7 @@ function displayDate(iso) {
         />
 
         <div class="flex items-center gap-4 mt-4">
-          <p class="text-[11px] text-muted/40">
+          <p class="text-xs text-muted/90">
             Publishing commits <code class="font-mono">{{ POSTS_DIR }}/{{ form.slug || 'slug' }}.md</code> to
             <code class="font-mono">main</code>.
             <template v-if="!isPublished">
@@ -774,7 +774,7 @@ function displayDate(iso) {
           <button
             v-if="form.originalSlug"
             type="button"
-            class="ml-auto text-xs text-muted/50 hover:text-red-400 transition-colors shrink-0"
+            class="ml-auto text-xs text-muted/90 hover:text-red-400 transition-colors shrink-0"
             @click="deleteCurrent"
           >Delete {{ isDraft ? 'draft' : 'post' }}</button>
         </div>

@@ -7,7 +7,7 @@ const posts = getAllPosts()
   <section class="pt-20 sm:pt-32 pb-20">
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-10">Blog</h2>
 
-    <div v-if="posts.length === 0" class="text-sm text-muted/50 italic">
+    <div v-if="posts.length === 0" class="text-sm text-muted/90 italic">
       No posts yet — check back soon.
     </div>
 
@@ -22,7 +22,7 @@ const posts = getAllPosts()
           <h3 class="text-fg font-semibold group-hover:text-accent transition-colors mb-1">{{ post.title }}</h3>
           <p v-if="post.description" class="text-sm text-muted">{{ post.description }}</p>
         </div>
-        <span class="text-xs font-mono text-muted/40 shrink-0 mt-1">{{ post.displayDate }}</span>
+        <span class="text-xs font-mono text-muted/90 shrink-0 mt-1">{{ post.displayDate }}</span>
       </RouterLink>
     </div>
   </section>
