@@ -1,9 +1,25 @@
 import { marked } from 'marked'
 import hljs from 'highlight.js/lib/common'
 
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 marked.use({
   renderer: {
     code({ text, lang }) {
+      // A ```mermaid fence only becomes a placeholder here: rendering needs a
+      // browser, and this same output is reused during pre-render and in the
+      // RSS feed, where it has to degrade to the diagram's source. `utils/
+      // mermaid.js` swaps in the SVG (plus pan/zoom chrome) on the client.
+      if ((lang || '').trim().toLowerCase() === 'mermaid') {
+        return `<div class="mermaid-block" data-state="pending">` +
+               `<pre class="mermaid-source"><code>${escapeHtml(text)}</code></pre>` +
+               `</div>`
+      }
       const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
       const highlighted = hljs.highlight(text, { language }).value
       return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`
