@@ -80,12 +80,12 @@ onUnmounted(() => {
     />
 
     <article v-if="post" class="pt-20 sm:pt-32 pb-20">
-      <RouterLink to="/blog" class="text-xs font-mono text-muted/50 hover:text-muted transition-colors mb-10 block">
+      <RouterLink to="/blog" class="text-sm font-mono text-muted hover:text-fg transition-colors mb-10 block">
         ← Back to blog
       </RouterLink>
 
       <h1 class="text-2xl sm:text-3xl font-bold text-fg mb-3">{{ post.title }}</h1>
-      <p class="text-xs font-mono text-muted/50 mb-12">
+      <p class="text-xs font-mono text-muted/90 mb-12">
         {{ post.displayDate }} · {{ post.readingTime }} min read
       </p>
 
@@ -98,7 +98,7 @@ onUnmounted(() => {
           :to="`/blog/${prev.slug}`"
           class="group flex flex-col gap-1 max-w-[45%]"
         >
-          <span class="text-xs font-mono text-muted/40">← Older</span>
+          <span class="text-xs font-mono text-muted">← Older</span>
           <span class="text-sm text-muted group-hover:text-fg transition-colors">{{ prev.title }}</span>
         </RouterLink>
         <div v-else />
@@ -108,7 +108,7 @@ onUnmounted(() => {
           :to="`/blog/${next.slug}`"
           class="group flex flex-col gap-1 items-end max-w-[45%]"
         >
-          <span class="text-xs font-mono text-muted/40">Newer →</span>
+          <span class="text-xs font-mono text-muted">Newer →</span>
           <span class="text-sm text-muted group-hover:text-fg transition-colors text-right">{{ next.title }}</span>
         </RouterLink>
         <div v-else />

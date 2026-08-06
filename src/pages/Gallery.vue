@@ -29,12 +29,12 @@ import { collections } from '../utils/gallery.js'
         <div class="p-4">
           <div class="text-fg font-semibold">{{ c.title }}</div>
           <div class="text-sm text-muted mt-1">{{ c.description }}</div>
-          <div class="text-[11px] font-mono text-muted/50 mt-2">{{ c.photos.length }} photo{{ c.photos.length === 1 ? '' : 's' }}</div>
+          <div class="text-xs font-mono text-muted/90 mt-2">{{ c.photos.length }} photo{{ c.photos.length === 1 ? '' : 's' }}</div>
         </div>
       </RouterLink>
     </div>
 
-    <p v-else class="text-sm text-muted/50 italic">
+    <p v-else class="text-sm text-muted/90 italic">
       Photos coming soon.
     </p>
   </section>

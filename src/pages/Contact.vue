@@ -71,7 +71,7 @@ const links = [
         <span class="absolute inline-flex w-full h-full rounded-full bg-accent opacity-60 animate-ping"></span>
         <span class="relative inline-flex w-2 h-2 rounded-full bg-accent"></span>
       </span>
-      <span class="text-xs font-mono text-muted/70 w-44">{{ statuses[statusIndex] }}</span>
+      <span class="text-xs font-mono text-muted w-44">{{ statuses[statusIndex] }}</span>
     </div>
 
     <button
@@ -80,7 +80,7 @@ const links = [
       class="group w-full flex items-center justify-between gap-4 px-5 py-5 mb-8 rounded-lg border border-fg/8 hover:border-accent/30 transition-colors text-left cursor-pointer"
     >
       <div class="min-w-0">
-        <div class="text-[11px] font-mono text-muted/50 uppercase tracking-widest mb-1">Email</div>
+        <div class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-1">Email</div>
         <div class="text-lg sm:text-xl text-fg font-medium truncate">{{ email }}</div>
       </div>
       <span
@@ -100,7 +100,7 @@ const links = [
         rel="noopener noreferrer"
         class="group flex flex-col items-center gap-3 px-4 py-6 rounded-lg border border-fg/8 hover:border-accent/30 transition-colors text-center"
       >
-        <span class="w-6 h-6 text-muted/60 group-hover:text-accent transition-colors" v-html="link.icon" />
+        <span class="w-6 h-6 text-muted/90 group-hover:text-accent transition-colors" v-html="link.icon" />
         <span class="text-sm text-muted group-hover:text-fg transition-colors">{{ link.label }}</span>
       </a>
     </div>

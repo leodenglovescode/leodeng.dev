@@ -175,7 +175,7 @@ function humanSize(bytes) {
     >
       <header class="flex items-center gap-3 px-5 py-4 border-b border-fg/10">
         <h2 class="text-sm font-semibold text-fg">Media</h2>
-        <span class="text-xs font-mono text-muted/50">public/blog-media</span>
+        <span class="text-xs font-mono text-muted/90">public/blog-media</span>
         <button
           type="button"
           class="ml-auto text-muted hover:text-fg transition-colors text-lg leading-none px-1"
@@ -190,7 +190,7 @@ function humanSize(bytes) {
           type="search"
           placeholder="Filter…"
           class="flex-1 min-w-0 h-9 px-3 rounded-md bg-surface border border-fg/10 text-sm text-fg
-                 outline-none focus:border-accent/50 placeholder:text-muted/40"
+                 outline-none focus:border-accent/50 placeholder:text-muted/90"
         />
         <input
           ref="fileInput"
@@ -221,7 +221,7 @@ function humanSize(bytes) {
           <p class="text-sm text-muted">
             {{ files.length ? 'Nothing matches that filter.' : 'No media yet.' }}
           </p>
-          <p class="text-xs text-muted/50 mt-1">Drag files anywhere in this panel to upload.</p>
+          <p class="text-xs text-muted/90 mt-1">Drag files anywhere in this panel to upload.</p>
         </div>
 
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -243,14 +243,14 @@ function humanSize(bytes) {
                 loading="lazy"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
-              <span v-else class="w-full h-full flex items-center justify-center text-xs font-mono text-muted/60">
+              <span v-else class="w-full h-full flex items-center justify-center text-xs font-mono text-muted/90">
                 {{ file.name.split('.').pop().toUpperCase() }}
               </span>
             </button>
 
             <figcaption class="p-2 flex flex-col gap-1.5">
-              <span class="text-[11px] font-mono text-fg truncate" :title="file.name">{{ file.name }}</span>
-              <div class="flex items-center gap-2 text-[10px] text-muted/50">
+              <span class="text-xs font-mono text-fg truncate" :title="file.name">{{ file.name }}</span>
+              <div class="flex items-center gap-2 text-xs text-muted/90">
                 <span>{{ humanSize(file.size) }}</span>
                 <button type="button" class="ml-auto hover:text-fg transition-colors" @click="copyPath(file)">
                   {{ copied === file.name ? 'copied' : 'copy path' }}
@@ -264,7 +264,7 @@ function humanSize(bytes) {
         </div>
       </div>
 
-      <footer class="px-5 py-3 border-t border-fg/10 text-[11px] text-muted/50">
+      <footer class="px-5 py-3 border-t border-fg/10 text-xs text-muted/90">
         {{ insertable ? 'Click a thumbnail to insert it.' : 'Click a thumbnail to copy its path.' }}
         Uploads commit straight to <code class="font-mono">main</code>.
       </footer>
