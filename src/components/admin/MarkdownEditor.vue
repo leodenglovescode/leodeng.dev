@@ -27,6 +27,32 @@ const stats = computed(() => {
   return { words, chars: text.length, minutes: Math.max(1, Math.round(words / 200)) }
 })
 
+/* ---------- input binding ---------- */
+
+// This is a controlled textarea (`:value` + `@input`), so Vue writes the model
+// back onto the element whenever the two differ. Mid-composition they always
+// differ, and assigning `.value` while an IME/autocorrect composition is open
+// destroys the composition buffer — the pending characters just vanish. Android
+// and iOS keyboards compose almost everything, so this ate real typing.
+//
+// `v-model` installs these guards itself; a hand-rolled binding has to do it.
+let composing = false
+
+function onInput(event) {
+  if (composing) return
+  emit('update:modelValue', event.target.value)
+}
+
+function onCompositionStart() {
+  composing = true
+}
+
+function onCompositionEnd(event) {
+  composing = false
+  // Emit the settled text so the model and the DOM resync in one clean step.
+  emit('update:modelValue', event.target.value)
+}
+
 /* ---------- text manipulation ---------- */
 
 // Goes through execCommand so the browser's native undo stack keeps working —
@@ -376,11 +402,16 @@ const groups = [
         ref="textarea"
         :value="modelValue"
         spellcheck="true"
+        autocorrect="off"
+        autocomplete="off"
+        writingsuggestions="false"
         placeholder="Write in Markdown…"
         class="min-h-[60vh] resize-y p-4 bg-transparent font-mono text-[13.5px] leading-[1.75] text-text
                outline-none placeholder:text-muted/40 selection:bg-accent/30"
         :class="showPreview && 'md:border-r border-fg/10'"
-        @input="emit('update:modelValue', $event.target.value)"
+        @input="onInput"
+        @compositionstart="onCompositionStart"
+        @compositionend="onCompositionEnd"
         @keydown="onKeydown"
         @scroll="syncScroll('editor')"
       />
