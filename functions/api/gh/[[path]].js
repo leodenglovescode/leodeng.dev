@@ -11,9 +11,10 @@
 //      headers without a CORS preflight, which this endpoint never approves.
 import { json, repoSlug, requireSession, USER_AGENT } from '../../../lib/auth.js'
 
-// Everything the editor touches lives under one of these.
-const WRITABLE_PREFIXES = ['src/posts/', 'public/blog-media/']
-const READABLE_PREFIXES = ['src/posts', 'public/blog-media']
+// Everything the editor touches lives under one of these. `src/drafts/` holds
+// unpublished posts — nothing globs it, so it never reaches the build.
+const WRITABLE_PREFIXES = ['src/posts/', 'src/drafts/', 'public/blog-media/']
+const READABLE_PREFIXES = ['src/posts', 'src/drafts', 'public/blog-media']
 
 function decodePath(params) {
   const parts = Array.isArray(params.path) ? params.path : [params.path]
