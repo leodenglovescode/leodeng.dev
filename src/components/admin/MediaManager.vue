@@ -203,7 +203,7 @@ function humanSize(bytes) {
         <button
           type="button"
           :disabled="busy"
-          class="h-9 px-3 rounded-md bg-accent text-white text-sm font-medium hover:bg-accent-soft
+          class="h-9 px-3 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110
                  disabled:opacity-50 transition-colors shrink-0"
           @click="fileInput?.click()"
         >Upload</button>

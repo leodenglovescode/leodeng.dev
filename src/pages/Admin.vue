@@ -584,7 +584,7 @@ function displayDate(iso) {
           <div class="flex items-center gap-3 shrink-0">
             <button
               type="button"
-              class="h-8 px-3 rounded-md bg-accent text-white text-xs font-medium hover:bg-accent-soft transition-colors"
+              class="h-8 px-3 rounded-md bg-accent-strong text-white text-xs font-medium hover:brightness-110 transition-colors"
               @click="restoreRecovery(entry)"
             >Restore</button>
             <button
@@ -620,7 +620,7 @@ function displayDate(iso) {
             >Media</button>
             <button
               type="button"
-              class="h-9 px-4 rounded-md bg-accent text-white text-sm font-medium hover:bg-accent-soft transition-colors"
+              class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110 transition-colors"
               @click="newPost"
             >New post</button>
           </div>
@@ -698,7 +698,7 @@ function displayDate(iso) {
               type="button"
               :disabled="saving || !!validation"
               :title="validation || 'Commit to main (ctrl+S)'"
-              class="h-9 px-4 rounded-md bg-accent text-white text-sm font-medium hover:bg-accent-soft
+              class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110
                      disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               @click="publish"
             >{{ saving ? 'Publishing…' : isPublished ? 'Update' : 'Publish' }}</button>

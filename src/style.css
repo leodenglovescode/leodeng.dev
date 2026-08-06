@@ -4,8 +4,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-accent: #6366f1;
-  --color-accent-soft: #818cf8;
+  /* Blue + gold on near-black. #6366f1 was Tailwind's stock indigo-500 — the
+     default accent of every generated portfolio, which is exactly the look
+     we're getting away from.
+     Three blues rather than one, because a blue light enough to read as text
+     on #111 is far too light to carry white button text (2.5:1). `accent` is
+     for text and borders, `accent-strong` is for filled buttons. */
+  --color-accent: #0b5fd0;
+  --color-accent-soft: #1857c4;
+  --color-accent-strong: #0b5fd0;
+  /* Used sparingly — selection, the cursor, the full stop after the name. */
+  --color-highlight: #8a6d00;
   --color-bg: #f7f7f7;
   --color-surface: #fff;
   /* #767676 only reached 4.24:1 on this background — under AA even at full
@@ -13,7 +22,10 @@
   --color-muted: #616161;
   --color-fg: #111;
   --color-text: #333;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Inter is a fine typeface, just the default of every generated portfolio.
+     IBM Plex Sans is the same SIL OFL licence as JetBrains Mono, and its
+     humanist, slightly angular letterforms read as a deliberate choice. */
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* The whole small-text scale, lifted one notch. Overriding the tokens moves
@@ -30,6 +42,12 @@
   --color-muted: #9a9a9a;
   --color-fg: #fff;
   --color-text: #ccc;
+  /* The blues invert: bright enough to read against #111, while buttons keep
+     a deep fill so white labels stay legible on them. */
+  --color-accent: #4d9dff;
+  --color-accent-soft: #7ab8ff;
+  --color-accent-strong: #1857c4;
+  --color-highlight: #f5c518;
 }
 
 html { scroll-behavior: smooth; }
@@ -42,9 +60,10 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Gold selection with near-black text, the way a code editor does it. */
 ::selection {
-  background: var(--color-accent);
-  color: white;
+  background: var(--color-highlight);
+  color: #111;
 }
 
 a {
@@ -168,16 +187,16 @@ a {
 .callout > pre:last-child {
   margin-bottom: 0;
 }
-/* The accent at full strength on a light background, one step lighter on dark —
-   the border and tint would otherwise wash out against #111. */
-.callout-important { --callout-color: var(--color-accent); }
-.dark .callout-important { --callout-color: var(--color-accent-soft); }
-.callout-note { --callout-color: #3b82f6; }
+/* Five distinct hues. `important` takes the gold rather than the accent —
+   now that the accent is blue it would be indistinguishable from `note` — and
+   `warning` shifts to orange so it doesn't read as the same colour as gold. */
+.callout-important { --callout-color: var(--color-highlight); }
+.callout-note { --callout-color: #1857c4; }
 .dark .callout-note { --callout-color: #60a5fa; }
 .callout-tip { --callout-color: #15a34a; }
 .dark .callout-tip { --callout-color: #4ade80; }
-.callout-warning { --callout-color: #d97706; }
-.dark .callout-warning { --callout-color: #fbbf24; }
+.callout-warning { --callout-color: #c2410c; }
+.dark .callout-warning { --callout-color: #fb923c; }
 .callout-caution { --callout-color: #dc2626; }
 .dark .callout-caution { --callout-color: #f87171; }
 
