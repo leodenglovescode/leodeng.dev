@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPost, getAllPosts } from '../utils/posts.js'
 import { applyMeta, resetMeta } from '../utils/useMeta.js'
+import { renderMermaid } from '../utils/mermaid.js'
 
 const route  = useRoute()
 const router = useRouter()
@@ -28,9 +29,15 @@ function onScroll() {
   scrollProgress.value = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100
 }
 
-// Copy buttons
-async function addCopyButtons() {
+// Copy buttons + mermaid diagrams. Run after every content swap, not just on
+// mount — the prev/next links reuse this component.
+async function enhanceContent() {
   await nextTick()
+  addCopyButtons()
+  renderMermaid(document.querySelector('.prose'))
+}
+
+function addCopyButtons() {
   document.querySelectorAll('.prose pre').forEach(pre => {
     if (pre.querySelector('.copy-btn')) return
     const btn = document.createElement('button')
@@ -51,9 +58,11 @@ watch(post, (p) => {
   if (p) applyMeta({ title: p.title, description: p.description })
 }, { immediate: true })
 
+watch(() => route.params.slug, () => enhanceContent())
+
 onMounted(() => {
   window.addEventListener('scroll', onScroll)
-  addCopyButtons()
+  enhanceContent()
 })
 
 onUnmounted(() => {

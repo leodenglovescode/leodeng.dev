@@ -203,6 +203,108 @@ a {
   border-color: var(--color-accent);
 }
 
+/* Mermaid diagrams — see utils/mermaid.js. Before that module runs (and in the
+   RSS feed) a block is just its source code block, so it stays readable. */
+.mermaid-block {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+/* Once rendered the source collapses behind the "show source" button; a failed
+   diagram keeps its source visible, since that's the thing you need to fix. */
+.mermaid-block[data-state="ready"] > .mermaid-source {
+  display: none;
+}
+.mermaid-block[data-state="ready"].show-source > .mermaid-source {
+  display: block;
+  margin-top: 0.6rem;
+}
+.mermaid-render {
+  border: 1px solid color-mix(in srgb, var(--color-fg) 12%, transparent);
+  border-radius: 8px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+.mermaid-viewport {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  min-height: 120px;
+}
+.mermaid-viewport.is-grabbing {
+  cursor: grabbing;
+}
+.mermaid-canvas {
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.mermaid-canvas svg {
+  display: block;
+  max-width: none;
+}
+.mermaid-toolbar {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.15rem;
+  border: 1px solid color-mix(in srgb, var(--color-fg) 12%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(4px);
+  opacity: 0.45;
+  transition: opacity 0.15s ease;
+}
+.mermaid-block:hover .mermaid-toolbar,
+.mermaid-toolbar:focus-within {
+  opacity: 1;
+}
+.mermaid-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 4px;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+.mermaid-btn:hover {
+  color: var(--color-fg);
+  background: color-mix(in srgb, var(--color-fg) 8%, transparent);
+}
+.mermaid-zoom {
+  min-width: 2.8rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  user-select: none;
+}
+.mermaid-error {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #f87171;
+  border: 1px solid color-mix(in srgb, #f87171 35%, transparent);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.6rem;
+}
+.mermaid-block:fullscreen {
+  background: var(--color-bg);
+  padding: 1rem;
+  margin: 0;
+}
+.mermaid-block:fullscreen .mermaid-render {
+  height: calc(100% - 2rem);
+}
+.mermaid-block:fullscreen .mermaid-viewport {
+  height: 100% !important;
+}
+
 /* Page transition */
 .fade-enter-active,
 .fade-leave-active {

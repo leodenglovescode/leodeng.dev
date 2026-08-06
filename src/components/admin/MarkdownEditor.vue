@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { renderMarkdown } from '../../utils/posts.js'
+import { renderMermaid } from '../../utils/mermaid.js'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -262,7 +263,27 @@ function syncScroll(source) {
 watch(showPreview, () => {
   if (!showPreview.value) return
   requestAnimationFrame(() => syncScroll('editor'))
+  drawDiagrams()
 })
+
+/* ---------- mermaid ---------- */
+
+// v-html rebuilds the preview on every keystroke, so diagrams are re-mounted
+// constantly. Debounce it (half-finished syntax renders as an error anyway)
+// and let utils/mermaid.js serve unchanged diagrams from its cache.
+let diagramTimer = null
+
+function drawDiagrams(delay = 400) {
+  clearTimeout(diagramTimer)
+  diagramTimer = setTimeout(async () => {
+    await nextTick()
+    if (previewPane.value) renderMermaid(previewPane.value)
+  }, delay)
+}
+
+watch(html, () => drawDiagrams(), { immediate: true })
+
+onUnmounted(() => clearTimeout(diagramTimer))
 
 /* ---------- toolbar definition ---------- */
 
@@ -286,6 +307,11 @@ const groups = [
   [
     { label: '</>', title: 'Inline code', run: () => surround('`', '`', 'code'), mono: true },
     { label: '{ }', title: 'Code block', run: () => insertBlock('```js\n\n```\n'), mono: true },
+    {
+      label: 'Diagram',
+      title: 'Mermaid diagram',
+      run: () => insertBlock('```mermaid\nflowchart LR\n  A[Start] --> B{Choice}\n  B -->|yes| C[Do it]\n  B -->|no| D[Skip]\n```\n'),
+    },
     { label: '—', title: 'Horizontal rule', run: () => insertBlock('---\n\n') },
     { label: '🔗', title: 'Link  (ctrl+K)', run: insertLink },
   ],
