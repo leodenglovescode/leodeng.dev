@@ -1,12 +1,13 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { calcAge } from '../utils/age'
 
 // Fast enough to feel alive. Most phrases need a beat longer than this to
 // actually read, so hovering pauses it.
 const STATUS_INTERVAL = 1000
 
 const time = ref('')
-const age = ref(16)
+const age = calcAge()
 const currentStatus = ref('')
 
 const statuses = [
@@ -70,10 +71,6 @@ onMounted(() => {
   // asks you not to do (WCAG 2.2.2). Those visitors get one status and the
   // click-to-reroll, which is the whole joke anyway.
   if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) startTicker()
-
-  const birthday = new Date(2010, 1, 1)
-  const now = new Date()
-  age.value = Math.floor((now - birthday) / 31557600000)
 })
 
 // Both intervals used to outlive the page — this is a route component, so

@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { calcAge } from '../utils/age'
 
-const age = Math.floor((new Date() - new Date(2010, 1, 1)) / 31557600000)
+const age = calcAge()
 
 // Site theme is a manual toggle (see Navbar.vue), not tied to OS
 // prefers-color-scheme, so the Apple Music embed has to watch the actual
