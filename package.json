@@ -12,7 +12,7 @@
     "generate": "node scripts/optimize-photos.js && node scripts/build-changelog.js",
     "build:client": "vite build",
     "preview": "vite preview",
-    "dev:admin": "npm run build:client && npx wrangler pages dev dist --port 8788",
+    "dev:admin": "npm run build:client && npx wrangler pages dev dist --port 8788 --r2 MEDIA",
     "photos:optimize": "node scripts/optimize-photos.js",
     "photos:rename": "node scripts/rename-photos.js",
     "photos:rename:apply": "node scripts/rename-photos.js --apply"

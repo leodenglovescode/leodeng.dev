@@ -1,10 +1,23 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { bytesToBase64, deleteFile, listDir, putFile } from '../../utils/adminApi.js'
+import {
+  bytesToBase64,
+  deleteFile,
+  deleteMedia,
+  listDir,
+  listMedia,
+  putFile,
+  putMedia,
+} from '../../utils/adminApi.js'
 
 const MEDIA_DIR = 'public/blog-media'
 const PUBLIC_PREFIX = '/blog-media'
-const MAX_BYTES = 20 * 1024 * 1024
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024
+
+// A Worker request body tops out at 100 MB on the free plan, and the whole
+// upload is one PUT. Stop short of the wall so the failure is a readable
+// message here rather than an opaque 413 from the edge.
+const MAX_VIDEO_BYTES = 95 * 1024 * 1024
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -15,7 +28,15 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'insert'])
 
-const files = ref([])
+// Images live in the repo, video lives in R2. They're different stores with
+// different delete semantics, so they get different tabs rather than one
+// merged grid that quietly does two very different things.
+const tab = ref('images')
+const isVideoTab = computed(() => tab.value === 'videos')
+
+const images = ref([])
+const videos = ref([])
+const mediaBase = ref('')
 const loading = ref(false)
 const busy = ref(false)
 const error = ref('')
@@ -26,34 +47,41 @@ const fileInput = ref(null)
 const copied = ref('')
 
 const IMAGE = /\.(png|jpe?g|gif|webp|avif|svg)$/i
-const VIDEO = /\.(mp4|webm|mov)$/i
+
+const files = computed(() => (isVideoTab.value ? videos.value : images.value))
 
 const visible = computed(() => {
   const q = query.value.trim().toLowerCase()
   return files.value.filter((f) => !q || f.name.toLowerCase().includes(q))
 })
 
-function publicPath(name) {
-  return `${PUBLIC_PREFIX}/${name}`
+function urlFor(file) {
+  return isVideoTab.value ? file.url : `${PUBLIC_PREFIX}/${file.name}`
 }
 
 function markdownFor(file) {
-  const path = publicPath(file.name)
-  if (VIDEO.test(file.name)) {
-    return `<video src="${path}" controls playsinline class="w-full rounded-lg"></video>\n`
+  const url = urlFor(file)
+  if (isVideoTab.value) {
+    return `<video src="${url}" controls preload="metadata" playsinline class="w-full rounded-lg"></video>\n`
   }
   const alt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')
-  return `![${alt}](${path})\n`
+  return `![${alt}](${url})\n`
 }
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    const entries = await listDir(MEDIA_DIR)
-    files.value = entries
-      .filter((e) => e.type === 'file')
-      .sort((a, b) => a.name.localeCompare(b.name))
+    if (isVideoTab.value) {
+      const { base, files: listed } = await listMedia()
+      mediaBase.value = base
+      videos.value = listed
+    } else {
+      const entries = await listDir(MEDIA_DIR)
+      images.value = entries
+        .filter((e) => e.type === 'file')
+        .sort((a, b) => a.name.localeCompare(b.name))
+    }
   } catch (err) {
     error.value = err.message
   } finally {
@@ -68,6 +96,12 @@ watch(
   },
   { immediate: true },
 )
+
+watch(tab, () => {
+  error.value = ''
+  query.value = ''
+  load()
+})
 
 // Keeps filenames URL-safe, since these end up verbatim in a public path.
 function safeName(name) {
@@ -88,6 +122,34 @@ function safeName(name) {
   return candidate
 }
 
+// Phones export 4K HEVC by default, which Chrome and Firefox refuse to decode
+// — it uploads fine and then plays for nobody. Ask this browser to read the
+// file's metadata first; if it can't, neither can most visitors.
+function browserCanDecode(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const probe = document.createElement('video')
+    let settled = false
+
+    const done = (ok) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      URL.revokeObjectURL(url)
+      resolve(ok)
+    }
+
+    // A slow decode shouldn't block the upload — a false "this is broken" is
+    // worse than letting an odd file through, so time out permissively.
+    const timer = setTimeout(() => done(true), 5000)
+
+    probe.preload = 'metadata'
+    probe.onloadedmetadata = () => done(true)
+    probe.onerror = () => done(false)
+    probe.src = url
+  })
+}
+
 async function upload(list) {
   const chosen = Array.from(list || [])
   if (!chosen.length) return
@@ -96,17 +158,31 @@ async function upload(list) {
   error.value = ''
   try {
     for (const [index, file] of chosen.entries()) {
-      if (file.size > MAX_BYTES) {
-        throw new Error(`${file.name} is ${(file.size / 1024 / 1024).toFixed(1)} MB — the limit is 20 MB.`)
+      const limit = isVideoTab.value ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES
+      if (file.size > limit) {
+        const mb = (n) => `${(n / 1024 / 1024).toFixed(1)} MB`
+        throw new Error(`${file.name} is ${mb(file.size)} — the limit is ${mb(limit)}.`)
       }
+
+      if (isVideoTab.value && !(await browserCanDecode(file))) {
+        throw new Error(
+          `${file.name} won't play in this browser — it's probably HEVC/H.265, which Chrome and ` +
+            'Firefox can\'t decode. Re-export it as H.264 and try again.',
+        )
+      }
+
       const name = safeName(file.name)
       progress.value = `Uploading ${name} (${index + 1}/${chosen.length})…`
-      const base64 = bytesToBase64(await file.arrayBuffer())
-      await putFile({
-        path: `${MEDIA_DIR}/${name}`,
-        base64,
-        message: `chore(media): upload ${name}`,
-      })
+
+      if (isVideoTab.value) {
+        await putMedia(name, file)
+      } else {
+        await putFile({
+          path: `${MEDIA_DIR}/${name}`,
+          base64: bytesToBase64(await file.arrayBuffer()),
+          message: `chore(media): upload ${name}`,
+        })
+      }
       // Reflect it immediately so the next filename check sees it.
       await load()
     }
@@ -120,16 +196,25 @@ async function upload(list) {
 }
 
 async function remove(file) {
-  if (!confirm(`Delete ${file.name}? This commits the deletion to the repo.`)) return
+  const warning = isVideoTab.value
+    ? `Delete ${file.name} from R2? This is immediate and can't be undone.`
+    : `Delete ${file.name}? This commits the deletion to the repo.`
+  if (!confirm(warning)) return
+
   busy.value = true
   error.value = ''
   try {
-    await deleteFile({
-      path: `${MEDIA_DIR}/${file.name}`,
-      sha: file.sha,
-      message: `chore(media): delete ${file.name}`,
-    })
-    files.value = files.value.filter((f) => f.name !== file.name)
+    if (isVideoTab.value) {
+      await deleteMedia(file.name)
+      videos.value = videos.value.filter((f) => f.name !== file.name)
+    } else {
+      await deleteFile({
+        path: `${MEDIA_DIR}/${file.name}`,
+        sha: file.sha,
+        message: `chore(media): delete ${file.name}`,
+      })
+      images.value = images.value.filter((f) => f.name !== file.name)
+    }
   } catch (err) {
     error.value = err.message
   } finally {
@@ -139,7 +224,7 @@ async function remove(file) {
 
 async function copyPath(file) {
   try {
-    await navigator.clipboard.writeText(publicPath(file.name))
+    await navigator.clipboard.writeText(urlFor(file))
     copied.value = file.name
     setTimeout(() => {
       if (copied.value === file.name) copied.value = ''
@@ -175,7 +260,9 @@ function humanSize(bytes) {
     >
       <header class="flex items-center gap-3 px-5 py-4 border-b border-fg/10">
         <h2 class="text-sm font-semibold text-fg">Media</h2>
-        <span class="text-xs font-mono text-muted/90">public/blog-media</span>
+        <span class="text-xs font-mono text-muted/90 truncate">
+          {{ isVideoTab ? (mediaBase || 'R2') : 'public/blog-media' }}
+        </span>
         <button
           type="button"
           class="ml-auto text-muted hover:text-fg transition-colors text-lg leading-none px-1"
@@ -183,6 +270,17 @@ function humanSize(bytes) {
           @click="emit('close')"
         >×</button>
       </header>
+
+      <div class="flex items-center gap-1 px-5 pt-3">
+        <button
+          v-for="t in [{ id: 'images', label: 'Images' }, { id: 'videos', label: 'Videos' }]"
+          :key="t.id"
+          type="button"
+          class="h-8 px-3 rounded-md text-sm font-medium transition-colors"
+          :class="tab === t.id ? 'bg-fg/10 text-fg' : 'text-muted hover:text-fg'"
+          @click="tab = t.id"
+        >{{ t.label }}</button>
+      </div>
 
       <div class="flex items-center gap-2 px-5 py-3 border-b border-fg/10">
         <input
@@ -196,7 +294,7 @@ function humanSize(bytes) {
           ref="fileInput"
           type="file"
           multiple
-          accept="image/*,video/*,audio/*"
+          :accept="isVideoTab ? 'video/*' : 'image/*'"
           class="hidden"
           @change="upload($event.target.files)"
         />
@@ -219,7 +317,7 @@ function humanSize(bytes) {
 
         <div v-else-if="!visible.length" class="py-12 text-center">
           <p class="text-sm text-muted">
-            {{ files.length ? 'Nothing matches that filter.' : 'No media yet.' }}
+            {{ files.length ? 'Nothing matches that filter.' : `No ${isVideoTab ? 'video' : 'images'} yet.` }}
           </p>
           <p class="text-xs text-muted/90 mt-1">Drag files anywhere in this panel to upload.</p>
         </div>
@@ -227,17 +325,25 @@ function humanSize(bytes) {
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <figure
             v-for="file in visible"
-            :key="file.sha"
+            :key="file.name"
             class="group rounded-lg border border-fg/10 bg-surface overflow-hidden flex flex-col"
           >
             <button
               type="button"
-              class="block aspect-video bg-fg/5 overflow-hidden"
+              class="block aspect-video bg-fg/5 overflow-hidden w-full"
               :title="insertable ? 'Insert into the post' : 'Copy path'"
               @click="insertable ? emit('insert', { markdown: markdownFor(file) }) : copyPath(file)"
             >
+              <video
+                v-if="isVideoTab"
+                :src="file.url"
+                preload="metadata"
+                muted
+                playsinline
+                class="w-full h-full object-cover"
+              />
               <img
-                v-if="IMAGE.test(file.name)"
+                v-else-if="IMAGE.test(file.name)"
                 :src="file.download_url"
                 :alt="file.name"
                 loading="lazy"
@@ -266,7 +372,8 @@ function humanSize(bytes) {
 
       <footer class="px-5 py-3 border-t border-fg/10 text-xs text-muted/90">
         {{ insertable ? 'Click a thumbnail to insert it.' : 'Click a thumbnail to copy its path.' }}
-        Uploads commit straight to <code class="font-mono">main</code>.
+        <template v-if="isVideoTab">Video uploads go straight to R2 — no commit, no undo.</template>
+        <template v-else>Uploads commit straight to <code class="font-mono">main</code>.</template>
       </footer>
     </div>
   </div>
