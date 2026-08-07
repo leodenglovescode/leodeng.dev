@@ -5,6 +5,7 @@ import GalleryCollection from '../pages/GalleryCollection.vue'
 import About from '../pages/About.vue'
 import Now from '../pages/Now.vue'
 import Spotting from '../pages/Spotting.vue'
+import Homelab from '../pages/Homelab.vue'
 import Changelog from '../pages/Changelog.vue'
 import Stack from '../pages/Stack.vue'
 import Feed from '../pages/Feed.vue'
@@ -21,6 +22,7 @@ export default [
   { path: '/gallery/:slug', component: GalleryCollection, meta: { title: 'Gallery' } },
   { path: '/now',       component: Now,      meta: { title: 'Now' } },
   { path: '/spotting',  component: Spotting, meta: { title: 'Spotting Stats' } },
+  { path: '/homelab',   component: Homelab,  meta: { title: 'Homelab' } },
   { path: '/changelog', component: Changelog, meta: { title: 'Changelog' } },
   { path: '/stack',     component: Stack,    meta: { title: 'Stack' } },
   { path: '/feed',      component: Feed,     meta: { title: 'RSS Feed' } },
