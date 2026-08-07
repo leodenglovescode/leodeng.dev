@@ -41,9 +41,23 @@ SYNTHETIC = "<synthetic>"
 
 
 def transcripts(root: Path):
-    """Yield (project_directory_name, path) for every transcript."""
-    for path in sorted(root.glob("*/*.jsonl")):
-        yield path.parent.name, path
+    """Yield (project_directory_name, path) for every transcript.
+
+    Recursive on purpose. A main session sits at `<project>/<uuid>.jsonl`, but
+    subagents get their own transcripts a further two levels down at
+    `<project>/<uuid>/subagents/agent-*.jsonl`. Globbing only one level deep
+    silently drops every subagent's usage — here that was 38 files and about
+    6.6% of all tokens, which is exactly the kind of undercount that looks
+    plausible enough to never get noticed.
+
+    The project is therefore the first path component below the root, not the
+    parent directory, which for a subagent is `subagents`.
+    """
+    for path in sorted(root.glob("**/*.jsonl")):
+        parts = path.relative_to(root).parts
+        if len(parts) < 2:
+            continue  # a stray file directly under the root, not a transcript
+        yield parts[0], path
 
 
 def local_day(stamp: str) -> str:
