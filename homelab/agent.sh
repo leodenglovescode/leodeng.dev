@@ -18,17 +18,14 @@
 set -euo pipefail
 
 ENDPOINT="${HOMELAB_ENDPOINT:-https://leodeng.dev/api/homelab}"
-TOKENS_ENDPOINT="${HOMELAB_TOKENS_ENDPOINT:-https://leodeng.dev/api/tokens}"
-TOKENS_SCRIPT="${HOMELAB_TOKENS_SCRIPT:-/usr/local/bin/homelab-tokens.py}"
-
-# How long an unchanged token rollup may go un-resent. See tokens.py.
-TOKENS_MIN_INTERVAL="${HOMELAB_TOKENS_MIN_INTERVAL:-600}"
-
-# systemd sets STATE_DIRECTORY from StateDirectory= in the unit. The fallback
-# is for running this by hand.
-STATE_DIR="${STATE_DIRECTORY:-${XDG_STATE_HOME:-$HOME/.local/state}/homelab-status}"
-
 : "${HOMELAB_TOKEN:?HOMELAB_TOKEN is not set (see homelab/README.md)}"
+
+# Everything the token rollup needs is set up inside push_tokens(), below the
+# heartbeat, rather than here. The rollup is the optional half of this script
+# and must not be able to stop the half that isn't — and setup at the top of a
+# `set -e -u` script runs before the heartbeat, so a single unset variable
+# there takes the whole run down. That is not hypothetical: an unguarded $HOME
+# in this block failed a heartbeat under DynamicUser=yes, which sets no HOME.
 
 # --- uptime ------------------------------------------------------------------
 read -r uptime_raw _ < /proc/uptime
@@ -88,7 +85,20 @@ curl --silent --show-error --fail \
 # for, and a box with no Claude Code transcripts on it — or no python3 — is a
 # perfectly healthy box. Problems go to the journal and the run still exits 0.
 push_tokens() {
-  if [ ! -r "$TOKENS_SCRIPT" ]; then
+  local endpoint script min_interval state_dir
+  endpoint="${HOMELAB_TOKENS_ENDPOINT:-https://leodeng.dev/api/tokens}"
+  script="${HOMELAB_TOKENS_SCRIPT:-/usr/local/bin/homelab-tokens.py}"
+
+  # How long an unchanged rollup may go un-resent. See tokens.py.
+  min_interval="${HOMELAB_TOKENS_MIN_INTERVAL:-600}"
+
+  # systemd sets STATE_DIRECTORY from StateDirectory= in the unit; the rest of
+  # the chain is for running this by hand. Every link tolerates being unset,
+  # HOME included — under `set -u` a bare $HOME is a fatal error, not an empty
+  # string.
+  state_dir="${STATE_DIRECTORY:-${XDG_STATE_HOME:-${HOME:-/tmp}/.local/state}/homelab-status}"
+
+  if [ ! -r "$script" ]; then
     return 0
   fi
   if ! command -v python3 >/dev/null 2>&1; then
@@ -96,7 +106,7 @@ push_tokens() {
     return 0
   fi
 
-  local state="$STATE_DIR/tokens.json"
+  local state="$state_dir/tokens.json"
 
   # No state file means this box has never pushed, so send the whole history
   # once to backfill. Every run after that sends only the trailing few days —
@@ -110,9 +120,9 @@ push_tokens() {
   # `set -e` is held off for exactly this call.
   local payload status
   set +e
-  payload=$(python3 "$TOKENS_SCRIPT" \
+  payload=$(python3 "$script" \
     --state-file "$state" \
-    --min-interval "$TOKENS_MIN_INTERVAL" \
+    --min-interval "$min_interval" \
     "${scope[@]}")
   status=$?
   set -e
@@ -127,15 +137,15 @@ push_tokens() {
 
   if ! curl --silent --show-error --fail \
             --max-time 20 --retry 2 --retry-delay 3 \
-            -X POST "$TOKENS_ENDPOINT" \
+            -X POST "$endpoint" \
             -H 'content-type: application/json' \
             -H "authorization: Bearer ${HOMELAB_TOKEN}" \
             -d "$payload" \
             -o /dev/null; then
     # The state file was already stamped, so this rollup won't be retried until
-    # TOKENS_MIN_INTERVAL is up. That bounds the damage at one stale interval
-    # instead of hammering a failing endpoint every minute.
-    echo "token push failed; will retry within ${TOKENS_MIN_INTERVAL}s" >&2
+    # min_interval is up. That bounds the damage at one stale interval instead
+    # of hammering a failing endpoint every minute.
+    echo "token push failed; will retry within ${min_interval}s" >&2
   fi
 }
 
