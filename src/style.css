@@ -376,6 +376,44 @@ a {
   height: 100% !important;
 }
 
+/* Split-flap board — see components/SplitFlap.vue. The character stream is
+   driven from JS; everything here is the mechanical look of the unit. */
+.flap {
+  display: inline-block;
+  max-width: 100%;
+}
+/* Mid-spin the characters are meaningless, so they sit back a little and let
+   the settled parts of the board carry the reading. */
+.flap:not(.is-settled) {
+  opacity: 0.72;
+}
+.flap-row {
+  display: inline-flex;
+  gap: 2px;
+}
+.flap-cell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1.55em;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-fg);
+  background: color-mix(in srgb, var(--color-fg) 9%, transparent);
+  border-radius: 2px;
+}
+/* The seam the flap hinges on. */
+.flap-cell::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 1px solid color-mix(in srgb, var(--color-bg) 55%, transparent);
+}
+
 /* Page transition */
 .fade-enter-active,
 .fade-leave-active {
