@@ -106,24 +106,19 @@ push_tokens() {
     return 0
   fi
 
-  local state="$state_dir/tokens.json"
-
-  # No state file means this box has never pushed, so send the whole history
-  # once to backfill. Every run after that sends only the trailing few days —
-  # older rows can't change, and re-sending them forever is what would
-  # eventually outgrow D1's free write allowance. See tokens.py.
-  local scope=()
-  [ -f "$state" ] || scope=(--full)
-
-  # tokens.py exits 3 to mean "nothing worth sending", which is the common case
-  # on an idle box — so the exit status is inspected rather than trusted, and
-  # `set -e` is held off for exactly this call.
+  # tokens.py both maintains the local archive and prints the rollup. It
+  # decides on its own when to send everything rather than the trailing window
+  # — first run, or once a day to reconcile — so there is no scope flag here.
+  #
+  # It exits 3 to mean "nothing worth sending", which is the common case on an
+  # idle box, so the exit status is inspected rather than trusted and `set -e`
+  # is held off for exactly this call.
   local payload status
   set +e
   payload=$(python3 "$script" \
-    --state-file "$state" \
-    --min-interval "$min_interval" \
-    "${scope[@]}")
+    --db "$state_dir/tokens.db" \
+    --state-file "$state_dir/tokens.json" \
+    --min-interval "$min_interval")
   status=$?
   set -e
 
