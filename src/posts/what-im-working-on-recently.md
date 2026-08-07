@@ -5,7 +5,7 @@ description: "HackGen, 6th grade online classes, CS:GO screenshots on a GTX 960,
 ---
 
 > [!NOTE]
-> Originally posted on my old blog in July 2022. It points at a few pages — Downloads, Games — that only existed there, so those links have nowhere to go now.
+> Originally posted on my old blog in July 2022, lightly trimmed since. It points at a "Downloads" page that only existed there, so that reference has nowhere to go now.
 
 So, Recently I was spending a lot of time doing boring online classes of 6th grade *(Which sucks, IRL SCHOOLS ARE THE BEST)*, and also my programming project "HackGen — A hacking/programming simulator" which is currently now available on MacOS and Linux! (Most distros) … find it on the "Downloads" Page of my blog to download it if you want, or just click on this repo card and go to the "releases" section of the repo page.
 
@@ -25,13 +25,7 @@ T (*pats on CT) : Buddy, how's this match? CT (*pats back): oof, pretty good and
 
 ![A CS:GO terrorist and counter-terrorist standing together](/blog-media/csgo-t-and-ct-funny.webp)
 
-Anyways even though I was born in 2010 (12 years old now), Old games still bring me nostalgia, like Counter Strike 1.6, Source, Half Life (Wasn't born when these games are made), but when I want to play these games I do NOT want to buy another copy of any of the old games on steam! It is wayyyy too "expensive" and I don't have any money (doge), so downloading non-steam versions is a great idea, though with many ads I still got all the games installers, clean, without ads; suck on that! Valve! (MEME TIME!)
-
-![One does not simply steal Valve's games](/blog-media/meme-one-does-not-simply.webp)
-
-![Valve's games? More like OUR games](/blog-media/meme-valves-games.webp)
-
-Alright enough memes, back on track, since I got all of that clean install files, I decided to share it with you guys, so if you want to download it, just go to the newly created page called "Games" on the top navigation menu, and click on the games you'd like to download! (Google Drive safe files, very clean)
+Anyways even though I was born in 2010 (12 years old now), Old games still bring me nostalgia, like Counter Strike 1.6, Source, Half Life (Wasn't born when these games are made).
 
 Later I will add some webpage games that you guys can play in your web browsers!
 
