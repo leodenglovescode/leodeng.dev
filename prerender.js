@@ -13,7 +13,7 @@ const staticRoutes = [
   { path: '/spotting',  title: 'Spotting Stats', description: "Every frame in my planespotting gallery, counted: gear, focal lengths, exposure and time of day, read straight out of the EXIF." },
   { path: '/changelog', title: 'Changelog', description: 'Every commit to leodeng.dev, generated from the repo at build time.' },
   { path: '/homelab',   title: 'Homelab', description: 'Live status of my home server — uptime, load, memory and CPU temperature, pushed every minute.' },
-  { path: '/tokens',    title: 'Token Stats', description: 'How many tokens I have run through Claude Code — daily and all time, counted from the transcripts and pushed from my server.' },
+  { path: '/tokens',    title: 'Token Stats', description: 'How many LLM tokens I have burned through — today and all time, counted from local session logs and pushed from my server.' },
   { path: '/stack',     title: 'Stack' },
   { path: '/feed',      title: 'RSS Feed' },
   { path: '/blog',      title: 'Blog' },

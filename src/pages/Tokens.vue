@@ -72,7 +72,7 @@ const headline = computed(() => {
   ]
 })
 
-// Where the tokens actually went. On a Claude Code workload this is the whole
+// Where the tokens actually went. On a cache-heavy agentic workload this is the whole
 // story: cache reads dwarf everything else by two orders of magnitude, which
 // is what the split is here to show.
 const composition = computed(() => {
@@ -127,7 +127,7 @@ const money = n =>
   <section class="pt-20 sm:pt-32 pb-20">
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Tokens</h2>
     <p class="text-xs font-mono text-muted/90 mb-10">
-      Claude Code usage, pushed from the
+      LLM token usage, pushed from the
       <RouterLink to="/homelab" class="text-fg hover:text-accent transition-colors">server</RouterLink>
     </p>
 
@@ -153,8 +153,8 @@ const money = n =>
 
       <p class="text-xs text-muted mb-14">
         {{ totals.firstDay }} — {{ totals.lastDay }}<template v-if="totals.sessions">
-        · {{ full(totals.sessions) }} sessions</template>. Counted from the transcripts
-        Claude Code writes locally, deduplicated per API response.
+        · {{ full(totals.sessions) }} sessions</template>. Counted from local session
+        logs, deduplicated per API response.
       </p>
 
       <!-- Where the tokens go -->
