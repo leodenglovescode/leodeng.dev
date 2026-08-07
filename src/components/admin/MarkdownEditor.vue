@@ -200,6 +200,23 @@ function insertCallout(variant = 'IMPORTANT', placeholder = 'Something worth cal
   replaceRange(start, end, `${prefix}${quoted}\n`, from, start + prefix.length + quoted.length)
 }
 
+/**
+ * A video embed, for the Videos tab in the media manager (R2-hosted) or a URL
+ * pasted by hand. Raw HTML rather than markdown because markdown has no video
+ * syntax — `marked` passes it through untouched.
+ */
+function insertVideo() {
+  const el = textarea.value
+  if (!el) return
+  const { selectionStart: start, selectionEnd: end } = el
+  const url = 'https://media.leodeng.dev/your-video.mp4'
+  const needsLeadingBreak = start > 0 && el.value[start - 1] !== '\n'
+  const prefix = `${needsLeadingBreak ? '\n\n' : ''}<video src="`
+  const text = `${prefix}${url}" controls preload="metadata" playsinline class="w-full rounded-lg"></video>\n`
+  // Leave the URL selected so picking a file — or pasting one — replaces it.
+  replaceRange(start, end, text, start + prefix.length, start + prefix.length + url.length)
+}
+
 /** Called by the parent after the media manager picks a file. */
 function insertMedia({ markdown }) {
   insertBlock(markdown)
@@ -353,6 +370,7 @@ const groups = [
       title: 'Mermaid diagram',
       run: () => insertBlock('```mermaid\nflowchart LR\n  A[Start] --> B{Choice}\n  B -->|yes| C[Do it]\n  B -->|no| D[Skip]\n```\n'),
     },
+    { label: 'Video', title: 'Video embed (R2-hosted)', run: insertVideo },
     { label: '—', title: 'Horizontal rule', run: () => insertBlock('---\n\n') },
     { label: '🔗', title: 'Link  (ctrl+K)', run: insertLink },
   ],

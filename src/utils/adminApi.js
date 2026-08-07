@@ -121,4 +121,44 @@ export function deleteFile({ path, sha, message }) {
   })
 }
 
+// --- R2 media (video) -------------------------------------------------------
+//
+// Separate from the GitHub helpers above on purpose: these hit /api/media,
+// which writes to the R2 bucket instead of committing to the repo. Only video
+// goes here — see functions/api/media/[[path]].js for why.
+
+/** Returns `{ base, files }`. `base` is the public origin the bucket serves from. */
+export function listMedia() {
+  return request('/api/media')
+}
+
+/**
+ * Uploads one File. Sent as a raw stream rather than base64 — R2 takes the
+ * bytes as-is, so there's no reason to inflate them by a third first.
+ */
+export async function putMedia(name, file) {
+  const res = await fetch(`/api/media/${encodeURIComponent(name)}`, {
+    method: 'PUT',
+    headers: { 'X-Admin': '1', 'content-type': file.type || 'application/octet-stream' },
+    body: file,
+  })
+  const payload = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new ApiError(payload?.error || `Upload failed (${res.status})`, res.status)
+  }
+  return payload
+}
+
+export async function deleteMedia(name) {
+  const res = await fetch(`/api/media/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+    headers: { 'X-Admin': '1' },
+  })
+  const payload = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new ApiError(payload?.error || `Delete failed (${res.status})`, res.status)
+  }
+  return payload
+}
+
 export { ApiError }
