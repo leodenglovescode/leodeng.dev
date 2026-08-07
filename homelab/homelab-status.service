@@ -22,7 +22,12 @@ ProtectHome=yes
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
-RestrictAddressFamilies=AF_INET AF_INET6
+# AF_UNIX belongs here even though the agent only talks TCP. Name resolution
+# runs the whole nsswitch `hosts:` chain, and the usual Ubuntu chain includes
+# mdns4_minimal (Avahi) and mymachines (systemd-machined) — both Unix sockets,
+# both consulted before plain `dns`. Drop AF_UNIX and lookups fail or stall
+# before they ever reach a nameserver.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 RestrictNamespaces=yes
 SystemCallFilter=@system-service
 CapabilityBoundingSet=
