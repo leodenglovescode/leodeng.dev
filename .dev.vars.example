@@ -19,3 +19,14 @@ GITHUB_CLIENT_SECRET=your_dev_app_client_secret
 # Optional — both default to the production values in lib/auth.js.
 # GITHUB_ALLOWED_USER=leodenglovescode
 # GITHUB_REPO=leodenglovescode/leodeng.dev
+
+# R2 credentials for scripts/optimize-photos.js, which uploads gallery
+# derivatives straight to the bucket over the S3 API. Not used by the site or
+# by Functions — /api/media reaches the bucket through its MEDIA binding, with
+# no keys involved.
+#
+# Dashboard > R2 > Manage API tokens > Create API token, permission
+# "Object Read & Write", scoped to the leodeng-media bucket.
+R2_ACCOUNT_ID=your_cloudflare_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key

@@ -1,18 +1,40 @@
 #!/usr/bin/env node
-// Generates a thumbnail and a compressed lightbox copy of every photo in
-// each collection folder under src/photos/<collection>/, so the gallery
-// never ships full-resolution originals (some of which are several MB) to
-// the browser.
-// Runs automatically before `dev` and `build` (see package.json pre* scripts).
+// Turns the originals in src/photos/<collection>/ into a thumbnail and a
+// compressed lightbox copy each, uploads those to R2, and writes the manifest
+// the site actually reads.
+//
+// The originals are NOT in the repo — src/photos is gitignored. They were 121MB
+// of full-resolution frames that no visitor ever received (the browser only
+// ever gets the derivatives), sitting in a public repo behind a Download ZIP
+// button. So they live on disk here and in R2 as cold backup.
+//
+// The consequence: Cloudflare can't regenerate the gallery, because it has no
+// photos to regenerate it from. Instead this runs locally, and the committed
+// manifest at src/generated/photos.json is what the build consumes. If there's
+// no src/photos directory (i.e. on the build machine) the script leaves the
+// manifest alone and exits.
+//
+//   npm run generate               regenerate stale derivatives, upload those
+//   npm run generate -- --upload-all   re-upload everything (initial sync)
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import exifr from 'exifr'
+import { loadCredentials, putObject } from './lib/r2.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PHOTOS_ROOT = path.join(__dirname, '../src/photos')
+const MANIFEST_PATH = path.join(__dirname, '../src/generated/photos.json')
 const EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
+
+const BUCKET = process.env.R2_BUCKET || 'leodeng-media'
+const PUBLIC_BASE = (process.env.R2_PUBLIC_BASE || 'https://media.leodeng.dev').replace(/\/+$/, '')
+const KEY_PREFIX = 'photos'
+
+const UPLOAD_ALL = process.argv.includes('--upload-all')
+// Signed PUTs are cheap, so this is just about not opening 150 sockets at once.
+const UPLOAD_CONCURRENCY = 8
 
 const THUMB_MAX = 640 // grid cell, ~2x a 320px column
 const FULL_MAX = 2200 // lightbox long edge
@@ -58,45 +80,83 @@ function wallClockFromName(name) {
   return m ? `${m[1]}:${m[2]}:${m[3]} ${m[4]}:${m[5]}:${m[6]}` : null
 }
 
-async function writeExifIndex(collectionDir, files) {
-  const entries = []
-
-  for (const file of files) {
-    const name = path.parse(file).name
-    let tags = {}
-    try {
-      tags = await exifr.parse(path.join(collectionDir, file), {
-        tiff: true, exif: true, pick: EXIF_FIELDS, reviveValues: false,
-      }) ?? {}
-    } catch {
-      // A photo with unreadable EXIF still counts as a frame; it just
-      // contributes nothing to the gear or exposure breakdowns.
-    }
-
-    // The filename is the more trustworthy clock of the two: photos are named
-    // by scripts/rename-photos.js from the original capture time, and the name
-    // survives re-exports that rewrite EXIF.
-    const shotAt = wallClockFromName(name) ?? tags.DateTimeOriginal ?? null
-    if (!shotAt) continue
-
-    entries.push({
-      name,
-      shotAt,
-      camera: tags.Model ?? null,
-      lens: tags.LensModel ?? null,
-      focalLength: typeof tags.FocalLength === 'number' ? tags.FocalLength : null,
-      aperture: typeof tags.FNumber === 'number' ? tags.FNumber : null,
-      iso: typeof tags.ISO === 'number' ? tags.ISO : null,
-      shutter: typeof tags.ExposureTime === 'number' ? tags.ExposureTime : null,
-    })
+async function readExif(collectionDir, file) {
+  const name = path.parse(file).name
+  let tags = {}
+  try {
+    tags = await exifr.parse(path.join(collectionDir, file), {
+      tiff: true, exif: true, pick: EXIF_FIELDS, reviveValues: false,
+    }) ?? {}
+  } catch {
+    // A photo with unreadable EXIF still counts as a frame; it just
+    // contributes nothing to the gear or exposure breakdowns.
   }
 
-  entries.sort((a, b) => a.shotAt.localeCompare(b.shotAt))
-  fs.writeFileSync(
-    path.join(collectionDir, '_generated/exif.json'),
-    JSON.stringify(entries, null, 1),
+  // The filename is the more trustworthy clock of the two: photos are named
+  // by scripts/rename-photos.js from the original capture time, and the name
+  // survives re-exports that rewrite EXIF.
+  return {
+    name,
+    // Null rather than dropped, unlike the old per-collection exif.json: the
+    // gallery needs every photo listed, and /spotting already skips frames it
+    // can't date.
+    shotAt: wallClockFromName(name) ?? tags.DateTimeOriginal ?? null,
+    camera: tags.Model ?? null,
+    lens: tags.LensModel ?? null,
+    focalLength: typeof tags.FocalLength === 'number' ? tags.FocalLength : null,
+    aperture: typeof tags.FNumber === 'number' ? tags.FNumber : null,
+    iso: typeof tags.ISO === 'number' ? tags.ISO : null,
+    shutter: typeof tags.ExposureTime === 'number' ? tags.ExposureTime : null,
+  }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+// Retried because a signed PUT can still lose to a flaky network; the earlier
+// wrangler-based version needed this far more often.
+async function uploadOne(creds, localPath, key, contentType, attempts = 4) {
+  const body = fs.readFileSync(localPath)
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await putObject(creds, BUCKET, key, body, { contentType })
+      return
+    } catch (err) {
+      if (attempt >= attempts) throw err
+      await sleep(500 * 2 ** (attempt - 1))
+    }
+  }
+}
+
+async function uploadAll(jobs) {
+  if (!jobs.length) {
+    console.log('  nothing to upload')
+    return
+  }
+  const creds = loadCredentials()
+  console.log(`  uploading ${jobs.length} file${jobs.length === 1 ? '' : 's'} to r2://${BUCKET}…`)
+
+  let done = 0
+  let failed = 0
+  const queue = [...jobs]
+
+  await Promise.all(
+    Array.from({ length: Math.min(UPLOAD_CONCURRENCY, queue.length) }, async () => {
+      while (queue.length) {
+        const job = queue.shift()
+        try {
+          await uploadOne(creds, job.localPath, job.key, job.contentType)
+          done += 1
+          if (done % 20 === 0) console.log(`    ${done}/${jobs.length}…`)
+        } catch (err) {
+          failed += 1
+          console.warn(`    ✗ ${job.key}: ${err.message.split('\n')[0]}`)
+        }
+      }
+    }),
   )
-  return entries.length
+
+  console.log(`  uploaded ${done}/${jobs.length}${failed ? ` (${failed} failed)` : ''}`)
+  if (failed) throw new Error(`${failed} upload(s) failed — manifest not written`)
 }
 
 async function processCollection(collectionDir) {
@@ -110,6 +170,8 @@ async function processCollection(collectionDir) {
     .filter(f => f.isFile() && EXTENSIONS.has(path.extname(f.name).toLowerCase()))
     .map(f => f.name)
 
+  const uploads = []
+
   for (const file of files) {
     const srcPath = path.join(collectionDir, file)
     const base = path.parse(file).name
@@ -118,38 +180,57 @@ async function processCollection(collectionDir) {
 
     const thumbStale = isStale(srcPath, thumbPath)
     const fullStale = isStale(srcPath, fullPath)
-    if (!thumbStale && !fullStale) continue
 
-    try {
-      if (thumbStale) await makeThumb(srcPath, thumbPath)
-      if (fullStale) await makeFull(srcPath, fullPath)
-      const kb = (fs.statSync(fullPath).size / 1024).toFixed(0)
-      console.log(`✓ ${label}/${file} -> thumb + full (${kb} KB)`)
-    } catch (err) {
-      console.warn(`✗ ${label}/${file}: ${err.message}`)
+    if (thumbStale || fullStale) {
+      try {
+        if (thumbStale) await makeThumb(srcPath, thumbPath)
+        if (fullStale) await makeFull(srcPath, fullPath)
+        const kb = (fs.statSync(fullPath).size / 1024).toFixed(0)
+        console.log(`✓ ${label}/${file} -> thumb + full (${kb} KB)`)
+      } catch (err) {
+        console.warn(`✗ ${label}/${file}: ${err.message}`)
+        continue
+      }
+    }
+
+    // Anything regenerated this run is out of date in the bucket. --upload-all
+    // re-sends everything, which is what the initial migration needs.
+    if (UPLOAD_ALL || thumbStale) {
+      uploads.push({ localPath: thumbPath, key: `${KEY_PREFIX}/${label}/thumbs/${base}.webp`, contentType: 'image/webp' })
+    }
+    if (UPLOAD_ALL || fullStale) {
+      uploads.push({ localPath: fullPath, key: `${KEY_PREFIX}/${label}/full/${base}.webp`, contentType: 'image/webp' })
     }
   }
 
-  // Rewritten every run rather than only for stale files — it's a full index,
-  // so a single deleted photo would otherwise leave a phantom frame behind.
-  const indexed = await writeExifIndex(collectionDir, files)
-  console.log(`  indexed EXIF for ${indexed}/${files.length} ${label} photo${files.length === 1 ? '' : 's'}`)
+  const entries = []
+  for (const file of files) entries.push(await readExif(collectionDir, file))
+  entries.sort((a, b) => String(b.name).localeCompare(String(a.name))) // newest first
 
-  // prune derivatives whose source photo was renamed or deleted
+  const dated = entries.filter(e => e.shotAt).length
+  console.log(`  indexed EXIF for ${dated}/${files.length} ${label} photo${files.length === 1 ? '' : 's'}`)
+
+  // Prune derivatives whose source photo was renamed or deleted. The bucket
+  // copy is left alone deliberately — an orphan there costs a fraction of a
+  // cent and is invisible, whereas a delete is unrecoverable.
   const validBases = new Set(files.map(f => path.parse(f).name))
   for (const dir of [thumbsDir, fullDir]) {
     for (const f of fs.readdirSync(dir)) {
       if (!validBases.has(path.parse(f).name)) {
         fs.unlinkSync(path.join(dir, f))
-        console.log(`  removed orphaned ${label}/${path.relative(collectionDir, path.join(dir, f))}`)
+        console.log(`  removed orphaned local ${label}/${path.basename(dir)}/${f}`)
       }
     }
   }
+
+  return { label, entries, uploads }
 }
 
 async function main() {
   if (!fs.existsSync(PHOTOS_ROOT)) {
-    console.log('No src/photos directory found.')
+    // The build machine has no originals. The committed manifest is already
+    // correct there, so touching it would only blank the gallery.
+    console.log('No src/photos directory — keeping the existing photo manifest.')
     return
   }
 
@@ -158,13 +239,28 @@ async function main() {
     .map(f => path.join(PHOTOS_ROOT, f.name))
 
   if (!collectionDirs.length) {
-    console.log('No photo collections found in src/photos.')
+    console.log('No photo collections found in src/photos — keeping the existing manifest.')
     return
   }
 
-  for (const dir of collectionDirs) {
-    await processCollection(dir)
+  const results = []
+  for (const dir of collectionDirs) results.push(await processCollection(dir))
+
+  await uploadAll(results.flatMap(r => r.uploads))
+
+  const manifest = {
+    base: PUBLIC_BASE,
+    prefix: KEY_PREFIX,
+    collections: Object.fromEntries(results.map(r => [r.label, r.entries])),
   }
+  fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true })
+  fs.writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 1)}\n`)
+
+  const total = results.reduce((n, r) => n + r.entries.length, 0)
+  console.log(`  wrote manifest: ${total} photo${total === 1 ? '' : 's'} across ${results.length} collection${results.length === 1 ? '' : 's'}`)
 }
 
-main()
+main().catch((err) => {
+  console.error(err.message)
+  process.exit(1)
+})

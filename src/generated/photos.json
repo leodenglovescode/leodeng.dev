@@ -1,0 +1,738 @@
+{
+ "base": "https://media.leodeng.dev",
+ "prefix": "photos",
+ "collections": {
+  "planespotting": [
+   {
+    "name": "2026-01-28_17-11-18",
+    "shotAt": "2026:01:28 17:11:18",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 100,
+    "aperture": 8,
+    "iso": 1600,
+    "shutter": 0.004
+   },
+   {
+    "name": "2025-12-20_16-25-48",
+    "shotAt": "2025:12:20 16:25:48",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.0013333333333333333
+   },
+   {
+    "name": "2025-12-20_16-21-55",
+    "shotAt": "2025:12:20 16:21:55",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.0013333333333333333
+   },
+   {
+    "name": "2025-12-20_16-16-25",
+    "shotAt": "2025:12:20 16:16:25",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.0013333333333333333
+   },
+   {
+    "name": "2025-12-20_16-09-05",
+    "shotAt": "2025:12:20 16:09:05",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.0013333333333333333
+   },
+   {
+    "name": "2025-12-20_15-55-23",
+    "shotAt": "2025:12:20 15:55:23",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-12-20_13-45-49",
+    "shotAt": "2025:12:20 13:45:49",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-12-20_11-51-18",
+    "shotAt": "2025:12:20 11:51:18",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF200-800mm F6.3-9 IS USM",
+    "focalLength": 432,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-11-27_10-58-42",
+    "shotAt": "2025:11:27 10:58:42",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-11-27_10-49-42",
+    "shotAt": "2025:11:27 10:49:42",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-11-27_10-44-46",
+    "shotAt": "2025:11:27 10:44:46",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-11-27_10-39-36",
+    "shotAt": "2025:11:27 10:39:36",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-11-27_10-29-11",
+    "shotAt": "2025:11:27 10:29:11",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-11-27_10-21-08",
+    "shotAt": "2025:11:27 10:21:08",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-11-27_10-17-19",
+    "shotAt": "2025:11:27 10:17:19",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-11-27_10-09-25",
+    "shotAt": "2025:11:27 10:09:25",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-10-18_15-28-38",
+    "shotAt": "2025:10:18 15:28:38",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_15-16-33",
+    "shotAt": "2025:10:18 15:16:33",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 124,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_15-14-02",
+    "shotAt": "2025:10:18 15:14:02",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 81,
+    "aperture": 7.1,
+    "iso": 320,
+    "shutter": 0.0008
+   },
+   {
+    "name": "2025-10-18_15-09-41",
+    "shotAt": "2025:10:18 15:09:41",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_15-08-36",
+    "shotAt": "2025:10:18 15:08:36",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_15-08-32",
+    "shotAt": "2025:10:18 15:08:32",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_15-02-05",
+    "shotAt": "2025:10:18 15:02:05",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_15-01-57",
+    "shotAt": "2025:10:18 15:01:57",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 135,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_14-58-58",
+    "shotAt": "2025:10:18 14:58:58",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 70,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_14-29-56",
+    "shotAt": "2025:10:18 14:29:56",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 100,
+    "shutter": 0.002
+   },
+   {
+    "name": "2025-10-18_14-29-55",
+    "shotAt": "2025:10:18 14:29:55",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 100,
+    "shutter": 0.002
+   },
+   {
+    "name": "2025-10-18_11-53-06",
+    "shotAt": "2025:10:18 11:53:06",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 2.8,
+    "iso": 250,
+    "shutter": 0.01
+   },
+   {
+    "name": "2025-10-18_11-52-12",
+    "shotAt": "2025:10:18 11:52:12",
+    "camera": "Canon EOS R6m2",
+    "lens": "EF24-70mm f/2.8L USM",
+    "focalLength": 32,
+    "aperture": 2.8,
+    "iso": 160,
+    "shutter": 0.01
+   },
+   {
+    "name": "2025-10-18_11-50-27",
+    "shotAt": "2025:10:18 11:50:27",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 70,
+    "aperture": 2.8,
+    "iso": 160,
+    "shutter": 0.01
+   },
+   {
+    "name": "2025-10-18_11-37-37",
+    "shotAt": "2025:10:18 11:37:37",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 70,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-33-55",
+    "shotAt": "2025:10:18 11:33:55",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 1600,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-33-06",
+    "shotAt": "2025:10:18 11:33:06",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 70,
+    "aperture": 8,
+    "iso": 800,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-32-18",
+    "shotAt": "2025:10:18 11:32:18",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 800,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-30-41",
+    "shotAt": "2025:10:18 11:30:41",
+    "camera": "Canon EOS R6m2",
+    "lens": "EF24-70mm f/2.8L USM",
+    "focalLength": 40,
+    "aperture": 8,
+    "iso": 640,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-30-04",
+    "shotAt": "2025:10:18 11:30:04",
+    "camera": "Canon EOS R6m2",
+    "lens": "EF24-70mm f/2.8L USM",
+    "focalLength": 70,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-27-19",
+    "shotAt": "2025:10:18 11:27:19",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-24-38",
+    "shotAt": "2025:10:18 11:24:38",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 640,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-13-26",
+    "shotAt": "2025:10:18 11:13:26",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 400,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-06-01",
+    "shotAt": "2025:10:18 11:06:01",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 163,
+    "aperture": 8,
+    "iso": 800,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-10-18_11-01-06",
+    "shotAt": "2025:10:18 11:01:06",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 70,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-58-42",
+    "shotAt": "2025:10:18 10:58:42",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-56-48",
+    "shotAt": "2025:10:18 10:56:48",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-56-45",
+    "shotAt": "2025:10:18 10:56:45",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-54-45",
+    "shotAt": "2025:10:18 10:54:45",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-52-38",
+    "shotAt": "2025:10:18 10:52:38",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-52-37",
+    "shotAt": "2025:10:18 10:52:37",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-51-33",
+    "shotAt": "2025:10:18 10:51:33",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-47-18",
+    "shotAt": "2025:10:18 10:47:18",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 70,
+    "aperture": 8,
+    "iso": 250,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-47-10",
+    "shotAt": "2025:10:18 10:47:10",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 108,
+    "aperture": 8,
+    "iso": 250,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-10-18_10-45-55",
+    "shotAt": "2025:10:18 10:45:55",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 250,
+    "shutter": 0.0002
+   },
+   {
+    "name": "2025-10-18_10-43-39",
+    "shotAt": "2025:10:18 10:43:39",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 250,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-09-03_17-46-58",
+    "shotAt": "2025:09:03 17:46:58",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 147,
+    "aperture": 6.3,
+    "iso": 800,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-08-28_14-13-09",
+    "shotAt": "2025:08:28 14:13:09",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 5.6,
+    "iso": 200,
+    "shutter": 0.0008
+   },
+   {
+    "name": "2025-08-28_14-13-04",
+    "shotAt": "2025:08:28 14:13:04",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 5.6,
+    "iso": 200,
+    "shutter": 0.0008
+   },
+   {
+    "name": "2025-08-28_13-50-51",
+    "shotAt": "2025:08:28 13:50:51",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 5.6,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-08-28_13-50-45",
+    "shotAt": "2025:08:28 13:50:45",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 5.6,
+    "iso": 320,
+    "shutter": 0.000625
+   },
+   {
+    "name": "2025-08-03_16-21-10",
+    "shotAt": "2025:08:03 16:21:10",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-08-03_16-21-06",
+    "shotAt": "2025:08:03 16:21:06",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-08-03_16-01-36",
+    "shotAt": "2025:08:03 16:01:36",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 250,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-08-03_15-56-21",
+    "shotAt": "2025:08:03 15:56:21",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 7.1,
+    "iso": 125,
+    "shutter": 0.00125
+   },
+   {
+    "name": "2025-08-03_15-50-51",
+    "shotAt": "2025:08:03 15:50:51",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 500,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-08-03_15-39-30",
+    "shotAt": "2025:08:03 15:39:30",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-08-03_15-37-01",
+    "shotAt": "2025:08:03 15:37:01",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-08-03_15-35-06",
+    "shotAt": "2025:08:03 15:35:06",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 100,
+    "shutter": 0.001
+   },
+   {
+    "name": "2025-07-19_10-47-15",
+    "shotAt": "2025:07:19 10:47:15",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-07-14_16-19-18",
+    "shotAt": "2025:07:14 16:19:18",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 158,
+    "aperture": 8,
+    "iso": 320,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-07-13_14-27-11",
+    "shotAt": "2025:07:13 14:27:11",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-07-13_12-51-38",
+    "shotAt": "2025:07:13 12:51:38",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 640,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-07-13_12-51-35",
+    "shotAt": "2025:07:13 12:51:35",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 640,
+    "shutter": 0.0005
+   },
+   {
+    "name": "2025-07-05_11-47-28",
+    "shotAt": "2025:07:05 11:47:28",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 250,
+    "shutter": 0.0008
+   },
+   {
+    "name": "2025-07-05_11-07-57",
+    "shotAt": "2025:07:05 11:07:57",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 8,
+    "iso": 200,
+    "shutter": 0.0008
+   },
+   {
+    "name": "2025-06-02_18-19-07",
+    "shotAt": "2025:06:02 18:19:07",
+    "camera": "Canon EOS R6m2",
+    "lens": "RF70-200mm F2.8 L IS USM",
+    "focalLength": 200,
+    "aperture": 2.8,
+    "iso": 100,
+    "shutter": 0.00025
+   }
+  ]
+ }
+}
