@@ -53,6 +53,7 @@ const socialLinks = [
       <RouterLink to="/now" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Now</RouterLink>
       <RouterLink to="/spotting" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Spotting</RouterLink>
       <RouterLink to="/homelab" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Homelab</RouterLink>
+      <RouterLink to="/tokens" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Tokens</RouterLink>
       <RouterLink to="/changelog" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Changelog</RouterLink>
       <div class="flex items-center gap-4">
         <template v-for="link in socialLinks" :key="link.label">

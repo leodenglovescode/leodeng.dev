@@ -1,18 +1,33 @@
 #!/usr/bin/env bash
-# Pushes a heartbeat to https://leodeng.dev/api/homelab.
+# Pushes a heartbeat to https://leodeng.dev/api/homelab, and a Claude Code
+# token rollup to https://leodeng.dev/api/tokens.
 #
 # Runs on the home server, which is behind Headscale and has no inbound path
 # from the internet — so the box reaches out rather than being polled.
 #
-# Reads only /proc and /sys, needs no root, and has no dependencies beyond
-# curl and awk. Everything it sends is public the moment it lands: uptime,
-# load, memory, CPU temperature. Nothing that identifies the machine or what
-# runs on it — see functions/api/homelab.js for why.
+# The heartbeat reads only /proc and /sys, needs no root, and has no
+# dependencies beyond curl and awk. Everything it sends is public the moment it
+# lands: uptime, load, memory, CPU temperature. Nothing that identifies the
+# machine or what runs on it — see functions/api/homelab.js for why.
+#
+# The token rollup additionally reads ~/.claude/projects and needs python3.
+# It sends per-day token counts and nothing else — see homelab/tokens.py and
+# functions/api/tokens.js.
 #
 # Install: see homelab/README.md
 set -euo pipefail
 
 ENDPOINT="${HOMELAB_ENDPOINT:-https://leodeng.dev/api/homelab}"
+TOKENS_ENDPOINT="${HOMELAB_TOKENS_ENDPOINT:-https://leodeng.dev/api/tokens}"
+TOKENS_SCRIPT="${HOMELAB_TOKENS_SCRIPT:-/usr/local/bin/homelab-tokens.py}"
+
+# How long an unchanged token rollup may go un-resent. See tokens.py.
+TOKENS_MIN_INTERVAL="${HOMELAB_TOKENS_MIN_INTERVAL:-600}"
+
+# systemd sets STATE_DIRECTORY from StateDirectory= in the unit. The fallback
+# is for running this by hand.
+STATE_DIR="${STATE_DIRECTORY:-${XDG_STATE_HOME:-$HOME/.local/state}/homelab-status}"
+
 : "${HOMELAB_TOKEN:?HOMELAB_TOKEN is not set (see homelab/README.md)}"
 
 # --- uptime ------------------------------------------------------------------
@@ -67,3 +82,61 @@ curl --silent --show-error --fail \
      -H "authorization: Bearer ${HOMELAB_TOKEN}" \
      -d "$payload" \
      -o /dev/null
+
+# --- Claude Code token usage -------------------------------------------------
+# Deliberately never fails the unit. The heartbeat is the job this timer exists
+# for, and a box with no Claude Code transcripts on it — or no python3 — is a
+# perfectly healthy box. Problems go to the journal and the run still exits 0.
+push_tokens() {
+  if [ ! -r "$TOKENS_SCRIPT" ]; then
+    return 0
+  fi
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "python3 not found; skipping the token rollup" >&2
+    return 0
+  fi
+
+  local state="$STATE_DIR/tokens.json"
+
+  # No state file means this box has never pushed, so send the whole history
+  # once to backfill. Every run after that sends only the trailing few days —
+  # older rows can't change, and re-sending them forever is what would
+  # eventually outgrow D1's free write allowance. See tokens.py.
+  local scope=()
+  [ -f "$state" ] || scope=(--full)
+
+  # tokens.py exits 3 to mean "nothing worth sending", which is the common case
+  # on an idle box — so the exit status is inspected rather than trusted, and
+  # `set -e` is held off for exactly this call.
+  local payload status
+  set +e
+  payload=$(python3 "$TOKENS_SCRIPT" \
+    --state-file "$state" \
+    --min-interval "$TOKENS_MIN_INTERVAL" \
+    "${scope[@]}")
+  status=$?
+  set -e
+
+  case "$status" in
+    0) ;;
+    3) return 0 ;;
+    *) echo "token rollup failed (exit $status); heartbeat was still sent" >&2; return 0 ;;
+  esac
+
+  [ -n "$payload" ] || return 0
+
+  if ! curl --silent --show-error --fail \
+            --max-time 20 --retry 2 --retry-delay 3 \
+            -X POST "$TOKENS_ENDPOINT" \
+            -H 'content-type: application/json' \
+            -H "authorization: Bearer ${HOMELAB_TOKEN}" \
+            -d "$payload" \
+            -o /dev/null; then
+    # The state file was already stamped, so this rollup won't be retried until
+    # TOKENS_MIN_INTERVAL is up. That bounds the damage at one stale interval
+    # instead of hammering a failing endpoint every minute.
+    echo "token push failed; will retry within ${TOKENS_MIN_INTERVAL}s" >&2
+  fi
+}
+
+push_tokens
