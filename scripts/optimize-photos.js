@@ -3,19 +3,25 @@
 // compressed lightbox copy each, uploads those to R2, and writes the manifest
 // the site actually reads.
 //
-// The originals are NOT in the repo — src/photos is gitignored. They were 121MB
-// of full-resolution frames that no visitor ever received (the browser only
-// ever gets the derivatives), sitting in a public repo behind a Download ZIP
-// button. So they live on disk here and in R2 as cold backup.
+// The originals are NOT in the repo — src/photos is gitignored and usually
+// absent entirely. They were 121MB of frames no visitor ever received (the
+// browser only ever gets the derivatives), sitting in a public repo behind a
+// Download ZIP button. They're archived outside this project.
 //
-// The consequence: Cloudflare can't regenerate the gallery, because it has no
-// photos to regenerate it from. Instead this runs locally, and the committed
-// manifest at src/generated/photos.json is what the build consumes. If there's
-// no src/photos directory (i.e. on the build machine) the script leaves the
-// manifest alone and exits.
+// So the manifest at src/generated/photos.json — not src/photos — is the record
+// of what's in the gallery, and it's merged rather than rebuilt. Derivatives
+// live in R2 and stay valid whether or not their original is on this disk.
+// With no src/photos at all, this is a no-op, which is what Cloudflare hits on
+// every deploy.
 //
-//   npm run generate               regenerate stale derivatives, upload those
-//   npm run generate -- --upload-all   re-upload everything (initial sync)
+// Adding photos: drop the new files in src/photos/<collection>/ and run it.
+// You do NOT need the rest of the collection present — the manifest is merged,
+// not rebuilt, so existing entries survive an empty or partial folder.
+//
+//   npm run generate                   process + upload whatever is on disk
+//   npm run generate -- --prune        also drop manifest entries with no local
+//                                      original (needs the full collection)
+//   npm run generate -- --upload-all   re-upload every derivative (resync)
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -33,6 +39,7 @@ const PUBLIC_BASE = (process.env.R2_PUBLIC_BASE || 'https://media.leodeng.dev').
 const KEY_PREFIX = 'photos'
 
 const UPLOAD_ALL = process.argv.includes('--upload-all')
+const PRUNE = process.argv.includes('--prune')
 // Signed PUTs are cheap, so this is just about not opening 150 sockets at once.
 const UPLOAD_CONCURRENCY = 8
 
@@ -246,41 +253,43 @@ async function main() {
   const results = []
   for (const dir of collectionDirs) results.push(await processCollection(dir))
 
-  // The originals aren't in the repo, so src/photos can legitimately be empty
-  // or partial on a fresh checkout — and the manifest is built from whatever
-  // is on disk. Without this, restoring five photos and running generate would
-  // quietly drop the other sixty-eight from the gallery.
-  if (fs.existsSync(MANIFEST_PATH)) {
-    const previous = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8')).collections ?? {}
-    const shrinking = Object.entries(previous)
-      .map(([slug, before]) => {
-        const after = results.find(r => r.label === slug)?.entries.length ?? 0
-        return { slug, before: before.length, after }
-      })
-      .filter(c => c.after < c.before)
-
-    if (shrinking.length && !process.argv.includes('--prune')) {
-      const detail = shrinking.map(c => `  ${c.slug}: ${c.before} -> ${c.after}`).join('\n')
-      throw new Error(
-        `Refusing to shrink the photo manifest:\n${detail}\n\n` +
-        'src/photos looks incomplete — restore the missing originals first.\n' +
-        'If the photos really are meant to go, re-run with --prune.',
-      )
-    }
-  }
-
   await uploadAll(results.flatMap(r => r.uploads))
 
-  const manifest = {
-    base: PUBLIC_BASE,
-    prefix: KEY_PREFIX,
-    collections: Object.fromEntries(results.map(r => [r.label, r.entries])),
+  // Merged into the existing manifest rather than replacing it. The derivatives
+  // live in R2 and stay there whether or not the original is still on this
+  // disk, so the manifest — not src/photos — is the record of what's in the
+  // gallery. That means you can drop in five new photos and run this without
+  // first restoring the other sixty-eight.
+  //
+  // The flip side: a photo can't leave the gallery by deleting its original,
+  // because "absent" and "not restored yet" look identical. Removing one is
+  // deliberate — --prune, with the collection fully present.
+  const previous = fs.existsSync(MANIFEST_PATH)
+    ? JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8')).collections ?? {}
+    : {}
+
+  const collections = { ...previous }
+  for (const { label, entries } of results) {
+    const byName = new Map((previous[label] ?? []).map(e => [e.name, e]))
+    for (const entry of entries) byName.set(entry.name, entry) // fresh EXIF wins
+
+    if (PRUNE) {
+      const onDisk = new Set(entries.map(e => e.name))
+      for (const name of [...byName.keys()]) if (!onDisk.has(name)) byName.delete(name)
+    }
+
+    collections[label] = [...byName.values()].sort((a, b) => String(b.name).localeCompare(String(a.name)))
   }
+
+  const manifest = { base: PUBLIC_BASE, prefix: KEY_PREFIX, collections }
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true })
   fs.writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 1)}\n`)
 
-  const total = results.reduce((n, r) => n + r.entries.length, 0)
-  console.log(`  wrote manifest: ${total} photo${total === 1 ? '' : 's'} across ${results.length} collection${results.length === 1 ? '' : 's'}`)
+  const total = Object.values(collections).reduce((n, e) => n + e.length, 0)
+  const added = total - Object.values(previous).reduce((n, e) => n + e.length, 0)
+  const delta = added > 0 ? ` (+${added})` : added < 0 ? ` (${added}, pruned)` : ''
+  const names = Object.keys(collections).length
+  console.log(`  wrote manifest: ${total} photo${total === 1 ? '' : 's'}${delta} across ${names} collection${names === 1 ? '' : 's'}`)
 }
 
 main().catch((err) => {
