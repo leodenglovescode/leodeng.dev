@@ -1,0 +1,28 @@
+[Unit]
+Description=Push a homelab heartbeat to leodeng.dev
+# Don't fire before the box can actually resolve and reach the internet;
+# otherwise every boot logs a failed push.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# HOMELAB_TOKEN lives here, not in the unit file — unit files are world-readable
+# by default and this one is committed to a public repo.
+EnvironmentFile=/etc/homelab-status.env
+ExecStart=/usr/local/bin/homelab-agent.sh
+
+# The agent reads /proc and /sys and talks to one host. It has no business
+# doing anything else, so it isn't allowed to.
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+SystemCallFilter=@system-service
+CapabilityBoundingSet=

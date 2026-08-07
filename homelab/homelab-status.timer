@@ -1,0 +1,19 @@
+[Unit]
+Description=Push a homelab heartbeat every minute
+
+[Timer]
+# One minute after boot, then every minute. The Function treats three missed
+# heartbeats (3 min) as offline, so a single skipped tick won't flap the badge.
+OnBootSec=1min
+OnUnitActiveSec=1min
+
+# Without this every machine running it would hit the endpoint on the exact
+# same second. It's one box today, but the jitter costs nothing.
+RandomizedDelaySec=10s
+
+# Fire immediately on resume rather than waiting out the remaining interval,
+# so a laptop or a box that was suspended shows as online again promptly.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
