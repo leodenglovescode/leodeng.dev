@@ -1,0 +1,398 @@
+{
+ "repo": "leodenglovescode/leodeng.dev",
+ "generatedAt": "2026-08-07",
+ "commits": [
+  {
+   "hash": "3cf0061a1fe92d084f9e0fef8dbd9fb6bd8f1158",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "auto-rotate the homepage status line"
+  },
+  {
+   "hash": "504aa05b05d9fed83098c0daadb42b7cf75f838c",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "new visual identity — blue and gold, IBM Plex Sans"
+  },
+  {
+   "hash": "862271549799a3729810079768e7ab9ccb945380",
+   "date": "2026-08-07",
+   "type": "fix",
+   "scope": null,
+   "subject": "make small text legible across the site"
+  },
+  {
+   "hash": "9d3532dbe17260d3bc2df53068b5c360cbdfe94a",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "stop the admin editor losing unsaved work"
+  },
+  {
+   "hash": "2f2c2c3456328e35a0e92eda6169a1305753b947",
+   "date": "2026-08-07",
+   "type": "content",
+   "scope": null,
+   "subject": "add post \"Explaining my weird home network & services setup\""
+  },
+  {
+   "hash": "a61a1052d638dc68a357ef06845fcc619aeaa936",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "drafts folder in the admin editor"
+  },
+  {
+   "hash": "288bdf093aeb72e00d57e43ef02323e0987f782c",
+   "date": "2026-08-07",
+   "type": "fix",
+   "scope": null,
+   "subject": "stop the admin editor eating characters during IME input"
+  },
+  {
+   "hash": "d2a77a032ebe82958022db70d18c7bc36bccae42",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "GitHub-style callouts for important sections"
+  },
+  {
+   "hash": "3cff129fcd7db383a584f1150b3397a18bb804f6",
+   "date": "2026-08-06",
+   "type": "feat",
+   "scope": null,
+   "subject": "render mermaid diagrams with pan/zoom controls"
+  },
+  {
+   "hash": "7c4927ba0e2a4d54bdb3f628c3c3a6bd71027191",
+   "date": "2026-08-06",
+   "type": "fix",
+   "scope": null,
+   "subject": "style headings, links and the rest of .prose"
+  },
+  {
+   "hash": "1c5c6baab9b851785876755a10d8a8e710a4cbf8",
+   "date": "2026-08-06",
+   "type": "content",
+   "scope": null,
+   "subject": "update post \"I Forked Tailscale's Android App So My Phone Could Find My Homelab\""
+  },
+  {
+   "hash": "8a0f6085e2ac34768ebe6bbfaa041e94a068e85d",
+   "date": "2026-08-06",
+   "type": "content",
+   "scope": null,
+   "subject": "rename post to \"i-forked-tailscales-android-app-so-my-phone-could-find-my-homelab\""
+  },
+  {
+   "hash": "8ee2765960eb41ee80ce642ba2cc3afc5f47e32c",
+   "date": "2026-08-06",
+   "type": "content",
+   "scope": null,
+   "subject": "update post \"I Forked Tailscale's Android App So My Phone Could Find My Homelab\""
+  },
+  {
+   "hash": "19873a5d2629639e1584d92c55bfe4bdc407517f",
+   "date": "2026-08-06",
+   "type": "fix",
+   "scope": null,
+   "subject": "stop /admin being cached at the edge"
+  },
+  {
+   "hash": "d7c908af0961bf19ca1bd49cd12671d437aa7b5f",
+   "date": "2026-08-06",
+   "type": "feat",
+   "scope": null,
+   "subject": "replace Decap CMS with a self-built editor at /admin"
+  },
+  {
+   "hash": "3bf0981738767cdaf836a85ba7628903c2c0949c",
+   "date": "2026-08-06",
+   "type": "fix",
+   "scope": null,
+   "subject": "parse multi-line YAML frontmatter so descriptions aren't truncated"
+  },
+  {
+   "hash": "18caf62b31587a0f9cc01da5ba704419f827e43d",
+   "date": "2026-08-05",
+   "type": "content",
+   "scope": null,
+   "subject": "Create Blog Posts “i-forked-a-vpn-app-so-my-phone-could-find-my-house”"
+  },
+  {
+   "hash": "b1b84d62dc9a8c67d899e176887b1de92feb50e9",
+   "date": "2026-08-05",
+   "type": "content",
+   "scope": null,
+   "subject": "Update Blog Posts “tailscale-headscale-setup-blog”"
+  },
+  {
+   "hash": "2a94bf0b1c838c828b45d28b946518f963351b4a",
+   "date": "2026-08-02",
+   "type": "fix",
+   "scope": null,
+   "subject": "Update to correct microphone model"
+  },
+  {
+   "hash": "0ef1088370fc5602485249ddf819f6813edf2794",
+   "date": "2026-07-30",
+   "type": "feat",
+   "scope": null,
+   "subject": "redesign contact page, fix casing across pages"
+  },
+  {
+   "hash": "2e10f2c78113a378b2b0d5bcf3d317273188719b",
+   "date": "2026-07-28",
+   "type": "content",
+   "scope": null,
+   "subject": "Update Blog Posts “tailscale-headscale-setup-blog”"
+  },
+  {
+   "hash": "b16c5bba36184af06d0cd5e5dbbdfcd04b59d031",
+   "date": "2026-07-27",
+   "type": "feat",
+   "scope": null,
+   "subject": "split gallery into paginated collections, add Stack page"
+  },
+  {
+   "hash": "2e5f65a56aac8127592eeed42f81fc9a584be0e5",
+   "date": "2026-07-24",
+   "type": "fix",
+   "scope": null,
+   "subject": "match Apple Music embed theme to site's dark/light toggle"
+  },
+  {
+   "hash": "735bf4f0a4453dba1500b977862026a5e3299428",
+   "date": "2026-07-24",
+   "type": "feat",
+   "scope": null,
+   "subject": "add live GitHub stats and contribution graph to About page"
+  },
+  {
+   "hash": "587e9b07b7adf2584350d2c9d0338603d73f7c3f",
+   "date": "2026-07-24",
+   "type": "fix",
+   "scope": null,
+   "subject": "self-host decap-cms bundle instead of loading from unpkg"
+  },
+  {
+   "hash": "df113970157c4c4a0bc2d50011cd7f95ba700f3a",
+   "date": "2026-07-23",
+   "type": "feat",
+   "scope": null,
+   "subject": "add Decap CMS admin panel, fix blog post timestamps"
+  },
+  {
+   "hash": "c8e38b49dfd89c62db67ac8347226f6b10b32f3a",
+   "date": "2026-07-23",
+   "type": "feat",
+   "scope": null,
+   "subject": "use profile pic as favicon, optimize avatar, update YouTube link"
+  },
+  {
+   "hash": "4eb4cd4b329f0b074e8fc92fe4a0767566f8b121",
+   "date": "2026-07-23",
+   "type": "feat",
+   "scope": null,
+   "subject": "add RSS explainer page, restyle footer with social icons"
+  },
+  {
+   "hash": "498946e89bf3943d1c985638fb2224bc5bdfb941",
+   "date": "2026-07-23",
+   "type": "feat",
+   "scope": null,
+   "subject": "add /now page and RSS feed for the blog"
+  },
+  {
+   "hash": "6265b6b5b0ae2dce4353645507a70385f7179435",
+   "date": "2026-07-23",
+   "type": "feat",
+   "scope": null,
+   "subject": "add planespotting photo gallery page"
+  },
+  {
+   "hash": "9f867b265dc073248865a57bbd0b30732dd9da7a",
+   "date": "2026-07-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "add robots.txt and generated sitemap.xml"
+  },
+  {
+   "hash": "72e23373d9decc21d11a383accb72f35a584f1f8",
+   "date": "2026-07-19",
+   "type": "fix",
+   "scope": null,
+   "subject": "output flat .html files instead of dir/index.html for prerendered routes"
+  },
+  {
+   "hash": "982a71442108b8bee12c381f8a4a662049c772e5",
+   "date": "2026-07-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "serve bare routes as 200 rewrites instead of 308 redirects"
+  },
+  {
+   "hash": "a81ef70af9a0f3418ff81a3296afc771c0003fb1",
+   "date": "2026-07-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "prerender all routes for crawler/AI-agent visibility"
+  },
+  {
+   "hash": "589e2b7ffa37ed206126668027985adc82b7b90d",
+   "date": "2026-07-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "Update homepage and about description"
+  },
+  {
+   "hash": "1189ad61813089a41927ccec637f2e4ada4603ff",
+   "date": "2026-07-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "Update english language flag from UK to US"
+  },
+  {
+   "hash": "5b3643e93ad8f40867785797de17da75e8468222",
+   "date": "2026-07-18",
+   "type": "fix",
+   "scope": null,
+   "subject": "give BlogPost a single template root so page transitions work"
+  },
+  {
+   "hash": "c7764ddee930a4da05fd11cd1264427c06e873fc",
+   "date": "2026-07-18",
+   "type": "fix",
+   "scope": null,
+   "subject": "label languages as 1st/2nd language, drop fluency wording"
+  },
+  {
+   "hash": "85e26b90d4e1e517aafac92a9d148c5c5a1347b4",
+   "date": "2026-07-18",
+   "type": "feat",
+   "scope": null,
+   "subject": "add languages section to about page"
+  },
+  {
+   "hash": "a8cc789d92bf1fbc26db46b7cdb2bf5d304434ae",
+   "date": "2026-07-18",
+   "type": "feat",
+   "scope": null,
+   "subject": "embed favorite rock playlist on about page"
+  },
+  {
+   "hash": "eadb6a328ed1fb39eb2b725a366dcdeabc17659c",
+   "date": "2026-07-12",
+   "type": "feat",
+   "scope": null,
+   "subject": "Added profile picture on main page, changed about descriptions"
+  },
+  {
+   "hash": "1d63aa37e67e50f71d44a154008a30e8dc685668",
+   "date": "2026-07-12",
+   "type": "feat",
+   "scope": null,
+   "subject": "Added new blog post and gitignored obsidian files."
+  },
+  {
+   "hash": "e78d3f51f839ed03ec36b5b8896c1254f2051825",
+   "date": "2026-06-13",
+   "type": "feat",
+   "scope": null,
+   "subject": "add dark/light mode toggle"
+  },
+  {
+   "hash": "ae26dc38186c8bb84f2bc4471dfe30e11382b928",
+   "date": "2026-06-13",
+   "type": "feat",
+   "scope": null,
+   "subject": "add DragonSea MC project"
+  },
+  {
+   "hash": "7d818d2cffdd774b2e904f744e1a8b83a6066d00",
+   "date": "2026-05-26",
+   "type": "fix",
+   "scope": null,
+   "subject": "Fix config"
+  },
+  {
+   "hash": "c7903ede9d14db58dc05f965f968fc939791f810",
+   "date": "2026-05-26",
+   "type": "feat",
+   "scope": null,
+   "subject": "add multi-page routing, blog, navigation, and polish"
+  },
+  {
+   "hash": "34a92bc3203c31f74b066e81cb85c0a8c1b31285",
+   "date": "2026-03-18",
+   "type": "feat",
+   "scope": null,
+   "subject": "initialize Vue 3 project with Vite and Tailwind CSS"
+  },
+  {
+   "hash": "74157d6d84c5fc85650076cd515c25ebb4fcbe1f",
+   "date": "2026-02-16",
+   "type": "other",
+   "scope": null,
+   "subject": "Fixed mobile menu broken on terminal page"
+  },
+  {
+   "hash": "7eccb425fdabd4ecb519e537af2a766a00957df9",
+   "date": "2026-02-16",
+   "type": "other",
+   "scope": null,
+   "subject": "Added/Fixed missing translations for chinese, replaced placeholder projects with actual ones"
+  },
+  {
+   "hash": "e7773ebc7b1f335918f2948912070836f099fc96",
+   "date": "2026-02-16",
+   "type": "other",
+   "scope": null,
+   "subject": "Added interactive terminal and added details about me to the about page :)"
+  },
+  {
+   "hash": "86e5af21fd5584874ecabf53eba4798f8affe255",
+   "date": "2026-02-15",
+   "type": "other",
+   "scope": null,
+   "subject": "Update README to add a description"
+  },
+  {
+   "hash": "67e668f232eefde7fce43e5a374ca614e6c918b1",
+   "date": "2026-02-15",
+   "type": "other",
+   "scope": null,
+   "subject": "Added README.md file for repo"
+  },
+  {
+   "hash": "6fa02e81c5cb282fe42da3a5fb8ba4978a8712f9",
+   "date": "2026-02-15",
+   "type": "other",
+   "scope": null,
+   "subject": "Deleted unecessary styles"
+  },
+  {
+   "hash": "26272a52498e07bda3128efc05f14407668e7656",
+   "date": "2026-02-15",
+   "type": "other",
+   "scope": null,
+   "subject": "Changed some translations and styles"
+  },
+  {
+   "hash": "a6f887ff3355098e5ae173696a0c3c39dbf02aa7",
+   "date": "2026-02-15",
+   "type": "other",
+   "scope": null,
+   "subject": "Updated website to deprecate \"#\" anchors and instead use the good ol' html redirects, updated page to include chinese and english locales"
+  },
+  {
+   "hash": "41bc46b5cec0e039f158538efc47c608b3a177f7",
+   "date": "2026-02-15",
+   "type": "other",
+   "scope": null,
+   "subject": "Initial commit for my own website"
+  }
+ ]
+}

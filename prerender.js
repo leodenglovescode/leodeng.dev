@@ -10,6 +10,8 @@ const staticRoutes = [
   { path: '/projects',  title: 'Projects' },
   { path: '/gallery',   title: 'Gallery' },
   { path: '/now',       title: 'Now' },
+  { path: '/spotting',  title: 'Spotting Stats', description: "Every frame in my planespotting gallery, counted: gear, focal lengths, exposure and time of day, read straight out of the EXIF." },
+  { path: '/changelog', title: 'Changelog', description: 'Every commit to leodeng.dev, generated from the repo at build time.' },
   { path: '/stack',     title: 'Stack' },
   { path: '/feed',      title: 'RSS Feed' },
   { path: '/blog',      title: 'Blog' },

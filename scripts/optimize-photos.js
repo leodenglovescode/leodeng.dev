@@ -8,6 +8,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
+import exifr from 'exifr'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PHOTOS_ROOT = path.join(__dirname, '../src/photos')
@@ -43,6 +44,61 @@ async function makeFull(srcPath, outPath) {
   fs.writeFileSync(outPath, buffer)
 }
 
+// The shot data behind /spotting. Read with reviveValues:false so
+// DateTimeOriginal stays the raw "2025:10:18 10:43:39" wall clock — exifr's
+// revived Date would be interpreted in the build machine's timezone, and a CI
+// box running UTC would shift every hour-of-day bucket by eight.
+const EXIF_FIELDS = [
+  'DateTimeOriginal', 'Model', 'LensModel',
+  'FocalLength', 'FNumber', 'ISO', 'ExposureTime',
+]
+
+function wallClockFromName(name) {
+  const m = name.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})/)
+  return m ? `${m[1]}:${m[2]}:${m[3]} ${m[4]}:${m[5]}:${m[6]}` : null
+}
+
+async function writeExifIndex(collectionDir, files) {
+  const entries = []
+
+  for (const file of files) {
+    const name = path.parse(file).name
+    let tags = {}
+    try {
+      tags = await exifr.parse(path.join(collectionDir, file), {
+        tiff: true, exif: true, pick: EXIF_FIELDS, reviveValues: false,
+      }) ?? {}
+    } catch {
+      // A photo with unreadable EXIF still counts as a frame; it just
+      // contributes nothing to the gear or exposure breakdowns.
+    }
+
+    // The filename is the more trustworthy clock of the two: photos are named
+    // by scripts/rename-photos.js from the original capture time, and the name
+    // survives re-exports that rewrite EXIF.
+    const shotAt = wallClockFromName(name) ?? tags.DateTimeOriginal ?? null
+    if (!shotAt) continue
+
+    entries.push({
+      name,
+      shotAt,
+      camera: tags.Model ?? null,
+      lens: tags.LensModel ?? null,
+      focalLength: typeof tags.FocalLength === 'number' ? tags.FocalLength : null,
+      aperture: typeof tags.FNumber === 'number' ? tags.FNumber : null,
+      iso: typeof tags.ISO === 'number' ? tags.ISO : null,
+      shutter: typeof tags.ExposureTime === 'number' ? tags.ExposureTime : null,
+    })
+  }
+
+  entries.sort((a, b) => a.shotAt.localeCompare(b.shotAt))
+  fs.writeFileSync(
+    path.join(collectionDir, '_generated/exif.json'),
+    JSON.stringify(entries, null, 1),
+  )
+  return entries.length
+}
+
 async function processCollection(collectionDir) {
   const label = path.basename(collectionDir)
   const thumbsDir = path.join(collectionDir, '_generated/thumbs')
@@ -73,6 +129,11 @@ async function processCollection(collectionDir) {
       console.warn(`✗ ${label}/${file}: ${err.message}`)
     }
   }
+
+  // Rewritten every run rather than only for stale files — it's a full index,
+  // so a single deleted photo would otherwise leave a phantom frame behind.
+  const indexed = await writeExifIndex(collectionDir, files)
+  console.log(`  indexed EXIF for ${indexed}/${files.length} ${label} photo${files.length === 1 ? '' : 's'}`)
 
   // prune derivatives whose source photo was renamed or deleted
   const validBases = new Set(files.map(f => path.parse(f).name))

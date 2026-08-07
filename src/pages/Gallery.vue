@@ -7,7 +7,8 @@ import { collections } from '../utils/gallery.js'
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-10">Gallery</h2>
 
     <p class="text-sm text-muted leading-relaxed mb-10">
-      Photo collections. Pick one to browse.
+      Photo collections. Pick one to browse — or see what the
+      <RouterLink to="/spotting" class="text-fg hover:text-accent transition-colors">EXIF says about how they were shot</RouterLink>.
     </p>
 
     <div v-if="collections.length" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
