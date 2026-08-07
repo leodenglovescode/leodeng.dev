@@ -48,8 +48,10 @@ export function loadCredentials(env = process.env) {
   if (missing.length) {
     throw new Error(
       `Missing R2 credentials: ${missing.join(', ')}.\n` +
-      'Add R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY to .dev.vars ' +
-      '(Cloudflare dashboard > R2 > Manage API tokens > Object Read & Write).',
+      'Add R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY to .dev.vars.\n' +
+      'Dashboard > R2 > Account Details panel > API Tokens > Manage, then ' +
+      '"Object Read & Write" scoped to the bucket. Note this is not the generic ' +
+      'Account API Tokens page — that one issues a Bearer token, not an S3 key pair.',
     )
   }
   return creds
