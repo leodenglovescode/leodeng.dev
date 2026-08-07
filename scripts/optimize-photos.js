@@ -246,6 +246,29 @@ async function main() {
   const results = []
   for (const dir of collectionDirs) results.push(await processCollection(dir))
 
+  // The originals aren't in the repo, so src/photos can legitimately be empty
+  // or partial on a fresh checkout — and the manifest is built from whatever
+  // is on disk. Without this, restoring five photos and running generate would
+  // quietly drop the other sixty-eight from the gallery.
+  if (fs.existsSync(MANIFEST_PATH)) {
+    const previous = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8')).collections ?? {}
+    const shrinking = Object.entries(previous)
+      .map(([slug, before]) => {
+        const after = results.find(r => r.label === slug)?.entries.length ?? 0
+        return { slug, before: before.length, after }
+      })
+      .filter(c => c.after < c.before)
+
+    if (shrinking.length && !process.argv.includes('--prune')) {
+      const detail = shrinking.map(c => `  ${c.slug}: ${c.before} -> ${c.after}`).join('\n')
+      throw new Error(
+        `Refusing to shrink the photo manifest:\n${detail}\n\n` +
+        'src/photos looks incomplete — restore the missing originals first.\n' +
+        'If the photos really are meant to go, re-run with --prune.',
+      )
+    }
+  }
+
   await uploadAll(results.flatMap(r => r.uploads))
 
   const manifest = {
