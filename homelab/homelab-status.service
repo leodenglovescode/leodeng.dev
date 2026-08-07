@@ -1,5 +1,5 @@
 [Unit]
-Description=Push a homelab heartbeat to leodeng.dev
+Description=Push a homelab heartbeat and Claude Code token rollup to leodeng.dev
 # Don't fire before the box can actually resolve and reach the internet;
 # otherwise every boot logs a failed push.
 After=network-online.target
@@ -8,17 +8,39 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 # HOMELAB_TOKEN lives here, not in the unit file — unit files are world-readable
-# by default and this one is committed to a public repo.
+# by default and this one is committed to a public repo. systemd reads this as
+# root before dropping to User=, so it can stay root-owned and mode 600.
 EnvironmentFile=/etc/homelab-status.env
 ExecStart=/usr/local/bin/homelab-agent.sh
 
-# The agent reads /proc and /sys and talks to one host. It has no business
-# doing anything else, so it isn't allowed to.
-DynamicUser=yes
+# Runs as a real user rather than DynamicUser=yes, which is what the heartbeat
+# alone used. The token rollup has to read ~/.claude/projects, and that tree is
+# mode 700 — a per-boot dynamic UID cannot open it, and loosening the
+# permissions to suit the agent would expose every transcript to every account
+# on the box. Change this to whoever runs Claude Code here.
+User=leodeng
+Group=leodeng
+
+# Where tokens.py remembers the last rollup it sent, so an unchanged one isn't
+# re-pushed every minute. systemd creates it and exports STATE_DIRECTORY.
+StateDirectory=homelab-status
+
+# Point the collector at the transcripts explicitly instead of letting it
+# derive ~ from $HOME — under ProtectHome=tmpfs the home directory is an empty
+# tmpfs, and only the path bound below is really there.
+Environment=CLAUDE_PROJECTS_DIR=/home/leodeng/.claude/projects
+
+# The agent reads /proc, /sys, the transcripts, and talks to one host. It has
+# no business doing anything else, so it isn't allowed to.
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
-ProtectHome=yes
+# tmpfs rather than ProtectHome=yes: the home directory is replaced with an
+# empty one, then exactly one path is bound back in read-only. The agent can
+# read the transcripts and nothing else under /home — not SSH keys, not
+# .dev.vars, not the rest of ~/.claude (which holds OAuth credentials).
+ProtectHome=tmpfs
+BindReadOnlyPaths=/home/leodeng/.claude/projects
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
