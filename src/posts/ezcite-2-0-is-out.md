@@ -5,7 +5,7 @@ description: "ezC!te 2.0 shipped back in March and I forgot to mention it. Here 
 ---
 
 > [!NOTE]
-> Originally posted on my old blog, leodengsblog.cn, on 21 May 2023. Moved here when I retired that domain.
+> Originally posted on my old blog in May 2023.
 
 Hello Readers!
 

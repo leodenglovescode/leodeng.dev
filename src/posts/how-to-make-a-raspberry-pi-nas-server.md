@@ -5,7 +5,7 @@ description: "Turning a Raspberry Pi 4B and a leftover drive into a Samba file s
 ---
 
 > [!NOTE]
-> Originally posted on my old blog, leodengsblog.cn, on 9 April 2022. Moved here when I retired that domain. Kept as written — the prices, the links and the advice are all from 2022.
+> Originally posted on my old blog in April 2022. Kept as written — the prices, the links and the advice are all from 2022.
 
 Imagine this senario, you need a lot of pictures and/or important files stored someplace locally, and you want to access it through every computer/phone, but all of your storage is full, how do you store those pictures/files?
 

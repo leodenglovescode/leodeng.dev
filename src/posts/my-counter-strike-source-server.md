@@ -5,7 +5,7 @@ description: "Running a full deathmatch CS:S server off an old ThinkPad, plus th
 ---
 
 > [!NOTE]
-> Originally posted on my old blog, leodengsblog.cn, as two posts on 4 and 5 April 2023. Merged into one here when I retired that domain. The server is long gone, so I've dropped the live status banner and the IP address.
+> Originally posted on my old blog as two posts a day apart in April 2023, merged into one here. The server is long gone, so I've dropped the live status banner and the IP address.
 
 Long time no see!
 

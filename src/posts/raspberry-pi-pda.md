@@ -5,7 +5,7 @@ description: "Building a handheld Raspberry Pi 4B with its own battery, speakers
 ---
 
 > [!NOTE]
-> Originally posted on my old blog, leodengsblog.cn, on 5 April 2024 — as a build log plus a separate "Tutorial Part 1", which never got a part 2. Merged into one post here when I retired that domain.
+> Originally posted on my old blog in April 2024 — a build log plus a separate "Tutorial Part 1" that never got a part 2, merged into one post here.
 
 Hey!
 
