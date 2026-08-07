@@ -1,10 +1,11 @@
-// Shooting stats for /spotting, derived from the EXIF index that
-// scripts/optimize-photos.js writes next to the generated thumbnails.
+// Shooting stats for /spotting, derived from the photo manifest that
+// scripts/optimize-photos.js commits.
 //
 // Everything here is computed at module load from data that only exists
 // because the photos exist — no hand-maintained counters, so the page can't
-// drift away from the gallery.
-const exifModules = import.meta.glob('../photos/*/_generated/exif.json', { eager: true, import: 'default' })
+// drift away from the gallery. Both read the same manifest, so they can't
+// disagree about which frames exist either.
+import manifest from '../generated/photos.json'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -17,16 +18,13 @@ function parseShotAt(raw) {
   return { year, month, day, hour, minute, second, dayKey: `${m[1]}-${m[2]}-${m[3]}` }
 }
 
-function collectionFromPath(p) {
-  return p.match(/\/photos\/([^/]+)\/_generated\/exif\.json$/)?.[1] ?? null
-}
-
 function loadFrames() {
   const frames = []
-  for (const [p, entries] of Object.entries(exifModules)) {
-    const collection = collectionFromPath(p)
-    if (!collection || !Array.isArray(entries)) continue
+  for (const [collection, entries] of Object.entries(manifest.collections ?? {})) {
+    if (!Array.isArray(entries)) continue
     for (const e of entries) {
+      // Entries without a readable capture time are still real photos and
+      // still show in the gallery; they just can't be placed on a timeline.
       const when = parseShotAt(e.shotAt)
       if (!when) continue
       frames.push({ ...e, collection, when })
