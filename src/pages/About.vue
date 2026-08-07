@@ -249,8 +249,10 @@ onMounted(() => {
           and somewhere along the way it became my hobby.
         </p>
         <p>
-          Outside of code I like planespotting & aviation photography (that's where ShutterWingPhotos came from),
-          watch some F1, and bike around the city when the weather lets me. I also self-host
+          Outside of code I like planespotting & aviation photography (that's where ShutterWingPhotos came from) —
+          the <RouterLink to="/gallery/planespotting" class="text-fg hover:text-accent transition-colors">photos</RouterLink>
+          are here, and the <RouterLink to="/spotting" class="text-fg hover:text-accent transition-colors">numbers behind them</RouterLink> are too.
+          I watch some F1, and bike around the city when the weather lets me. I also self-host
           a bunch of services: Home Servers, Docker, Home Assistant, the usual rabbit hole.
         </p>
         <p>

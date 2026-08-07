@@ -48,8 +48,11 @@ const socialLinks = [
     <p class="text-xs text-muted/90 font-mono">
       2026 © Leo Deng — Built with Vue, Vite, Tailwind.
     </p>
-    <div class="flex items-center gap-5">
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <!-- Deliberately footer-only: side pages worth finding, not worth a nav slot. -->
       <RouterLink to="/now" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Now</RouterLink>
+      <RouterLink to="/spotting" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Spotting</RouterLink>
+      <RouterLink to="/changelog" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Changelog</RouterLink>
       <div class="flex items-center gap-4">
         <template v-for="link in socialLinks" :key="link.label">
           <RouterLink
