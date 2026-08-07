@@ -41,26 +41,26 @@ Here is some pictures of the components in case you can't find it:
 
 USB 3.0 2-port conjoined Female Port:
 
-![A conjoined two-port USB 3.0 female connector](/blog-media/rpi-pda-usb3-connector.webp)
+![A conjoined two-port USB 3.0 female connector](https://media.leodeng.dev/rpi-pda-usb3-connector.webp)
 
 Rii Mini X1 Keyboard:
 
-![The Rii Mini X1 wireless keyboard with trackpad](/blog-media/rpi-pda-rii-mini-x1.webp)
+![The Rii Mini X1 wireless keyboard with trackpad](https://media.leodeng.dev/rpi-pda-rii-mini-x1.webp)
 
 8Ω 2W Wired Water-proof Speaker:
 
-![A small round 8-ohm waterproof speaker](/blog-media/rpi-pda-speakers.webp)
+![A small round 8-ohm waterproof speaker](https://media.leodeng.dev/rpi-pda-speakers.webp)
 
 3.7v 3000mah Lithium Polymer Battery:
 
-![A 3.7V 3000mAh lithium polymer pouch cell](/blog-media/rpi-pda-battery.webp)
+![A 3.7V 3000mAh lithium polymer pouch cell](https://media.leodeng.dev/rpi-pda-battery.webp)
 
 ## The case
 
 Then, based on the size of the components, I modeled a case for it in Autodesk Fusion:
 
-![Fusion render of the PDA case, front view](/blog-media/rpi-pda-case-front.webp)
+![Fusion render of the PDA case, front view](https://media.leodeng.dev/rpi-pda-case-front.webp)
 
-![Fusion render of the PDA case, back view](/blog-media/rpi-pda-case-back.webp)
+![Fusion render of the PDA case, back view](https://media.leodeng.dev/rpi-pda-case-back.webp)
 
 After creating the model, I bought the components, and the price was totaling about 150¥ (CNY) or about 21$ (USD), excluding the Raspberry Pi and the 32 Gigabyte MicroSD Card which I already have, then I pieced the components together and got it working without the case!

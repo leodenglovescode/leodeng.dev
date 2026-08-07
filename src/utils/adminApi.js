@@ -31,15 +31,6 @@ export function decodeBase64(base64) {
   return new TextDecoder().decode(bytes)
 }
 
-export function bytesToBase64(bytes) {
-  let binary = ''
-  const view = new Uint8Array(bytes)
-  for (let i = 0; i < view.length; i += 0x8000) {
-    binary += String.fromCharCode(...view.subarray(i, i + 0x8000))
-  }
-  return btoa(binary)
-}
-
 async function request(path, { method = 'GET', body } = {}) {
   const res = await fetch(path, {
     method,

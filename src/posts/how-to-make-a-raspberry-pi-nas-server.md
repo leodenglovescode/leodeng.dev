@@ -16,7 +16,7 @@ Well, the Raspberry pi can be a great soulution. The Raspberry Pi uses a lot les
 First, you need these components, some are needed and some are optional:
 
 1. **Raspberry Pi 4B / 2G RAM** — $35 Dollars ¥223 Yuan (You can buy the 4G and 8G version, but it's more pricey)
-2. **Case for Raspberry Pi** (Optional) — If you are a geek, you can 3D print one like I did, anyways, [here it is](/blog-media/raspberry-pi-nas-case-files.zip). (Credit to Michael Klements for designing the case (Aaaand making his own tutorial of the making of the case), he is a great tech youtuber and you should definitely check him out!)
+2. **Case for Raspberry Pi** (Optional) — If you are a geek, you can 3D print one like I did, anyways, [here it is](https://media.leodeng.dev/raspberry-pi-nas-case-files.zip). (Credit to Michael Klements for designing the case (Aaaand making his own tutorial of the making of the case), he is a great tech youtuber and you should definitely check him out!)
 3. **Micro SD Card** (Sandisk 32 GB here) — 14 Dollars/89 RMB. This is for system installation, or if you only have a few files, using a 32 gigabyte sd card would be fine.
 4. **SSD or HDD** (Optional) (Can be Leftover SSD or HDDs)
 5. **I2C display** (Optional if you want the case)
@@ -69,15 +69,15 @@ First, you need these components, some are needed and some are optional:
 
 6. Connect to your file-sharing service. On macOS, go to the "Finder Menu bar":
 
-   ![The macOS Finder menu bar](/blog-media/rpi-nas-finder-menu-bar.webp)
+   ![The macOS Finder menu bar](https://media.leodeng.dev/rpi-nas-finder-menu-bar.webp)
 
    Click "Go" and click "Connect to server":
 
-   ![The Go menu with Connect to Server highlighted](/blog-media/rpi-nas-connect-to-server.webp)
+   ![The Go menu with Connect to Server highlighted](https://media.leodeng.dev/rpi-nas-connect-to-server.webp)
 
    After that, enter your NAS server's ip address and your NAS share name and click "Connect":
 
-   ![The Connect to Server dialog with the smb address filled in](/blog-media/rpi-nas-connect-samba-ip.webp)
+   ![The Connect to Server dialog with the smb address filled in](https://media.leodeng.dev/rpi-nas-connect-samba-ip.webp)
 
    Click on your server and enter the **samba** credentials.
 
@@ -85,11 +85,11 @@ Now you are done! Access all of your saved files, images, videos on the server!
 
 Here's a showcase of the server:
 
-![The finished NAS in its 3D-printed case](/blog-media/rpi-nas-showcase-1.webp)
+![The finished NAS in its 3D-printed case](https://media.leodeng.dev/rpi-nas-showcase-1.webp)
 
-![The NAS from another angle, showing the drive bays](/blog-media/rpi-nas-showcase-2.webp)
+![The NAS from another angle, showing the drive bays](https://media.leodeng.dev/rpi-nas-showcase-2.webp)
 
-![The NAS running, with the I2C display lit up](/blog-media/rpi-nas-showcase-3.webp)
+![The NAS running, with the I2C display lit up](https://media.leodeng.dev/rpi-nas-showcase-3.webp)
 
 Now doesn't that look good? :3
 
