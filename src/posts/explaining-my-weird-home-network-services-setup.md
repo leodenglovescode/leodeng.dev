@@ -52,8 +52,8 @@ But anyways, lets get to the actual structure of my LAN network by showing you t
     HA["Home Assistant Server"]
     SW1F100["Dumb LAN Switch<br/>100 Mbps"]
 
-    DOORCAM["Door Camera"]
-    LRCAM["Living Room Camera"]
+    DOORCAM["IP Camera"]
+    LRCAM["IP Camera"]
 
     BE3 -->|1 Gbps| SW1F
 
@@ -104,10 +104,6 @@ Immich - Photo gallery
 Jellyfin - Media indexer & Player
 
 Scriberr - Audio/Video transcription (Speech-To-Text)
-
-VaultWarden - Password Manager
-
-Frigate - Cameras & NVR
 
 CarbonPanel - Custom built real-time server monitoring panel
 

@@ -9,7 +9,7 @@ description: "Building a handheld Raspberry Pi 4B with its own battery, speakers
 
 Hey!
 
-As I have mentioned in the last blog, I was preparing to make a small Raspberry Pi PDA (or Handheld PC) using my spare RPI 4B, and after about 20 days or so, I am 90% done building it, so the objective was to build a compact device to code (definitely not for hacking lol) and to take everywhere, so I listed some basic functions:
+As I have mentioned in the last blog, I was preparing to make a small Raspberry Pi PDA (or Handheld PC) using my spare RPI 4B, and after about 20 days or so, I am 90% done building it, so the objective was to build a compact device to code on and to take everywhere, so I listed some basic functions:
 
 1. Charge-free for at least 2 hours under full load (2 Amps)
 2. Fits in my hands
@@ -17,7 +17,7 @@ As I have mentioned in the last blog, I was preparing to make a small Raspberry 
 4. No external Keyboard or mouse unless necessary
 5. External USB 3.0 Ports
 6. External FULL-SIZED HDMI port
-7. System designed for purely ethical hacking (I Promise :3)
+7. System set up for tinkering and learning (I Promise :3)
 8. Plays Sound
 
 ## Components list
