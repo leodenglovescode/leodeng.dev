@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
-"""Roll up Claude Code token usage into a small JSON payload on stdout.
+"""Archive local LLM CLI token usage, and roll it up for /api/tokens.
 
-Reads the transcripts Claude Code writes under ~/.claude/projects and prints
-one compact object for homelab/agent.sh to POST to /api/tokens. Reads only;
-never writes to or prunes the transcripts.
+Two jobs, in order:
 
-Python rather than Node because the systemd unit hides $HOME from the service
-(see homelab/homelab-status.service) and nvm keeps node inside it. /usr/bin/
-python3 is always there, and this needs nothing outside the standard library.
+1. Ingest. Every API response found in the local session logs becomes one row
+   in a SQLite database, keyed on the response's own id. Re-ingesting is a
+   no-op, so this is safe to run as often as you like.
+2. Roll up. The rollup is computed *from that database*, never from the logs
+   directly, and printed on stdout for homelab/agent.sh to POST.
+
+The database is the point. Claude Code prunes its transcripts after a few
+weeks, so anything derived only from what's currently on disk is a number that
+quietly loses its own history — and an aggregation bug found later can no
+longer be corrected, because the evidence is gone. Keeping one row per
+response means the totals stay re-derivable long after the logs that produced
+them have been deleted.
+
+Python rather than Node because the systemd unit hides $HOME (see
+homelab/homelab-status.service) and nvm keeps node inside it. /usr/bin/python3
+is always there, and sqlite3 is in the standard library.
 
 Install: see homelab/README.md
 """
@@ -15,36 +26,58 @@ import argparse
 import hashlib
 import json
 import os
+import sqlite3
 import sys
 import time
-from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-# How many trailing days a routine push covers. Only today's row can really
-# still change, but a week costs nothing and absorbs a midnight boundary, a
-# clock adjustment, or a few days of the agent being down.
-#
-# This window is what keeps the write cost flat. Every push rewrites every row
-# it sends, so pushing the whole history would grow linearly with age: a year
-# in, that's ~900 rows a push, and at one push per ten minutes it would blow
-# through D1's 100,000 rows/day free limit. Seven days is ~17 rows a push
-# forever. The endpoint never deletes, so older days stay archived server-side.
+# How many trailing days a routine push covers. Only recent days can still
+# change, and every push rewrites the rows it sends — so pushing the whole
+# archive every ten minutes would grow linearly with age and eventually
+# outgrow D1's free write allowance. The periodic full push below is what
+# keeps the remote copy honest despite the narrow window.
 DEFAULT_WINDOW_DAYS = 7
 
-# The ceiling for a --full backfill, so even that can't send something absurd.
+# Ceiling for a --full push, so even that can't send something absurd.
 MAX_DAYS = 400
+
+# How often to push everything rather than the trailing window. This is the
+# repair path: if the agent was offline for longer than the window, or a row
+# was corrected in SQLite after the fact, a daily full push reconciles the
+# remote copy without anyone noticing something drifted.
+FULL_PUSH_INTERVAL = 24 * 60 * 60
 
 # Locally generated messages (interrupts, tool errors) are recorded with this
 # model name and no API call behind them. They are not usage.
 SYNTHETIC = "<synthetic>"
 
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS message (
+  id         TEXT    NOT NULL,
+  request_id TEXT    NOT NULL DEFAULT '',
+  ts         TEXT    NOT NULL,           -- as recorded, UTC
+  day        TEXT    NOT NULL,           -- local calendar day
+  model      TEXT    NOT NULL,
+  project    TEXT    NOT NULL DEFAULT '',
+  session    TEXT    NOT NULL DEFAULT '',
+  sidechain  INTEGER NOT NULL DEFAULT 0, -- 1 for subagent turns
+  input      INTEGER NOT NULL DEFAULT 0,
+  output     INTEGER NOT NULL DEFAULT 0,
+  cw5m       INTEGER NOT NULL DEFAULT 0,
+  cw1h       INTEGER NOT NULL DEFAULT 0,
+  cache_read INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (id, request_id)
+);
+CREATE INDEX IF NOT EXISTS message_day ON message(day);
+"""
+
 
 def transcripts(root: Path):
-    """Yield (project_directory_name, path) for every transcript.
+    """Yield (project_directory_name, path) for every session log.
 
     Recursive on purpose. A main session sits at `<project>/<uuid>.jsonl`, but
-    subagents get their own transcripts a further two levels down at
+    subagents get their own logs a further two levels down at
     `<project>/<uuid>/subagents/agent-*.jsonl`. Globbing only one level deep
     silently drops every subagent's usage — here that was 38 files and about
     6.6% of all tokens, which is exactly the kind of undercount that looks
@@ -56,19 +89,16 @@ def transcripts(root: Path):
     for path in sorted(root.glob("**/*.jsonl")):
         parts = path.relative_to(root).parts
         if len(parts) < 2:
-            continue  # a stray file directly under the root, not a transcript
+            continue  # a stray file directly under the root, not a session log
         yield parts[0], path
 
 
 def local_day(stamp: str) -> str:
-    """Map a transcript's UTC timestamp onto the local calendar day.
+    """Map a log's UTC timestamp onto the local calendar day.
 
-    Claude Code writes timestamps in UTC. Bucketing on the raw string would put
-    an evening session in Beijing on the following day, which is not the day
-    the person worked.
+    Bucketing on the raw string would put an evening session in Beijing on the
+    following day, which is not the day the person worked.
     """
-    # fromisoformat handles the trailing 'Z' from 3.11 onwards; the replace
-    # keeps this working on older interpreters too.
     parsed = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
@@ -78,11 +108,11 @@ def local_day(stamp: str) -> str:
 def cache_writes(usage: dict) -> tuple:
     """Split cache-creation tokens into (5-minute, 1-hour) buckets.
 
-    The two TTLs bill differently (1.25x vs 2x the input rate), so they can't
-    be added together. `cache_creation` carries the split; older entries only
-    have the total, which is attributed to the 5-minute bucket because that is
-    the API default. Any shortfall between the split and the total goes the
-    same way, so the buckets always sum to what was actually billed.
+    The two TTLs bill differently — 1.25x the input rate against 2x — so they
+    can't be added together. `cache_creation` carries the split; entries that
+    only have the total get it attributed to the 5-minute bucket, which is the
+    API default. Any shortfall goes the same way, so the buckets always sum to
+    what was actually billed.
     """
     total = usage.get("cache_creation_input_tokens", 0) or 0
     detail = usage.get("cache_creation") or {}
@@ -92,17 +122,19 @@ def cache_writes(usage: dict) -> tuple:
     return five_min, one_hour
 
 
-def collect(root: Path, window: int) -> dict:
-    # (message.id, requestId) is the deduplication key. It has to be: Claude
-    # Code rewrites a message's line as a turn develops, so a single response
-    # appears three or four times in one file, and resuming a session copies
-    # earlier turns into the new transcript. Summing the raw lines roughly
-    # doubles every number.
-    seen = set()
+def open_db(path: Path) -> sqlite3.Connection:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path)
+    # WAL so a long ingest doesn't block a concurrent read, and so an
+    # interrupted run can't leave a half-written database behind.
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.executescript(SCHEMA)
+    return conn
 
-    daily = defaultdict(lambda: defaultdict(int))
-    sessions = defaultdict(set)
-    projects = defaultdict(set)
+
+def ingest(conn: sqlite3.Connection, root: Path) -> dict:
+    """Insert every response found on disk that isn't already recorded."""
+    rows = []
     skipped = 0
 
     for project, path in transcripts(root):
@@ -119,9 +151,9 @@ def collect(root: Path, window: int) -> dict:
                 try:
                     row = json.loads(line)
                 except ValueError:
-                    # A transcript being appended to right now can end in a
+                    # A log being appended to right now can end in a
                     # half-written line. Skipping it is correct; the next run
-                    # picks the message up once it is complete.
+                    # picks the response up once it is complete.
                     skipped += 1
                     continue
 
@@ -136,13 +168,9 @@ def collect(root: Path, window: int) -> dict:
                 if not model or model == SYNTHETIC:
                     continue
 
-                key = (message.get("id"), row.get("requestId"))
-                if key in seen:
-                    continue
-                seen.add(key)
-
+                identifier = message.get("id")
                 stamp = row.get("timestamp")
-                if not stamp:
+                if not identifier or not stamp:
                     continue
                 try:
                     day = local_day(stamp)
@@ -150,52 +178,81 @@ def collect(root: Path, window: int) -> dict:
                     continue
 
                 five_min, one_hour = cache_writes(usage)
-                bucket = daily[(day, model)]
-                bucket["input"] += usage.get("input_tokens", 0) or 0
-                bucket["output"] += usage.get("output_tokens", 0) or 0
-                bucket["cache_write_5m"] += five_min
-                bucket["cache_write_1h"] += one_hour
-                bucket["cache_read"] += usage.get("cache_read_input_tokens", 0) or 0
-                bucket["messages"] += 1
+                rows.append((
+                    identifier,
+                    row.get("requestId") or "",
+                    stamp,
+                    day,
+                    model,
+                    project,
+                    row.get("sessionId") or "",
+                    1 if row.get("isSidechain") else 0,
+                    usage.get("input_tokens", 0) or 0,
+                    usage.get("output_tokens", 0) or 0,
+                    five_min,
+                    one_hour,
+                    usage.get("cache_read_input_tokens", 0) or 0,
+                ))
 
-                if row.get("sessionId"):
-                    sessions[day].add(row["sessionId"])
-                projects[day].add(project)
+    before = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    # INSERT OR IGNORE against the (id, request_id) primary key is the whole
+    # deduplication strategy, and it holds across runs rather than only within
+    # one. It has to: the CLI rewrites a response's line as a turn develops, so
+    # the same response appears three or four times in a single log, and
+    # resuming a session copies earlier turns into the new file. Counting the
+    # raw lines roughly doubles every number.
+    conn.executemany(
+        "INSERT OR IGNORE INTO message"
+        " (id, request_id, ts, day, model, project, session, sidechain,"
+        "  input, output, cw5m, cw1h, cache_read)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        rows,
+    )
+    conn.commit()
+    after = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
 
-    days = sorted({day for day, _ in daily})[-min(window, MAX_DAYS):]
-    keep = set(days)
+    return {"scanned": len(rows), "inserted": after - before, "skipped": skipped, "total": after}
+
+
+def rollup(conn: sqlite3.Connection, window: int) -> dict:
+    """Aggregate the archive into the wire format the endpoint expects."""
+    days = [r[0] for r in conn.execute("SELECT DISTINCT day FROM message ORDER BY day")]
+    days = days[-min(window, MAX_DAYS):]
+    if not days:
+        return {"generatedAt": int(time.time()), "days": [], "meta": []}
+
+    placeholders = ",".join("?" * len(days))
+
+    rows = conn.execute(
+        f"""SELECT day, model, SUM(input), SUM(output), SUM(cw5m), SUM(cw1h),
+                   SUM(cache_read), COUNT(*)
+              FROM message
+             WHERE day IN ({placeholders})
+             GROUP BY day, model
+             ORDER BY day, model""",
+        days,
+    ).fetchall()
+
+    meta = conn.execute(
+        f"""SELECT day, COUNT(DISTINCT session), COUNT(DISTINCT project)
+              FROM message
+             WHERE day IN ({placeholders})
+             GROUP BY day
+             ORDER BY day""",
+        days,
+    ).fetchall()
 
     # Positional rows rather than objects: this is a wire format read by
     # exactly one endpoint, and the key names would be most of the payload.
-    rows = [
-        [
-            day,
-            model,
-            b["input"],
-            b["output"],
-            b["cache_write_5m"],
-            b["cache_write_1h"],
-            b["cache_read"],
-            b["messages"],
-        ]
-        for (day, model), b in sorted(daily.items())
-        if day in keep
-    ]
-
     return {
         "generatedAt": int(time.time()),
-        "days": rows,
-        "meta": [[day, len(sessions[day]), len(projects[day])] for day in days],
-        "skippedLines": skipped,
+        "days": [list(r) for r in rows],
+        "meta": [list(r) for r in meta],
     }
 
 
 def digest_of(payload: dict) -> str:
-    """Fingerprint the numbers, deliberately excluding `generatedAt`.
-
-    The timestamp changes on every run, so hashing the whole payload would
-    report "changed" every minute and defeat the point of checking.
-    """
+    """Fingerprint the numbers, deliberately excluding `generatedAt`."""
     material = json.dumps(
         {"days": payload["days"], "meta": payload["meta"]},
         separators=(",", ":"),
@@ -204,32 +261,16 @@ def digest_of(payload: dict) -> str:
     return hashlib.sha256(material.encode()).hexdigest()
 
 
-def should_emit(state_file: Path, digest: str, min_interval: int) -> bool:
-    """Decide whether this rollup is worth a request.
-
-    The timer fires every minute for the heartbeat, but these numbers only move
-    when I'm actually using Claude Code — and each push rewrites every day row,
-    so re-sending an unchanged rollup all day would burn a real share of D1's
-    daily write allowance restating yesterday. Push when something changed, or
-    when `min_interval` has passed, whichever comes first.
-
-    The periodic push is what makes this self-healing: the state file is
-    written when the payload is emitted, not when the POST succeeds, so a
-    failed push is retried at the next interval rather than being wedged out
-    until the numbers happen to change again.
-    """
+def read_state(state_file: Path) -> dict:
     try:
-        previous = json.loads(state_file.read_text())
+        return json.loads(state_file.read_text())
     except (OSError, ValueError):
-        return True
-
-    if previous.get("digest") != digest:
-        return True
-    return time.time() - float(previous.get("pushed", 0)) >= min_interval
+        return {}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--db", type=Path, help="path to the SQLite archive")
     parser.add_argument(
         "--state-file",
         type=Path,
@@ -248,41 +289,88 @@ def main() -> int:
         help=f"how many trailing days to send (default: {DEFAULT_WINDOW_DAYS})",
     )
     parser.add_argument(
-        "--full",
-        action="store_true",
-        help="send the whole history — for the first push, or to re-backfill",
+        "--full", action="store_true", help="send the whole archive, not just recent days"
+    )
+    parser.add_argument(
+        "--stats", action="store_true", help="report the archive on stderr and send nothing"
     )
     args = parser.parse_args()
 
+    db_path = args.db or Path(
+        os.environ.get("STATE_DIRECTORY") or Path.home() / ".local/state/homelab-status"
+    ) / "tokens.db"
+    conn = open_db(db_path)
+
     root = Path(
-        os.environ.get("CLAUDE_PROJECTS_DIR")
-        or Path.home() / ".claude" / "projects"
+        os.environ.get("CLAUDE_PROJECTS_DIR") or Path.home() / ".claude" / "projects"
     )
-    if not root.is_dir():
-        print(f"no transcript directory at {root}", file=sys.stderr)
+    if root.is_dir():
+        result = ingest(conn, root)
+        if result["inserted"]:
+            print(
+                f"archived {result['inserted']} new responses "
+                f"({result['total']} total)",
+                file=sys.stderr,
+            )
+    elif not conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]:
+        # No logs to read and nothing archived from an earlier run: there is
+        # genuinely nothing to report.
+        print(f"no session logs at {root} and an empty archive", file=sys.stderr)
         return 1
 
-    payload = collect(root, MAX_DAYS if args.full else args.days)
-    if not payload["days"]:
-        print(f"no usage found under {root}", file=sys.stderr)
+    if args.stats:
+        row = conn.execute(
+            "SELECT COUNT(*), COUNT(DISTINCT day), MIN(day), MAX(day),"
+            " SUM(input+output+cw5m+cw1h+cache_read) FROM message"
+        ).fetchone()
+        print(
+            f"{row[0]:,} responses over {row[1]} days ({row[2]} to {row[3]}), "
+            f"{row[4]:,} tokens, archive at {db_path}",
+            file=sys.stderr,
+        )
+        return 0
+
+    state = read_state(args.state_file) if args.state_file else {}
+    now = time.time()
+
+    # Push everything when asked, on the first run, or once a day so the
+    # remote copy reconciles with the archive even if the trailing window
+    # missed something.
+    full = (
+        args.full
+        or not state
+        or now - float(state.get("fullPushed", 0)) >= FULL_PUSH_INTERVAL
+    )
+
+    # The digest always describes the *window* rollup, never whichever payload
+    # happens to be going out. Fingerprinting the payload instead would make
+    # every window push look changed just because the previous one was a full
+    # push, costing a redundant push after each daily reconcile.
+    window = rollup(conn, args.days)
+    if not window["days"]:
+        print("archive is empty", file=sys.stderr)
         return 1
 
     if args.state_file:
-        digest = digest_of(payload)
-        if not should_emit(args.state_file, digest, args.min_interval):
+        digest = digest_of(window)
+        unchanged = digest == state.get("digest")
+        due = now - float(state.get("pushed", 0)) >= args.min_interval
+        if not full and unchanged and not due:
             return 3  # nothing worth sending; agent.sh treats this as success
 
         try:
             args.state_file.parent.mkdir(parents=True, exist_ok=True)
-            args.state_file.write_text(
-                json.dumps({"digest": digest, "pushed": int(time.time())})
-            )
+            args.state_file.write_text(json.dumps({
+                "digest": digest,
+                "pushed": int(now),
+                "fullPushed": int(now) if full else state.get("fullPushed", 0),
+            }))
         except OSError as err:
             # Losing the state file costs an unnecessary push, not correctness
             # — the endpoint's upserts are idempotent.
             print(f"could not write {args.state_file}: {err}", file=sys.stderr)
 
-    json.dump(payload, sys.stdout, separators=(",", ":"))
+    json.dump(rollup(conn, MAX_DAYS) if full else window, sys.stdout, separators=(",", ":"))
     return 0
 
 

@@ -17,8 +17,25 @@ home server                      Cloudflare Pages            leodeng.dev
 │ + tokens.py  │ ───────────────>│ /api/tokens     │ ──────> │ /tokens  │
 │   on change, │  Bearer <token> │  POST = ingest  │ upsert  │  fetches │
 │   ≤ 1/10min  │                 │  GET  = public  │ <────── │  GET     │
-└──────────────┘                 └─────────────────┘  select └──────────┘
+│      ▲       │                 └─────────────────┘  select └──────────┘
+│      │ query │
+│  ┌───┴────┐  │
+│  │ SQLite │  │  one row per API response, forever
+│  └────────┘  │
+└──────────────┘
 ```
+
+**Two stores, two jobs.** SQLite on the box is the system of record: one row per
+API response, keyed on the response's own id, never deleted. D1 is the published
+aggregate: day × model, also never deleted. The rollup is computed from SQLite,
+not from the logs — the logs are only ever an input to the archive.
+
+That split exists because the CLIs prune their own session logs after a few
+weeks. Anything derived only from what's currently on disk is a number that
+quietly loses its own history, and an aggregation bug found later can't be
+corrected because the evidence is gone. It is not hypothetical: a one-level glob
+in the first version of `tokens.py` missed every subagent transcript — 6.6% of
+all tokens — and was only fixable because the logs still happened to exist.
 
 One timer, one secret, two endpoints — it's the same agent on the same machine,
 and a second token would be another thing to rotate protecting the same
@@ -113,31 +130,53 @@ whereas a failed timer run is right there in the journal.
 
 ## Token counting
 
-`tokens.py` reads the JSONL transcripts Claude Code writes under
-`~/.claude/projects` and rolls them up per day and per model. Three things in
-there are less obvious than they look:
+`tokens.py` does two things in order: ingest every API response it can find into
+`$STATE_DIRECTORY/tokens.db`, then roll that database up per day and per model.
+Re-ingesting is a no-op, so it is safe to run as often as the timer likes.
 
-**Deduplicate on `(message.id, requestId)`.** Claude Code rewrites a message's
-line as a turn develops, so one API response appears three or four times in a
-single transcript, and resuming a session copies earlier turns into the new
-file. On this machine that was 6,294 duplicate lines against 6,318 real ones —
-summing the raw lines roughly *doubles* every number.
+Useful by hand:
 
-**Bucket days in local time.** Transcript timestamps are UTC. Bucketing on the
-raw string puts an evening session in Beijing on the following day, which is
-not the day the work happened.
+```bash
+# what's archived, without sending anything
+sudo -u leodeng CLAUDE_PROJECTS_DIR=~/.claude/projects \
+  /usr/local/bin/homelab-tokens.py --db /var/lib/homelab-status/tokens.db --stats
+
+# ad-hoc queries — the archive keeps per-project and per-session detail that
+# the public page deliberately never gets
+sqlite3 /var/lib/homelab-status/tokens.db \
+  "SELECT project, SUM(input+output+cw5m+cw1h+cache_read) AS t
+     FROM message GROUP BY project ORDER BY t DESC;"
+```
+
+Three things in the counting are less obvious than they look:
+
+**Deduplicate on `(message.id, requestId)`.** The CLI rewrites a response's line
+as a turn develops, so one response appears three or four times in a single log,
+and resuming a session copies earlier turns into the new file. On this machine
+that was 6,294 duplicate lines against 6,318 real ones — summing the raw lines
+roughly *doubles* every number. That pair is the primary key of the `message`
+table, so `INSERT OR IGNORE` enforces it across runs rather than only within one.
+
+**Recurse into subagent logs.** A main session is `<project>/<uuid>.jsonl`, but
+subagents get their own two levels further down at
+`<project>/<uuid>/subagents/agent-*.jsonl`. Missing those undercounted by 6.6%
+here — plausible enough that nothing would ever have flagged it.
+
+**Bucket days in local time.** Log timestamps are UTC. Bucketing on the raw
+string puts an evening session in Beijing on the following day, which is not the
+day the work happened.
 
 **Keep the two cache-write TTLs apart.** Cache writes bill at 1.25× the input
-rate for the 5-minute cache and 2× for the 1-hour one, and Claude Code uses
-1-hour entries almost exclusively. Folding them together understates the cost
-of a cache-heavy workload badly.
+rate for the 5-minute cache and 2× for the 1-hour one, and these tools use
+1-hour entries almost exclusively. Folding them together understates the cost of
+a cache-heavy workload badly.
 
 Pushes are throttled: the rollup goes out when the numbers change, and at most
 once every 10 minutes either way. A routine push carries only the trailing 7
-days — older rows can't change any more, and re-sending the whole history on
-every push is what would eventually outgrow the free write allowance. The first
-push (no state file yet) sends everything to backfill; `--full` forces that
-again.
+days, since older rows can't change. Every 24 hours it pushes everything
+instead — that's the repair path, so a stretch of downtime longer than the
+window, or a row corrected in SQLite after the fact, reconciles on its own
+rather than leaving D1 quietly out of step. `--full` forces it immediately.
 
 The dollar figure on the page is Anthropic **list price** for the same tokens.
 It is not a bill — this usage is on a subscription, so none of it was charged
@@ -156,12 +195,19 @@ agent is down the window keeps pruning with nothing arriving to replace it. A
 box that's been offline a full day shows an empty chart. That's honest — there
 is nothing to plot.
 
-**Token rows are never deleted**, which is the opposite decision for the
-opposite reason. Claude Code prunes old transcripts, so the agent eventually
-can't see a day it once reported. If the table pruned too, that day would
-vanish from a total that is supposed to be all-time. D1 is the only durable
-copy, so it keeps everything: one row per day per model, a few hundred bytes a
-day, indefinitely.
+**Token rows are never deleted**, in either store, which is the opposite
+decision for the opposite reason. The CLIs prune their own logs, so the agent
+eventually can't see a day it once reported. If these pruned too, that day would
+vanish from a total that is supposed to be all-time.
+
+- SQLite: one row per API response, ~300 bytes each. At the current rate that's
+  roughly 30 MB a year — worth it, because it keeps the totals re-derivable if
+  the aggregation ever turns out to be wrong.
+- D1: one row per day per model, a few hundred bytes a day.
+
+The archive is not backed up anywhere. If that matters, `sqlite3 tokens.db
+.dump` it somewhere; D1 also holds the daily aggregate independently, so losing
+one store degrades the detail rather than the headline number.
 
 ## Cost
 
