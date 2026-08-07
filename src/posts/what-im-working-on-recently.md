@@ -15,15 +15,15 @@ For fun I played like 40 mins of CS:GO every week on my "low-end pc", CSGO was r
 
 Hey! Whatcha lookin' at!
 
-![A CS:GO terrorist model in a funny pose](/blog-media/csgo-t-funny.webp)
+![A CS:GO terrorist model in a funny pose](https://media.leodeng.dev/csgo-t-funny.webp)
 
 Hi i'm dead
 
-![A CS:GO counter-terrorist ragdoll](/blog-media/csgo-ct-funny.webp)
+![A CS:GO counter-terrorist ragdoll](https://media.leodeng.dev/csgo-ct-funny.webp)
 
 T (*pats on CT) : Buddy, how's this match? CT (*pats back): oof, pretty good and goofy, I would say
 
-![A CS:GO terrorist and counter-terrorist standing together](/blog-media/csgo-t-and-ct-funny.webp)
+![A CS:GO terrorist and counter-terrorist standing together](https://media.leodeng.dev/csgo-t-and-ct-funny.webp)
 
 Anyways even though I was born in 2010 (12 years old now), Old games still bring me nostalgia, like Counter Strike 1.6, Source, Half Life (Wasn't born when these games are made).
 
