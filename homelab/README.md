@@ -20,15 +20,18 @@ home server                      Cloudflare Pages            leodeng.dev
 │      ▲       │                 └─────────────────┘  select └──────────┘
 │      │ query │
 │  ┌───┴────┐  │
-│  │ SQLite │  │  one row per API response, forever
+│  │ SQLite │  │  immutable API usage records, forever
 │  └────────┘  │
 └──────────────┘
 ```
 
-**Two stores, two jobs.** SQLite on the box is the system of record: one row per
-API response, keyed on the response's own id, never deleted. D1 is the published
-aggregate: day × model, also never deleted. The rollup is computed from SQLite,
-not from the logs — the logs are only ever an input to the archive.
+**Two stores, two jobs.** SQLite on the box is the system of record: immutable
+usage records, never deleted. Claude and Codex provide one record per response;
+Copilot CLI's durable event log provides cumulative per-model snapshots with an
+exact request count; VS Code Copilot provides visible transcript history for an
+explicitly labelled estimate. D1 is the published aggregate: day × model, also
+never deleted. The rollup is computed from SQLite, not from the logs — the logs
+are only ever an input to the archive.
 
 That split exists because the CLIs prune their own session logs after a few
 weeks. Anything derived only from what's currently on disk is a number that
@@ -89,6 +92,7 @@ than accepting anonymous writes.
 ```bash
 sudo install -m 755 homelab/agent.sh  /usr/local/bin/homelab-agent.sh
 sudo install -m 755 homelab/tokens.py /usr/local/bin/homelab-tokens.py
+sudo python3 -m pip install --upgrade --target /usr/local/lib/homelab-tokens -r homelab/requirements.txt
 
 # The token, readable only by root
 printf 'HOMELAB_TOKEN=%s\n' 'the-hex-string' | sudo tee /etc/homelab-status.env >/dev/null
@@ -99,14 +103,15 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now homelab-status.timer
 ```
 
-**Edit `User=`, `Group=`, `CLAUDE_PROJECTS_DIR=` and `CODEX_SESSIONS_DIR=`
-in the unit** to whoever runs the CLIs on the box. The heartbeat alone ran
+**Edit `User=`, `Group=`, `CLAUDE_PROJECTS_DIR=`, `CODEX_SESSIONS_DIR=`,
+`COPILOT_SESSIONS_DIR=` and `COPILOT_VSCODE_WORKSPACES_DIR=` in the unit**
+to whoever runs the tools on the box. The heartbeat alone ran
 under `DynamicUser=yes`; the token rollup can't, because the session trees are
 private and a per-boot dynamic UID cannot read them. Relaxing those permissions
 instead would expose every transcript to every account on the machine, so the
 service runs as the real user and gives back the isolation a different way:
 `ProtectHome=tmpfs` replaces the home directory with an empty one, and
-`BindReadOnlyPaths` mounts just the two transcript trees back in. The agent
+`BindReadOnlyPaths` mounts just the four transcript trees back in. The agent
 can read those and nothing else
 under `/home` — not SSH keys, not `.dev.vars`, not the rest of `~/.claude`,
 which holds OAuth credentials.
@@ -141,6 +146,10 @@ Useful by hand:
 # what's archived, without sending anything
 sudo -u leodeng CLAUDE_PROJECTS_DIR=~/.claude/projects \
   CODEX_SESSIONS_DIR=~/.codex/sessions \
+  COPILOT_SESSIONS_DIR=~/.copilot/session-state \
+  COPILOT_VSCODE_WORKSPACES_DIR=~/.vscode-server/data/User/workspaceStorage \
+  PYTHONPATH=/usr/local/lib/homelab-tokens \
+  TIKTOKEN_CACHE_DIR=/var/cache/homelab-status/tiktoken \
   /usr/local/bin/homelab-tokens.py --db /var/lib/homelab-status/tokens.db --stats
 
 # ad-hoc queries — the archive keeps per-project and per-session detail that
@@ -150,7 +159,7 @@ sqlite3 /var/lib/homelab-status/tokens.db \
      FROM message GROUP BY project ORDER BY t DESC;"
 ```
 
-Five things in the counting are less obvious than they look:
+Nine things in the counting are less obvious than they look:
 
 **Deduplicate Claude on `(message.id, requestId)`.** The CLI rewrites a response's line
 as a turn develops, so one response appears three or four times in a single log,
@@ -163,6 +172,43 @@ table, so `INSERT OR IGNORE` enforces it across runs rather than only within one
 event has usage for the last API response but no response id, and status updates
 can repeat the event. The session's cumulative token counter changes only for a
 new response, so its hash is the stable archive key.
+
+**Use Copilot's durable shutdown metrics, not context size.** Per-call
+`assistant.usage` has ideal timestamps but is explicitly ephemeral. The
+persisted `session.shutdown.modelMetrics` summary carries cumulative input,
+output, cache and request totals per model. Resumed sessions can append another
+shutdown summary, so the collector stores only the delta from the previous
+snapshot. If a client does persist per-call usage, that more precise source
+wins only when it reconciles exactly with the durable summary; a partial set
+cannot silently undercount the session.
+
+The durable summary has no per-call timestamps, so a Copilot session held open
+across local midnight is assigned to the day it shuts down. All-time and
+per-model totals remain exact; only that session segment's day can shift.
+
+**Estimate VS Code Copilot from visible history.** Remote SSH runs the Copilot
+extension host on the server, where it persists transcripts below
+`~/.vscode-server/data/User/workspaceStorage/*/GitHub.copilot-chat/transcripts`.
+Those files contain user messages, assistant text and reasoning, and tool
+requests, but no API token usage, hidden system prompt, tool results, or
+reliable per-turn model selection. The collector replays the visible history
+with `o200k_base` and a one-million-token context cap, both taken from
+Copilot's own cached Sonnet 4.6 model catalog. It assumes Sonnet 4.6 by default
+because that is the model used here; `COPILOT_VSCODE_MODEL` makes the
+assumption explicit and configurable. The separate
+`copilot-claude-sonnet-4-6-estimate` model id keeps these estimates visibly
+distinct from exact Claude usage.
+
+This is not a byte-count shortcut: `tiktoken` applies the tokenizer Copilot
+declares for the model. Input remains an estimate because the missing context
+cannot be recovered, and long sessions may also compact old visible history.
+On the current Remote SSH archive the estimate is 96.6 million tokens across
+2,670 persisted model responses.
+
+**Keep Copilot response counts separate from archive row counts.** One durable
+Copilot snapshot can summarize several API calls. The SQLite `responses`
+column defaults to one for historical Claude/Codex rows and carries Copilot's
+`requests.count`; the public response total sums that column.
 
 **Recurse into subagent logs.** A main session is `<project>/<uuid>.jsonl`, but
 subagents get their own two levels further down at
@@ -183,6 +229,11 @@ a cache-heavy workload badly.
 difference as input and the cached portion as cache-read keeps the shared
 rollup from counting those tokens twice. Reasoning tokens already belong to
 Codex's output total and likewise are not added again.
+
+Copilot also includes cache reads in `inputTokens`, so its collector applies
+the same subtraction. Copilot exposes cache-write tokens but not their TTL in
+the durable summary; those are conservatively assigned to the default
+five-minute bucket rather than inventing a one-hour rate.
 
 Pushes are throttled: the rollup goes out when the numbers change, and at most
 once every 10 minutes either way. A routine push carries only the trailing 7
@@ -213,9 +264,10 @@ decision for the opposite reason. The CLIs prune their own logs, so the agent
 eventually can't see a day it once reported. If these pruned too, that day would
 vanish from a total that is supposed to be all-time.
 
-- SQLite: one row per API response, ~300 bytes each. At the current rate that's
-  roughly 30 MB a year — worth it, because it keeps the totals re-derivable if
-  the aggregation ever turns out to be wrong.
+- SQLite: one row per Claude/Codex/VS Code Copilot response or Copilot CLI
+  usage snapshot, roughly 300 bytes each. At the current rate that's about
+  30 MB a year — worth it, because it keeps the totals re-derivable if the
+  aggregation ever turns out to be wrong.
 - D1: one row per day per model, a few hundred bytes a day.
 
 The archive is not backed up anywhere. If that matters, `sqlite3 tokens.db

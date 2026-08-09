@@ -3,17 +3,19 @@
 
 Two jobs, in order:
 
-1. Ingest. Every API response found in the local session logs becomes one row
-   in a SQLite database, keyed on the response's own id. Re-ingesting is a
-   no-op, so this is safe to run as often as you like.
+1. Ingest. API usage found in the local session logs is archived in SQLite.
+   Claude and Codex provide per-response records; Copilot CLI provides
+   per-model cumulative snapshots; VS Code Copilot provides visible transcript
+   content from which explicitly labelled estimates are derived. Re-ingesting
+   is a no-op.
 2. Roll up. The rollup is computed *from that database*, never from the logs
    directly, and printed on stdout for homelab/agent.sh to POST.
 
 The database is the point. LLM CLIs prune their transcripts after a few
 weeks, so anything derived only from what's currently on disk is a number that
 quietly loses its own history — and an aggregation bug found later can no
-longer be corrected, because the evidence is gone. Keeping one row per
-response means the totals stay re-derivable long after the logs that produced
+longer be corrected, because the evidence is gone. Keeping the raw usage
+records means the totals stay re-derivable long after the logs that produced
 them have been deleted.
 
 Python rather than Node because the systemd unit hides $HOME (see
@@ -52,6 +54,15 @@ FULL_PUSH_INTERVAL = 24 * 60 * 60
 # model name and no API call behind them. They are not usage.
 SYNTHETIC = "<synthetic>"
 
+# VS Code Copilot does not persist API usage. Its own cached model catalog says
+# Sonnet 4.6 uses o200k_base and allows a one-million-token context window, so
+# use those exact local-model facts for the visible-transcript estimate. The
+# model id is intentionally distinct from exact Claude API usage all the way to
+# D1 and the page.
+COPILOT_VSCODE_MODEL = "copilot-claude-sonnet-4-6-estimate"
+COPILOT_VSCODE_ENCODING = "o200k_base"
+COPILOT_VSCODE_CONTEXT = 1_000_000
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS message (
   id         TEXT    NOT NULL,
@@ -67,6 +78,7 @@ CREATE TABLE IF NOT EXISTS message (
   cw5m       INTEGER NOT NULL DEFAULT 0,
   cw1h       INTEGER NOT NULL DEFAULT 0,
   cache_read INTEGER NOT NULL DEFAULT 0,
+  responses  INTEGER NOT NULL DEFAULT 1,
   PRIMARY KEY (id, request_id)
 );
 CREATE INDEX IF NOT EXISTS message_day ON message(day);
@@ -129,6 +141,14 @@ def open_db(path: Path) -> sqlite3.Connection:
     # interrupted run can't leave a half-written database behind.
     conn.execute("PRAGMA journal_mode=WAL")
     conn.executescript(SCHEMA)
+    # Existing archives predate aggregate Copilot snapshots. Claude and Codex
+    # rows are one response each, so DEFAULT 1 migrates them without rewriting
+    # history. Copilot rows can then carry the exact request count reported by
+    # its durable per-model session summary.
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(message)")}
+    if "responses" not in columns:
+        conn.execute("ALTER TABLE message ADD COLUMN responses INTEGER NOT NULL DEFAULT 1")
+        conn.commit()
     return conn
 
 
@@ -211,7 +231,10 @@ def ingest_claude(conn: sqlite3.Connection, root: Path) -> dict:
     conn.commit()
     after = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
 
-    return {"scanned": len(rows), "inserted": after - before, "skipped": skipped, "total": after}
+    return {
+        "scanned": len(rows), "inserted": after - before, "responses": after - before,
+        "skipped": skipped, "total": after,
+    }
 
 
 def codex_transcripts(root: Path):
@@ -304,7 +327,383 @@ def ingest_codex(conn: sqlite3.Connection, root: Path) -> dict:
     )
     conn.commit()
     after = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
-    return {"scanned": len(rows), "inserted": after - before, "skipped": skipped, "total": after}
+    return {
+        "scanned": len(rows), "inserted": after - before, "responses": after - before,
+        "skipped": skipped, "total": after,
+    }
+
+
+def copilot_transcripts(root: Path):
+    """Yield Copilot CLI's durable event log for every local session."""
+    yield from sorted(root.glob("**/events.jsonl"))
+
+
+def as_count(value) -> int:
+    """Return a non-negative integer token/request count, or zero."""
+    try:
+        number = int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, number)
+
+
+def copilot_buckets(usage: dict) -> tuple:
+    """Map Copilot's normalized usage into the archive's disjoint buckets.
+
+    Copilot inputTokens includes cache reads. cacheWriteTokens is separate,
+    but its durable summary does not expose a TTL, so it goes into the default
+    5-minute bucket just like an Anthropic record without cache_creation
+    detail. reasoningTokens is a subset of outputTokens and is not added.
+    """
+    input_tokens = as_count(usage.get("inputTokens"))
+    cache_read = min(input_tokens, as_count(usage.get("cacheReadTokens")))
+    return (
+        input_tokens - cache_read,
+        as_count(usage.get("outputTokens")),
+        as_count(usage.get("cacheWriteTokens")),
+        0,
+        cache_read,
+    )
+
+
+def copilot_event_id(session: str, event: dict, model: str) -> str:
+    identifier = event.get("id")
+    if identifier:
+        return f"copilot:{identifier}:{model}"
+    material = json.dumps(
+        {
+            "session": session,
+            "timestamp": event.get("timestamp"),
+            "model": model,
+            "data": event.get("data"),
+        },
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return f"copilot:{hashlib.sha256(material.encode()).hexdigest()}"
+
+
+def metric_totals(metric: dict) -> dict:
+    usage = metric.get("usage") or {}
+    requests = metric.get("requests") or {}
+    return {
+        "inputTokens": as_count(usage.get("inputTokens")),
+        "outputTokens": as_count(usage.get("outputTokens")),
+        "cacheWriteTokens": as_count(usage.get("cacheWriteTokens")),
+        "cacheReadTokens": as_count(usage.get("cacheReadTokens")),
+        "responses": as_count(requests.get("count")),
+    }
+
+
+def metric_delta(current: dict, previous: dict) -> dict:
+    """Subtract two cumulative Copilot snapshots, tolerating a counter reset."""
+    if any(current[key] < previous.get(key, 0) for key in current):
+        return current
+    return {key: current[key] - previous.get(key, 0) for key in current}
+
+
+def exact_covers_shutdown(exact: list, shutdowns: list) -> bool:
+    """Only trust persisted per-call events when they match the durable total."""
+    if not exact:
+        return False
+
+    latest = {}
+    for event, _, _ in shutdowns:
+        metrics = (event.get("data") or {}).get("modelMetrics") or {}
+        if isinstance(metrics, dict):
+            for model, metric in metrics.items():
+                if model and isinstance(metric, dict):
+                    latest[model] = metric_totals(metric)
+    if not latest:
+        return True  # a live session can have per-call events but no shutdown yet
+
+    summed = {}
+    for event, _, _ in exact:
+        usage = event.get("data") or {}
+        model = usage.get("model")
+        if not model:
+            continue
+        total = summed.setdefault(model, {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cacheWriteTokens": 0,
+            "cacheReadTokens": 0,
+            "responses": 0,
+        })
+        total["inputTokens"] += as_count(usage.get("inputTokens"))
+        total["outputTokens"] += as_count(usage.get("outputTokens"))
+        total["cacheWriteTokens"] += as_count(usage.get("cacheWriteTokens"))
+        total["cacheReadTokens"] += as_count(usage.get("cacheReadTokens"))
+        total["responses"] += 1
+
+    return summed == latest
+
+
+def ingest_copilot(conn: sqlite3.Connection, root: Path) -> dict:
+    """Archive Copilot CLI usage from durable session event logs.
+
+    assistant.usage has exact per-call timestamps and ids but is documented as
+    ephemeral. If a client persisted it anyway, prefer it only when those
+    calls reconcile exactly with the durable shutdown summary. Normally only
+    session.shutdown survives; its modelMetrics values are cumulative, so each
+    shutdown contributes the delta from the previous snapshot. That preserves
+    exact token and request totals without counting a resumed session twice.
+    """
+    rows = []
+    skipped = 0
+
+    for path in copilot_transcripts(root):
+        session = path.parent.name
+        project = ""
+        exact = []
+        shutdowns = []
+
+        try:
+            handle = path.open(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+
+        with handle:
+            for line in handle:
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    skipped += 1
+                    continue
+
+                event_type = event.get("type")
+                data = event.get("data") or {}
+                if event_type == "session.start":
+                    session = data.get("sessionId") or session
+                    context = data.get("context") or {}
+                    project = context.get("cwd") or project
+                elif event_type == "session.context_changed":
+                    project = data.get("cwd") or project
+                elif event_type == "assistant.usage":
+                    exact.append((event, session, project))
+                elif event_type == "session.shutdown":
+                    shutdowns.append((event, session, project))
+
+        if exact_covers_shutdown(exact, shutdowns):
+            for event, event_session, event_project in exact:
+                data = event.get("data") or {}
+                model = data.get("model")
+                stamp = event.get("timestamp")
+                if not model or not stamp:
+                    continue
+                try:
+                    day = local_day(stamp)
+                except ValueError:
+                    continue
+                input_tokens, output, cw5m, cw1h, cache_read = copilot_buckets(data)
+                rows.append((
+                    copilot_event_id(event_session, event, model), "", stamp, day, model,
+                    event_project, f"copilot:{event_session}",
+                    1 if event.get("agentId") or data.get("initiator") == "sub-agent" else 0,
+                    input_tokens, output, cw5m, cw1h, cache_read, 1,
+                ))
+            continue
+
+        previous = {}
+        for event, event_session, event_project in shutdowns:
+            # Durable Copilot usage is an aggregate with no per-call
+            # timestamps. Bucket each new segment on its shutdown day. Totals
+            # and model attribution stay exact; a session held open across
+            # local midnight necessarily lands on the day it shuts down.
+            stamp = event.get("timestamp")
+            metrics = (event.get("data") or {}).get("modelMetrics") or {}
+            if not stamp or not isinstance(metrics, dict):
+                continue
+            try:
+                day = local_day(stamp)
+            except ValueError:
+                continue
+
+            for model, metric in metrics.items():
+                if not model or not isinstance(metric, dict):
+                    continue
+                current = metric_totals(metric)
+                delta = metric_delta(current, previous.get(model, {}))
+                previous[model] = current
+                response_count = delta.pop("responses")
+                input_tokens, output, cw5m, cw1h, cache_read = copilot_buckets(delta)
+                if not response_count and not any((input_tokens, output, cw5m, cw1h, cache_read)):
+                    continue
+                # Older builds made requests.count optional. Preserve their
+                # token totals and count the aggregate as one response rather
+                # than claiming zero API calls produced non-zero usage.
+                response_count = response_count or 1
+                rows.append((
+                    copilot_event_id(event_session, event, model), "", stamp, day, model,
+                    event_project, f"copilot:{event_session}", 0,
+                    input_tokens, output, cw5m, cw1h, cache_read, response_count,
+                ))
+
+    before_rows = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    before_responses = conn.execute(
+        "SELECT COALESCE(SUM(responses), 0) FROM message"
+    ).fetchone()[0]
+    conn.executemany(
+        "INSERT OR IGNORE INTO message"
+        " (id, request_id, ts, day, model, project, session, sidechain,"
+        "  input, output, cw5m, cw1h, cache_read, responses)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        rows,
+    )
+    conn.commit()
+    after_rows = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    after_responses = conn.execute(
+        "SELECT COALESCE(SUM(responses), 0) FROM message"
+    ).fetchone()[0]
+    return {
+        "scanned": len(rows),
+        "inserted": after_rows - before_rows,
+        "responses": after_responses - before_responses,
+        "skipped": skipped,
+        "total": after_rows,
+    }
+
+
+def copilot_vscode_transcripts(root: Path):
+    """Yield Remote/desktop VS Code Copilot Chat transcript files.
+
+    Each workspace has an opaque hash below workspaceStorage. The hash is
+    useful as a private project identifier but never leaves the local archive.
+    """
+    pattern = "*/GitHub.copilot-chat/transcripts/*.jsonl"
+    for path in sorted(root.glob(pattern)):
+        yield path.parents[2].name, path
+
+
+def load_copilot_vscode_encoder():
+    """Load the tokenizer named by Copilot's Sonnet 4.6 model catalog."""
+    try:
+        import tiktoken
+    except ImportError as err:
+        raise RuntimeError(
+            "Copilot VS Code estimates skipped: tiktoken is not installed"
+        ) from err
+    try:
+        return tiktoken.get_encoding(COPILOT_VSCODE_ENCODING)
+    except Exception as err:
+        raise RuntimeError(
+            f"Copilot VS Code estimates skipped: could not load "
+            f"{COPILOT_VSCODE_ENCODING}: {err}"
+        ) from err
+
+
+def encoded_tokens(encoder, value) -> int:
+    """Count visible string/JSON content with Copilot's recorded tokenizer."""
+    if value in (None, "", [], {}):
+        return 0
+    if isinstance(value, str):
+        text = value
+    else:
+        text = json.dumps(
+            value, ensure_ascii=False, separators=(",", ":"), sort_keys=True
+        )
+    encode = getattr(encoder, "encode_ordinary", encoder.encode)
+    return len(encode(text))
+
+
+def copilot_vscode_output_tokens(encoder, data: dict) -> int:
+    """Estimate billed output from persisted text, reasoning and tool calls."""
+    return sum(
+        encoded_tokens(encoder, data.get(field))
+        for field in ("content", "reasoningText", "toolRequests")
+    )
+
+
+def ingest_copilot_vscode(
+    conn: sqlite3.Connection,
+    root: Path,
+    model: str = COPILOT_VSCODE_MODEL,
+    context_window: int = COPILOT_VSCODE_CONTEXT,
+    encoder=None,
+) -> dict:
+    """Estimate VS Code Copilot usage from its durable visible transcript.
+
+    VS Code persists user messages, assistant text/reasoning and tool requests,
+    but not API usage, hidden system prompts, tool results, or reliable per-turn
+    model selection. Replay the visible history with the tokenizer and context
+    limit from Copilot's cached Sonnet 4.6 catalog. This is necessarily a lower
+    fidelity source than Claude/Codex/Copilot CLI usage and its distinct model
+    id keeps that fact visible on the public page.
+    """
+    encoder = encoder or load_copilot_vscode_encoder()
+    rows = []
+    skipped = 0
+
+    for project, path in copilot_vscode_transcripts(root):
+        session = path.stem
+        visible_history = 0
+        try:
+            handle = path.open(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+
+        with handle:
+            for line in handle:
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    skipped += 1
+                    continue
+
+                event_type = event.get("type")
+                data = event.get("data") or {}
+                if not isinstance(data, dict):
+                    continue
+                if event_type == "session.start":
+                    session = data.get("sessionId") or session
+                    continue
+                if event_type == "user.message":
+                    visible_history += encoded_tokens(encoder, data.get("content"))
+                    visible_history += encoded_tokens(encoder, data.get("attachments"))
+                    continue
+                if event_type != "assistant.message":
+                    continue
+
+                identifier = data.get("messageId") or event.get("id")
+                stamp = event.get("timestamp")
+                output = copilot_vscode_output_tokens(encoder, data)
+                if not identifier or not stamp or not output:
+                    continue
+                try:
+                    day = local_day(stamp)
+                except ValueError:
+                    continue
+
+                rows.append((
+                    f"copilot:vscode:{identifier}", "", stamp, day, model,
+                    f"vscode:{project}", f"copilot:vscode:{session}", 0,
+                    min(visible_history, context_window), output, 0, 0, 0, 1,
+                ))
+                visible_history += output
+
+    before_rows = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    before_responses = conn.execute(
+        "SELECT COALESCE(SUM(responses), 0) FROM message"
+    ).fetchone()[0]
+    conn.executemany(
+        "INSERT OR IGNORE INTO message"
+        " (id, request_id, ts, day, model, project, session, sidechain,"
+        "  input, output, cw5m, cw1h, cache_read, responses)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        rows,
+    )
+    conn.commit()
+    after_rows = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    after_responses = conn.execute(
+        "SELECT COALESCE(SUM(responses), 0) FROM message"
+    ).fetchone()[0]
+    return {
+        "scanned": len(rows),
+        "inserted": after_rows - before_rows,
+        "responses": after_responses - before_responses,
+        "skipped": skipped,
+        "total": after_rows,
+    }
 
 
 def rollup(conn: sqlite3.Connection, window: int) -> dict:
@@ -318,7 +717,7 @@ def rollup(conn: sqlite3.Connection, window: int) -> dict:
 
     rows = conn.execute(
         f"""SELECT day, model, SUM(input), SUM(output), SUM(cw5m), SUM(cw1h),
-                   SUM(cache_read), COUNT(*)
+                   SUM(cache_read), SUM(responses)
               FROM message
              WHERE day IN ({placeholders})
              GROUP BY day, model
@@ -400,29 +799,63 @@ def main() -> int:
     codex_root = Path(
         os.environ.get("CODEX_SESSIONS_DIR") or Path.home() / ".codex" / "sessions"
     )
+    copilot_root = Path(
+        os.environ.get("COPILOT_SESSIONS_DIR")
+        or Path.home() / ".copilot" / "session-state"
+    )
+    copilot_vscode_root = Path(
+        os.environ.get("COPILOT_VSCODE_WORKSPACES_DIR")
+        or Path.home() / ".vscode-server" / "data" / "User" / "workspaceStorage"
+    )
+    copilot_vscode_model = os.environ.get(
+        "COPILOT_VSCODE_MODEL", COPILOT_VSCODE_MODEL
+    )
     inserted = 0
     for name, root, collector in (
         ("Claude", claude_root, ingest_claude),
         ("Codex", codex_root, ingest_codex),
+        ("Copilot", copilot_root, ingest_copilot),
     ):
         if root.is_dir():
             result = collector(conn, root)
             inserted += result["inserted"]
             if result["inserted"]:
-                print(f"archived {result['inserted']} new {name} responses", file=sys.stderr)
+                print(f"archived {result['responses']} new {name} responses", file=sys.stderr)
 
-    total = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    if copilot_vscode_root.is_dir():
+        try:
+            result = ingest_copilot_vscode(
+                conn, copilot_vscode_root, model=copilot_vscode_model
+            )
+        except RuntimeError as err:
+            print(err, file=sys.stderr)
+        else:
+            inserted += result["inserted"]
+            if result["inserted"]:
+                print(
+                    f"archived {result['responses']} new Copilot VS Code "
+                    "estimated responses",
+                    file=sys.stderr,
+                )
+
+    total = conn.execute("SELECT COALESCE(SUM(responses), 0) FROM message").fetchone()[0]
     if inserted:
         print(f"{total} responses total", file=sys.stderr)
-    if not claude_root.is_dir() and not codex_root.is_dir() and not total:
+    if (
+        not claude_root.is_dir()
+        and not codex_root.is_dir()
+        and not copilot_root.is_dir()
+        and not copilot_vscode_root.is_dir()
+        and not total
+    ):
         # No logs to read and nothing archived from an earlier run: there is
         # genuinely nothing to report.
-        print("no Claude or Codex session logs and an empty archive", file=sys.stderr)
+        print("no Claude, Codex or Copilot session logs and an empty archive", file=sys.stderr)
         return 1
 
     if args.stats:
         row = conn.execute(
-            "SELECT COUNT(*), COUNT(DISTINCT day), MIN(day), MAX(day),"
+            "SELECT COALESCE(SUM(responses), 0), COUNT(DISTINCT day), MIN(day), MAX(day),"
             " SUM(input+output+cw5m+cw1h+cache_read) FROM message"
         ).fetchone()
         print(

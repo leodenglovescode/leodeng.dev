@@ -10,7 +10,8 @@
 # lands: uptime, load, memory, CPU temperature. Nothing that identifies the
 # machine or what runs on it — see functions/api/homelab.js for why.
 #
-# The token rollup additionally reads Claude/Codex session logs and needs python3.
+# The token rollup additionally reads Claude, Codex, Copilot CLI and VS Code
+# Copilot session logs and needs python3 plus tiktoken.
 # It sends per-day token counts and nothing else — see homelab/tokens.py and
 # functions/api/tokens.js.
 #
