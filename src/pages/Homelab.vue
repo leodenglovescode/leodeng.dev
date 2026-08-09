@@ -78,12 +78,6 @@ function formatAge(seconds) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-function formatBytes(bytes) {
-  if (bytes == null) return '—'
-  const gb = bytes / 1024 ** 3
-  return gb >= 10 ? `${Math.round(gb)} GB` : `${gb.toFixed(1)} GB`
-}
-
 // Load average is only meaningful against the core count: 4.0 is saturated on
 // four cores and idle on ninety-six.
 const loadPct = computed(() => {
@@ -188,17 +182,6 @@ const hasHistory = computed(() => (data.value?.history?.length ?? 0) >= 2)
             {{ current.temp == null ? '—' : Math.round(current.temp) + '°C' }}
           </div>
           <div class="text-xs text-muted mt-1">CPU temp</div>
-        </div>
-      </div>
-
-      <!-- Memory bar -->
-      <div v-if="memPct != null" class="mb-12">
-        <div class="flex justify-between items-baseline text-xs font-mono text-muted mb-2">
-          <span>{{ formatBytes(current.memUsed) }} used</span>
-          <span>{{ formatBytes(current.memTotal) }} total</span>
-        </div>
-        <div class="h-2 rounded-full bg-fg/8 overflow-hidden">
-          <div class="h-full bg-accent rounded-full transition-[width] duration-500" :style="{ width: `${memPct}%` }" />
         </div>
       </div>
 
