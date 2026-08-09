@@ -1,0 +1,65 @@
+{
+  "updatedAt": "2026-08-07T00:00:00+08:00",
+  "events": [
+    {
+      "id": "planespotting-gallery",
+      "flight": "LD 001",
+      "title": "Planespotting Gallery",
+      "startedAt": "2026-07-01T00:00:00+08:00",
+      "sinceLabel": "",
+      "remark": "Landed",
+      "tone": "ok",
+      "details": "Shipped the planespotting [gallery](/gallery), with build-time photo compression and a [stats page](/spotting) built from its EXIF."
+    },
+    {
+      "id": "shutterwingphotos",
+      "flight": "LD 002",
+      "title": "ShutterWingPhotos",
+      "startedAt": "2025-05-01T00:00:00+08:00",
+      "sinceLabel": "",
+      "remark": "On time",
+      "tone": "ok",
+      "details": "Continuously iterating on [ShutterWingPhotos](https://shutterwingphotos.com)."
+    },
+    {
+      "id": "llmgps",
+      "flight": "LD 003",
+      "title": "llmgps",
+      "startedAt": "2026-06-01T00:00:00+08:00",
+      "sinceLabel": "",
+      "remark": "Boarding",
+      "tone": "go",
+      "details": "Building [llmgps](https://github.com/leodenglovescode/llmgps), a multi-LLM chat workspace with a debate mode."
+    },
+    {
+      "id": "esp32-iot",
+      "flight": "LD 004",
+      "title": "ESP32 IoT",
+      "startedAt": "2026-03-01T00:00:00+08:00",
+      "sinceLabel": "",
+      "remark": "Delayed",
+      "tone": "warn",
+      "details": "Tinkering with ESP32-based IoT for Home Assistant."
+    },
+    {
+      "id": "headscale-mesh",
+      "flight": "LD 005",
+      "title": "Headscale Mesh",
+      "startedAt": "2026-02-01T00:00:00+08:00",
+      "sinceLabel": "",
+      "remark": "Cruising",
+      "tone": "go",
+      "details": "Running a self-hosted Headscale mesh for remote access to my home server (wrote it up on the [blog](/blog))."
+    },
+    {
+      "id": "planespotting",
+      "flight": "LD 006",
+      "title": "Planespotting",
+      "startedAt": "",
+      "sinceLabel": "Always",
+      "remark": "Weather",
+      "tone": "warn",
+      "details": "Planespotting whenever the weather and the schedule line up."
+    }
+  ]
+}

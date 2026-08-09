@@ -38,13 +38,13 @@ function yearLabel(m, i) {
   <section class="pt-20 sm:pt-32 pb-20">
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Spotting stats</h2>
     <p class="text-xs font-mono text-muted/90 mb-10">
-      <template v-if="!stats.empty">{{ stats.firstDay }} — {{ stats.lastDay }} ·</template>
+      <template v-if="!stats.empty">{{ stats.firstDay }} to {{ stats.lastDay }} ·</template>
       EXIF from the
       <RouterLink to="/gallery/planespotting" class="text-fg hover:text-accent transition-colors">gallery</RouterLink>
     </p>
 
     <p v-if="stats.empty" class="text-sm text-muted italic">
-      No photos indexed yet — add some to <code class="font-mono">src/photos/</code> and rebuild.
+      No photos indexed yet. Add some to <code class="font-mono">src/photos/</code> and rebuild.
     </p>
 
     <template v-else>
@@ -68,7 +68,7 @@ function yearLabel(m, i) {
           :key="h.hour"
           class="flex-1 bg-accent/70 rounded-t-[2px] min-h-0"
           :style="{ height: hourScale(h.count) }"
-          :title="`${String(h.hour).padStart(2, '0')}:00 — ${h.count} frame${h.count === 1 ? '' : 's'}`"
+          :title="`${String(h.hour).padStart(2, '0')}:00: ${h.count} frame${h.count === 1 ? '' : 's'}`"
         />
       </div>
       <div class="flex gap-[3px] text-xs font-mono text-muted mb-14">
@@ -86,7 +86,7 @@ function yearLabel(m, i) {
           :key="m.key"
           class="flex-1 bg-accent/70 rounded-t-[2px]"
           :style="{ height: monthScale(m.count) }"
-          :title="`${m.label} ${m.year} — ${m.count} frame${m.count === 1 ? '' : 's'}`"
+          :title="`${m.label} ${m.year}: ${m.count} frame${m.count === 1 ? '' : 's'}`"
         />
       </div>
       <div class="flex gap-1 text-xs font-mono text-muted mb-14">
@@ -117,7 +117,7 @@ function yearLabel(m, i) {
           <span class="text-accent shrink-0">→</span>
           <span>
             <span class="text-fg">{{ body.value }}</span>
-            — {{ body.count }} frame{{ body.count === 1 ? '' : 's' }}
+            : {{ body.count }} frame{{ body.count === 1 ? '' : 's' }}
           </span>
         </li>
       </ul>
@@ -125,7 +125,7 @@ function yearLabel(m, i) {
       <!-- Focal lengths -->
       <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">Focal length</h3>
       <p class="text-xs text-muted mb-5">
-        {{ stats.focal.min }}–{{ stats.focal.max }}mm, median {{ stats.focal.median }}mm.
+        {{ stats.focal.min }} to {{ stats.focal.max }}mm, median {{ stats.focal.median }}mm.
       </p>
       <div class="space-y-2.5 mb-14">
         <div v-for="b in stats.focalHistogram" :key="b.label" class="flex items-center gap-3">
@@ -168,7 +168,7 @@ function yearLabel(m, i) {
       <!-- Sessions -->
       <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">Days out</h3>
       <p class="text-xs text-muted mb-5">
-        Best: {{ stats.busiest.label }} — {{ stats.busiest.count }} frames<template
+        Best: {{ stats.busiest.label }}: {{ stats.busiest.count }} frames<template
           v-if="stats.busiest.minutes > 0"> in {{ stats.busiest.minutes }} minutes</template>.
       </p>
       <div class="border border-fg/8 rounded-lg overflow-hidden">

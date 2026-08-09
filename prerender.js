@@ -12,8 +12,8 @@ const staticRoutes = [
   { path: '/now',       title: 'Now' },
   { path: '/spotting',  title: 'Spotting Stats', description: "Every frame in my planespotting gallery, counted: gear, focal lengths, exposure and time of day, read straight out of the EXIF." },
   { path: '/changelog', title: 'Changelog', description: 'Every commit to leodeng.dev, generated from the repo at build time.' },
-  { path: '/homelab',   title: 'Homelab', description: 'Live status of my home server — uptime, load, memory and CPU temperature, pushed every minute.' },
-  { path: '/tokens',    title: 'Token Stats', description: 'How many LLM tokens I have burned through — today and all time, counted from local session logs and pushed from my server.' },
+  { path: '/homelab',   title: 'Homelab', description: 'Live status of my home server: uptime, load, memory and CPU temperature, pushed every minute.' },
+  { path: '/tokens',    title: 'Token Stats', description: 'How many LLM tokens I have burned through, today and all time, counted from local session logs and pushed from my server.' },
   { path: '/stack',     title: 'Stack' },
   { path: '/feed',      title: 'RSS Feed' },
   { path: '/blog',      title: 'Blog' },
@@ -25,7 +25,7 @@ function escapeXml(str) {
 }
 
 function withMeta(html, { title, description }) {
-  const fullTitle = title ? `${title} — leodeng.dev` : 'leodeng.dev'
+  const fullTitle = title ? `${title} | leodeng.dev` : 'leodeng.dev'
   let out = html.replace(/<title>.*?<\/title>/, `<title>${fullTitle}</title>`)
   out = out.replace(/(<meta property="og:title"\s+content=").*?(")/, `$1${fullTitle}$2`)
   out = out.replace(/(<meta name="twitter:title"\s+content=").*?(")/, `$1${fullTitle}$2`)

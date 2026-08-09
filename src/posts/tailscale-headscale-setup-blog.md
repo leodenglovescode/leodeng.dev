@@ -242,7 +242,7 @@ Depending on the device and network, that can be:
 
 The actual traffic between peers is handled by Tailscale/WireGuard.
 
-The clients try to establish a direct UDP path first. If the two networks cannot talk directly — for example an IPv4-only client reaching an IPv6-only server with no translation path — DERP provides the fallback.
+The clients try to establish a direct UDP path first. If the two networks cannot talk directly, for example an IPv4-only client reaching an IPv6-only server with no translation path, DERP provides the fallback.
 
 That separation cleared up most of the confusing behavior:
 

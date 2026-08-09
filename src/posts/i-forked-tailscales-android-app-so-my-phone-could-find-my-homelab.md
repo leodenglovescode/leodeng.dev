@@ -1,7 +1,7 @@
 ---
 title: "I Forked Tailscale's Android App So My Phone Could Find My Homelab"
 date: 2026-08-05T23:57:00+08:00
-description: "Every single thing that broke while building a custom Android client for my self-hosted VPN — a home address I refused to publish, a build that lied to me, a typo on my server that did nothing for weeks, and a bug that only appeared when I left the house."
+description: "Every single thing that broke while building a custom Android client for my self-hosted VPN: a home address I refused to publish, a build that lied to me, a typo on my server that did nothing for weeks, and a bug that only appeared when I left the house."
 ---
 
 Last time I wrote about getting Headscale running so my Mac, my PC and my phone could all reach my homelab and servers from anywhere. That post ended with everything working. This post is about the part where I looked at the working setup and went "yeah but I don't like one thing about it," and then spent weeks fixing that one thing.

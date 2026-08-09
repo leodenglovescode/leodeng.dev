@@ -5,7 +5,7 @@ description: "Turning a Raspberry Pi 4B and a leftover drive into a Samba file s
 ---
 
 > [!NOTE]
-> Originally posted on my old blog in April 2022. Kept as written — the prices, the links and the advice are all from 2022.
+> Originally posted on my old blog in April 2022. Kept as written. The prices, the links and the advice are all from 2022.
 
 Imagine this senario, you need a lot of pictures and/or important files stored someplace locally, and you want to access it through every computer/phone, but all of your storage is full, how do you store those pictures/files?
 
@@ -15,9 +15,9 @@ Well, the Raspberry pi can be a great soulution. The Raspberry Pi uses a lot les
 
 First, you need these components, some are needed and some are optional:
 
-1. **Raspberry Pi 4B / 2G RAM** — $35 Dollars ¥223 Yuan (You can buy the 4G and 8G version, but it's more pricey)
-2. **Case for Raspberry Pi** (Optional) — If you are a geek, you can 3D print one like I did, anyways, [here it is](https://media.leodeng.dev/raspberry-pi-nas-case-files.zip). (Credit to Michael Klements for designing the case (Aaaand making his own tutorial of the making of the case), he is a great tech youtuber and you should definitely check him out!)
-3. **Micro SD Card** (Sandisk 32 GB here) — 14 Dollars/89 RMB. This is for system installation, or if you only have a few files, using a 32 gigabyte sd card would be fine.
+1. **Raspberry Pi 4B / 2G RAM**: $35 Dollars ¥223 Yuan (You can buy the 4G and 8G version, but it's more pricey)
+2. **Case for Raspberry Pi** (Optional): If you are a geek, you can 3D print one like I did, anyways, [here it is](https://media.leodeng.dev/raspberry-pi-nas-case-files.zip). (Credit to Michael Klements for designing the case (Aaaand making his own tutorial of the making of the case), he is a great tech youtuber and you should definitely check him out!)
+3. **Micro SD Card** (Sandisk 32 GB here): 14 Dollars/89 RMB. This is for system installation, or if you only have a few files, using a 32 gigabyte sd card would be fine.
 4. **SSD or HDD** (Optional) (Can be Leftover SSD or HDDs)
 5. **I2C display** (Optional if you want the case)
 6. **3.3V Fan** (Optional if you want the case)

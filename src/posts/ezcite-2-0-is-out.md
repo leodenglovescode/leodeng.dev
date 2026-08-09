@@ -1,5 +1,5 @@
 ---
-title: "ezC!te version 2.0 is out — sorry for being so late..."
+title: "ezC!te version 2.0 is out. Sorry for being so late..."
 date: 2023-05-21T12:31:37+08:00
 description: "ezC!te 2.0 shipped back in March and I forgot to mention it. Here are the download links."
 ---

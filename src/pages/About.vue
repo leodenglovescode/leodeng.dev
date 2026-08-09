@@ -7,7 +7,7 @@ const age = calcAge()
 // Site theme is a manual toggle (see Navbar.vue), not tied to OS
 // prefers-color-scheme, so the Apple Music embed has to watch the actual
 // `.dark` class on <html> rather than assume a fixed or system theme.
-// Starts true to match index.html's default class="dark" — `document` isn't
+// Starts true to match index.html's default class="dark"; `document` isn't
 // available during SSR, so the real value is only read once mounted.
 const isDark = ref(true)
 let themeObserver
@@ -130,7 +130,7 @@ function hideTooltip() {
 
 // Primary source: a public, no-auth wrapper around GitHub's real contribution
 // calendar. GitHub's own GraphQL API requires an auth token even for public
-// data, which can't safely live in client-side JS — so this is the only way
+// data, which can't safely live in client-side JS. This is the only way
 // to show the full year live without a backend of our own.
 async function fetchContributionsPrimary() {
   const res = await fetch(`https://github-contributions-api.jogruber.de/v4/${GITHUB_LOGIN}?y=last`)
@@ -149,7 +149,7 @@ async function fetchContributionsPrimary() {
   contributionRangeLabel.value = 'contributions in the last year'
 }
 
-// Fallback: GitHub's own official REST API, no auth needed — but it only
+// Fallback: GitHub's own official REST API, no auth needed, but it only
 // exposes recent public events (~90 days / 300 events max), not a full
 // contribution calendar, and event counts approximate rather than match
 // contribution counts exactly (e.g. one push = one event regardless of
@@ -216,7 +216,7 @@ async function fetchGithubStats() {
       .slice(0, 5)
       .map(([lang]) => lang)
   } catch {
-    // stats stay null — tiles simply don't render
+    // stats stay null; tiles simply don't render
   }
 
   try {
@@ -224,7 +224,7 @@ async function fetchGithubStats() {
     const prData = await prRes.json()
     prCount.value = prData.total_count ?? 0
   } catch {
-    // stays null — tile simply doesn't render
+    // stays null; tile simply doesn't render
   }
 }
 
@@ -232,7 +232,7 @@ onMounted(() => {
   fetchGithubStats()
   fetchContributionsPrimary().catch(() =>
     fetchContributionsFallback().catch(() => {
-      // heatmap stays hidden — total/contributionDays stay empty
+      // heatmap stays hidden; total/contributionDays stay empty
     })
   )
 })
@@ -250,8 +250,8 @@ onMounted(() => {
           and somewhere along the way it became my hobby.
         </p>
         <p>
-          Outside of code I like planespotting & aviation photography (that's where ShutterWingPhotos came from) —
-          the <RouterLink to="/gallery/planespotting" class="text-fg hover:text-accent transition-colors">photos</RouterLink>
+          Outside of code I like planespotting & aviation photography (that's where ShutterWingPhotos came from).
+          The <RouterLink to="/gallery/planespotting" class="text-fg hover:text-accent transition-colors">photos</RouterLink>
           are here, and the <RouterLink to="/spotting" class="text-fg hover:text-accent transition-colors">numbers behind them</RouterLink> are too.
           I watch some F1, and bike around the city when the weather lets me. I also self-host
           a bunch of services: Home Servers, Docker, Home Assistant, the usual rabbit hole.
@@ -359,7 +359,7 @@ onMounted(() => {
       <div class="space-y-6 text-sm">
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2017</span>
-          <p class="text-muted">Started coding — school projects in Scratch</p>
+          <p class="text-muted">Started coding: school projects in Scratch</p>
         </div>
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2018/19</span>
@@ -367,7 +367,7 @@ onMounted(() => {
         </div>
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2023</span>
-          <p class="text-muted">AI boom — started using AI tools to build websites and apps</p>
+          <p class="text-muted">AI boom: started using AI tools to build websites and apps</p>
         </div>
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2025</span>
@@ -376,8 +376,8 @@ onMounted(() => {
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2026 (now)</span>
           <p class="text-muted">
-            Continuously updating ShutterWingPhotos, building llmgps, and getting into IoT —
-            more on the <RouterLink to="/now" class="text-fg hover:text-accent transition-colors">/now page</RouterLink>.
+            Continuously updating ShutterWingPhotos, building llmgps, and getting into IoT.
+            More on the <RouterLink to="/now" class="text-fg hover:text-accent transition-colors">/now page</RouterLink>.
           </p>
         </div>
       </div>

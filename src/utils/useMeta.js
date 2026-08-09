@@ -9,7 +9,7 @@ function setMeta(selector, attr, value) {
 export function applyMeta({ title, description } = {}) {
   if (typeof document === 'undefined') return
 
-  const fullTitle = title ? `${title} — leodeng.dev` : DEFAULT_TITLE
+  const fullTitle = title ? `${title} | leodeng.dev` : DEFAULT_TITLE
   const desc = description || DEFAULT_DESC
 
   document.title = fullTitle

@@ -5,7 +5,7 @@ import App from './App.vue'
 
 router.afterEach((to) => {
   const t = to.meta?.title
-  document.title = t ? `${t} — leodeng.dev` : 'leodeng.dev'
+  document.title = t ? `${t} | leodeng.dev` : 'leodeng.dev'
 })
 
 createApp(App).use(router).mount('#app')

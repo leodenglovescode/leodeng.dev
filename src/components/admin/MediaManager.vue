@@ -10,7 +10,7 @@ const MAX_BYTES = 95 * 1024 * 1024
 const props = defineProps({
   open: { type: Boolean, default: false },
   // False when opened from the post list, where there's no editor to insert into
-  // — clicking a thumbnail copies its URL instead.
+  // Clicking a thumbnail copies its URL instead.
   insertable: { type: Boolean, default: true },
 })
 
@@ -85,7 +85,7 @@ function safeName(name) {
 }
 
 // Phones export 4K HEVC by default, which Chrome and Firefox refuse to decode
-// — it uploads fine and then plays for nobody. Ask this browser to read the
+// It uploads fine and then plays for nobody. Ask this browser to read the
 // file's metadata first; if it can't, neither can most visitors.
 function browserCanDecode(file) {
   return new Promise((resolve) => {
@@ -101,7 +101,7 @@ function browserCanDecode(file) {
       resolve(ok)
     }
 
-    // A slow decode shouldn't block the upload — a false "this is broken" is
+    // A slow decode shouldn't block the upload. A false "this is broken" is
     // worse than letting an odd file through, so time out permissively.
     const timer = setTimeout(() => done(true), 5000)
 
@@ -122,12 +122,12 @@ async function upload(list) {
     for (const [index, file] of chosen.entries()) {
       if (file.size > MAX_BYTES) {
         const mb = (n) => `${(n / 1024 / 1024).toFixed(1)} MB`
-        throw new Error(`${file.name} is ${mb(file.size)} — the limit is ${mb(MAX_BYTES)}.`)
+        throw new Error(`${file.name} is ${mb(file.size)}. The limit is ${mb(MAX_BYTES)}.`)
       }
 
       if (VIDEO.test(file.name) && !(await browserCanDecode(file))) {
         throw new Error(
-          `${file.name} won't play in this browser — it's probably HEVC/H.265, which Chrome and ` +
+          `${file.name} won't play in this browser. It is probably HEVC/H.265, which Chrome and ` +
             'Firefox can\'t decode. Re-export it as H.264 and try again.',
         )
       }
@@ -298,7 +298,7 @@ function humanSize(bytes) {
 
       <footer class="px-5 py-3 border-t border-fg/10 text-xs text-muted/90">
         {{ insertable ? 'Click a thumbnail to insert it.' : 'Click a thumbnail to copy its URL.' }}
-        Uploads go straight to R2 — no commit, and deletes can't be undone.
+        Uploads go straight to R2. There is no commit, and deletes cannot be undone.
       </footer>
     </div>
   </div>

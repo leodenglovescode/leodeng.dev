@@ -46,7 +46,7 @@ const socialLinks = [
   </main>
   <footer v-if="chrome" class="max-w-3xl mx-auto px-6 py-8 border-t border-fg/5 flex flex-wrap items-center justify-between gap-4">
     <p class="text-xs text-muted/90 font-mono">
-      2026 © Leo Deng — Built with Vue, Vite, Tailwind.
+      2026 © Leo Deng · Built with Vue, Vite, Tailwind.
     </p>
     <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
       <!-- Deliberately footer-only: side pages worth finding, not worth a nav slot. -->

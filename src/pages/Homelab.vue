@@ -59,7 +59,7 @@ const online = computed(() =>
 )
 
 function formatUptime(seconds) {
-  if (seconds == null) return '—'
+  if (seconds == null) return 'N/A'
   const d = Math.floor(seconds / 86400)
   const h = Math.floor((seconds % 86400) / 3600)
   const m = Math.floor((seconds % 3600) / 60)
@@ -69,7 +69,7 @@ function formatUptime(seconds) {
 }
 
 function formatAge(seconds) {
-  if (seconds == null) return '—'
+  if (seconds == null) return 'N/A'
   if (seconds < 60) return `${seconds}s ago`
   const m = Math.floor(seconds / 60)
   if (m < 60) return `${m}m ago`
@@ -155,8 +155,8 @@ const hasHistory = computed(() => (data.value?.history?.length ?? 0) >= 2)
       </div>
 
       <p v-if="!online" class="text-sm text-muted mb-10">
-        The box stopped checking in. Either it's down, or my internet is —
-        from out here those look identical.
+        The box stopped checking in. Either it's down, or my internet is having a moment.
+        From out here those look identical.
       </p>
 
       <!-- Headline numbers -->
@@ -166,20 +166,20 @@ const hasHistory = computed(() => (data.value?.history?.length ?? 0) >= 2)
           <div class="text-xs text-muted mt-1">uptime</div>
         </div>
         <div class="bg-bg p-4">
-          <div class="text-2xl font-semibold text-fg font-mono">{{ current.load1?.toFixed(2) ?? '—' }}</div>
+          <div class="text-2xl font-semibold text-fg font-mono">{{ current.load1?.toFixed(2) ?? 'N/A' }}</div>
           <div class="text-xs text-muted mt-1">
             load<template v-if="current.cpus"> · {{ current.cpus }} cores</template>
           </div>
         </div>
         <div class="bg-bg p-4">
           <div class="text-2xl font-semibold text-fg font-mono">
-            {{ memPct == null ? '—' : Math.round(memPct) + '%' }}
+            {{ memPct == null ? 'N/A' : Math.round(memPct) + '%' }}
           </div>
           <div class="text-xs text-muted mt-1">memory</div>
         </div>
         <div class="bg-bg p-4">
           <div class="text-2xl font-semibold text-fg font-mono">
-            {{ current.temp == null ? '—' : Math.round(current.temp) + '°C' }}
+            {{ current.temp == null ? 'N/A' : Math.round(current.temp) + '°C' }}
           </div>
           <div class="text-xs text-muted mt-1">CPU temp</div>
         </div>
@@ -201,7 +201,7 @@ const hasHistory = computed(() => (data.value?.history?.length ?? 0) >= 2)
                 <span class="text-muted uppercase tracking-wider">{{ chart.label }}</span>
                 <span class="text-muted/90">
                   {{ chart.spark.min.toFixed(chart.unit === '' ? 2 : 0) }}{{ chart.unit }}
-                  –
+                  to
                   {{ chart.spark.max.toFixed(chart.unit === '' ? 2 : 0) }}{{ chart.unit }}
                 </span>
               </div>
@@ -230,7 +230,7 @@ const hasHistory = computed(() => (data.value?.history?.length ?? 0) >= 2)
       </template>
 
       <p class="text-xs text-muted/90 font-mono mt-12">
-        Uptime, load, memory and temperature — nothing that says what runs on it.
+        Uptime, load, memory and temperature. Nothing that says what runs on it.
       </p>
     </template>
   </section>

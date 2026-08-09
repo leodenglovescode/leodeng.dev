@@ -1,60 +1,50 @@
 <script setup>
 import { ref } from 'vue'
+import { marked } from 'marked'
 import SplitFlap from '../components/SplitFlap.vue'
-
-const lastUpdated = 'August 7, 2026'
-
-// A departure board, because of course it is. Every row is one thing I'm
-// actually on right now; the remark is the honest status of it.
-const rows = [
-  {
-    since: 'JUL 26',
-    flight: 'LD 001',
-    dest: 'PLANESPOTTING GALLERY',
-    remark: 'LANDED',
-    tone: 'ok',
-  },
-  {
-    since: 'MAY 25',
-    flight: 'LD 002',
-    dest: 'SHUTTERWINGPHOTOS',
-    remark: 'ON TIME',
-    tone: 'ok',
-  },
-  {
-    since: 'JUN 26',
-    flight: 'LD 003',
-    dest: 'LLMGPS',
-    remark: 'BOARDING',
-    tone: 'go',
-  },
-  {
-    since: 'MAR 26',
-    flight: 'LD 004',
-    dest: 'ESP32 IOT',
-    remark: 'DELAYED',
-    tone: 'warn',
-  },
-  {
-    since: 'FEB 26',
-    flight: 'LD 005',
-    dest: 'HEADSCALE MESH',
-    remark: 'CRUISING',
-    tone: 'go',
-  },
-  {
-    since: 'ALWAYS',
-    flight: 'LD 006',
-    dest: 'PLANESPOTTING',
-    remark: 'WEATHER',
-    tone: 'warn',
-  },
-]
+import nowData from '../content/now.json'
 
 const TONES = {
   ok:   'text-[#15a34a] dark:text-[#4ade80]',
   go:   'text-accent',
   warn: 'text-highlight',
+}
+
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+
+function sinceLabel(event) {
+  if (event.sinceLabel?.trim()) return event.sinceLabel.trim().toUpperCase()
+  const match = String(event.startedAt || '').match(/^(\d{4})-(\d{2})/)
+  if (!match) return 'NOW'
+  return `${MONTHS[Number(match[2]) - 1]} ${match[1].slice(2)}`
+}
+
+function longDate(iso) {
+  const match = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return 'recently'
+  const month = new Intl.DateTimeFormat('en-US', { month: 'long' })
+    .format(new Date(Date.UTC(2000, Number(match[2]) - 1, 1)))
+  return `${month} ${Number(match[3])}, ${match[1]}`
+}
+
+// A departure board, because of course it is. Content lives in one JSON file
+// shared with /admin, while the presentation stays exactly the same here.
+const rows = (nowData.events || []).map((event) => ({
+  ...event,
+  since: sinceLabel(event),
+  flight: String(event.flight || '').toUpperCase(),
+  dest: String(event.title || '').toUpperCase(),
+  remark: String(event.remark || '').toUpperCase(),
+  tone: TONES[event.tone] ? event.tone : 'go',
+}))
+
+const lastUpdated = longDate(nowData.updatedAt)
+
+function renderDetails(source) {
+  return marked.parseInline(String(source || ''))
+    .replace(/<a href="(https?:\/\/[^"]+)"/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer"')
 }
 
 // Bumping the key remounts every flap, which re-runs the settle animation —
@@ -89,7 +79,7 @@ const boardKey = ref(0)
 
       <div
         v-for="(row, i) in rows"
-        :key="row.flight"
+        :key="row.id"
         class="grid grid-cols-[1fr_auto] sm:grid-cols-[5rem_5rem_1fr_auto] gap-x-4 items-center
                px-4 py-3 border-b border-fg/5 last:border-b-0"
       >
@@ -123,29 +113,19 @@ const boardKey = ref(0)
 
     <!-- The board is the fun part; this is the part that's actually useful. -->
     <ul class="space-y-4 text-sm mt-10">
-      <li class="flex gap-3">
+      <li
+        v-for="row in rows"
+        :key="`details-${row.id}`"
+        class="flex gap-3"
+      >
         <span class="text-accent shrink-0">→</span>
-        <span class="text-muted"><span class="font-mono text-xs text-muted/90">LD 001</span> — Shipped the planespotting <RouterLink to="/gallery" class="text-fg hover:text-accent transition-colors">gallery</RouterLink>, with build-time photo compression and a <RouterLink to="/spotting" class="text-fg hover:text-accent transition-colors">stats page</RouterLink> built from its EXIF.</span>
-      </li>
-      <li class="flex gap-3">
-        <span class="text-accent shrink-0">→</span>
-        <span class="text-muted"><span class="font-mono text-xs text-muted/90">LD 002</span> — Continuously iterating on <a href="https://shutterwingphotos.com" target="_blank" rel="noopener noreferrer" class="text-fg hover:text-accent transition-colors">ShutterWingPhotos</a>.</span>
-      </li>
-      <li class="flex gap-3">
-        <span class="text-accent shrink-0">→</span>
-        <span class="text-muted"><span class="font-mono text-xs text-muted/90">LD 003</span> — Building <a href="https://github.com/leodenglovescode/llmgps" target="_blank" rel="noopener noreferrer" class="text-fg hover:text-accent transition-colors">llmgps</a>, a multi-LLM chat workspace with a debate mode.</span>
-      </li>
-      <li class="flex gap-3">
-        <span class="text-accent shrink-0">→</span>
-        <span class="text-muted"><span class="font-mono text-xs text-muted/90">LD 004</span> — Tinkering with ESP32-based IoT for Home Assistant.</span>
-      </li>
-      <li class="flex gap-3">
-        <span class="text-accent shrink-0">→</span>
-        <span class="text-muted"><span class="font-mono text-xs text-muted/90">LD 005</span> — Running a self-hosted Headscale mesh for remote access to my home server (wrote it up on the <RouterLink to="/blog" class="text-fg hover:text-accent transition-colors">blog</RouterLink>).</span>
-      </li>
-      <li class="flex gap-3">
-        <span class="text-accent shrink-0">→</span>
-        <span class="text-muted"><span class="font-mono text-xs text-muted/90">LD 006</span> — Planespotting whenever the weather and the schedule line up.</span>
+        <span
+          class="text-muted [&_a]:text-fg [&_a]:hover:text-accent [&_a]:transition-colors"
+        >
+          <span class="font-mono text-xs text-muted/90">{{ row.flight }}</span>
+          :
+          <span v-html="renderDetails(row.details)" />
+        </span>
       </li>
     </ul>
 

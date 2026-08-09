@@ -5,7 +5,7 @@ description: "End of 8th grade, a business competition in Suzhou, and a montage 
 ---
 
 > [!NOTE]
-> Originally posted on my old blog in November 2024. The montage was a 4K HEVC file that most browsers refused to play — it's re-encoded here so it actually works.
+> Originally posted on my old blog in November 2024. The montage was a 4K HEVC file that most browsers refused to play. It is re-encoded here so it actually works.
 
 Hi Again!
 

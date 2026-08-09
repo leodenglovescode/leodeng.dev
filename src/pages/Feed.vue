@@ -18,7 +18,7 @@ async function copyUrl() {
     <div class="space-y-4 text-[15px] leading-relaxed text-muted mb-10">
       <p>
         This is a web feed, also known as an RSS feed. It lets you follow new blog posts
-        from this site in a feed reader app, without an algorithm, an account, or any tracking —
+        from this site in a feed reader app, without an algorithm, an account, or any tracking.
         just new posts, in order, the moment they're published.
       </p>
       <p>

@@ -5,7 +5,7 @@ description: "Ringing in 2025 from Beijing."
 ---
 
 > [!NOTE]
-> Originally posted on my old blog on New Year's Day 2025 — the last thing I put on it before moving here.
+> Originally posted on my old blog on New Year's Day 2025. It was the last thing I put on it before moving here.
 
 It is January 1st, 2025 12:50 PM here in China (GMT +8 Beijing Standard Time).
 

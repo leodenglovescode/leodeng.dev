@@ -19,7 +19,7 @@ I Will Post The ***IP Address of my server*** Later in the Month, and I wish you
 
 ## The next day: the link, and more
 
-So as I promised, here's the banner of my server, including the ip address of my CSS Server — it was a GameTracker badge pointing at my home connection on port 27015.
+So as I promised, here's the banner of my server, including the ip address of my CSS Server: it was a GameTracker badge pointing at my home connection on port 27015.
 
 Oh and also my server has SourceMod, MetaMod, and some plugins Installed on it, I have a list of the plugins at the bottom of this page if you guys want to see for yourself, it is really just a few files and the SourceMod Plugins command just shows all of the files associated with each plugin.
 
