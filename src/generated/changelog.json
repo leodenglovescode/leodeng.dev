@@ -1,212 +1,366 @@
 {
  "repo": "leodenglovescode/leodeng.dev",
- "generatedAt": "2026-08-07",
+ "generatedAt": "2026-08-09",
  "commits": [
   {
-   "hash": "3cf0061a1fe92d084f9e0fef8dbd9fb6bd8f1158",
+   "hash": "31407becf42ecbb92a0211a61cacbf9a0e6ca31c",
+   "date": "2026-08-09",
+   "type": "other",
+   "scope": null,
+   "subject": "Add VS Code Copilot token estimates"
+  },
+  {
+   "hash": "7d94676a7e2068af193f71c6a2b639fa515fa7de",
+   "date": "2026-08-09",
+   "type": "other",
+   "scope": null,
+   "subject": "Simplify homelab memory display"
+  },
+  {
+   "hash": "c8bd21a07ba1880758ccc5bd5020f4977a6a6620",
+   "date": "2026-08-09",
+   "type": "other",
+   "scope": null,
+   "subject": "Add Codex token collection"
+  },
+  {
+   "hash": "7133dc26c162f229e7bfff290fe62c6515d4cf27",
+   "date": "2026-08-08",
+   "type": "feat",
+   "scope": "tokens",
+   "subject": "archive usage in SQLite, add 7/30/all ranges"
+  },
+  {
+   "hash": "77214803d1eac4bb800e876f2bb161db6d842964",
+   "date": "2026-08-08",
+   "type": "fix",
+   "scope": "tokens",
+   "subject": "count subagent transcripts"
+  },
+  {
+   "hash": "728f09748dcf6d6d3325ac79a99d1f0674fbf74a",
+   "date": "2026-08-08",
+   "type": "other",
+   "scope": null,
+   "subject": "copy(tokens): drop the tool name from the page"
+  },
+  {
+   "hash": "12e67b8e466da4417bbc11f5da8c2f7e0ac5a830",
+   "date": "2026-08-08",
+   "type": "fix",
+   "scope": "homelab",
+   "subject": "stop the token rollup from being able to fail the heartbeat"
+  },
+  {
+   "hash": "135222cf479c85e40bdb13f1b16138cf6ec821bd",
+   "date": "2026-08-08",
+   "type": "feat",
+   "scope": "tokens",
+   "subject": "add a /tokens page fed by the homelab timer"
+  },
+  {
+   "hash": "11afcb11db5a525402aa6477d46e078e9ba45085",
+   "date": "2026-08-07",
+   "type": "fix",
+   "scope": "photos",
+   "subject": "merge the manifest instead of rebuilding it from disk"
+  },
+  {
+   "hash": "e0c07cca347ba9d61fe1e84dd929b29211e998b1",
+   "date": "2026-08-07",
+   "type": "content",
+   "scope": null,
+   "subject": "correct the R2 token path in the credentials error"
+  },
+  {
+   "hash": "7bafdfdc4126a275a15a2e402a756cd1a8e7477f",
+   "date": "2026-08-07",
+   "type": "chore",
+   "scope": "photos",
+   "subject": "drop the local originals, guard the manifest against shrinking"
+  },
+  {
+   "hash": "6c882e290de9b52972883888da47db5e52ba5e9c",
+   "date": "2026-08-07",
+   "type": "chore",
+   "scope": "photos",
+   "subject": "move the gallery to R2, drop originals from the repo"
+  },
+  {
+   "hash": "037d520e0bd4b095a4e24397ab75a9708e632091",
+   "date": "2026-08-07",
+   "type": "chore",
+   "scope": "media",
+   "subject": "serve blog images from R2 instead of the repo"
+  },
+  {
+   "hash": "9b1e45beed7e24a5b863a2e6d18e0a9142501544",
+   "date": "2026-08-07",
+   "type": "content",
+   "scope": null,
+   "subject": "tidy up a few things across the older posts"
+  },
+  {
+   "hash": "b9cc9c01605182c70ae36f97b7ca2b86f22d64a2",
+   "date": "2026-08-07",
+   "type": "content",
+   "scope": null,
+   "subject": "trim the 2022 \"what I'm working on\" post"
+  },
+  {
+   "hash": "2f03bb0604e7815a3b62e5f4f982917103276fc6",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "port the rest of the old blog, fix the age calculation"
+  },
+  {
+   "hash": "1c52073d71e3f88f4f6d43af423a88c5e67f6064",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": "admin",
+   "subject": "upload video to R2 instead of committing it to the repo"
+  },
+  {
+   "hash": "6d6571d15b1d3de40f695ac500323f6af45ef36e",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "port four posts over from the old leodengsblog.cn"
+  },
+  {
+   "hash": "3d9072275d40b18a469eabcf7d952a634e1f4f5b",
+   "date": "2026-08-07",
+   "type": "fix",
+   "scope": null,
+   "subject": "allow AF_UNIX in the homelab agent unit so DNS resolves"
+  },
+  {
+   "hash": "80dde57b41067859d74e12d052264f1a2d5abb7e",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "live homelab status at /homelab"
+  },
+  {
+   "hash": "59682da0af9f6469b0cd20d3376f5d0c30427516",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "turn /now into a split-flap departure board"
+  },
+  {
+   "hash": "7fd4fa3455e048fd6dc3c387ba332201aa7ceaff",
+   "date": "2026-08-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "add /spotting and /changelog, both generated at build time"
+  },
+  {
+   "hash": "9070a2d6759b2367a54fd0c6cb4a37ade8de20cc",
    "date": "2026-08-07",
    "type": "feat",
    "scope": null,
    "subject": "auto-rotate the homepage status line"
   },
   {
-   "hash": "504aa05b05d9fed83098c0daadb42b7cf75f838c",
+   "hash": "feecfa064f3436ef8cbfa22f3f4f59c8487e261e",
    "date": "2026-08-07",
    "type": "feat",
    "scope": null,
    "subject": "new visual identity — blue and gold, IBM Plex Sans"
   },
   {
-   "hash": "862271549799a3729810079768e7ab9ccb945380",
+   "hash": "7e006b409569743640d60b40bb9ec5efc1e50622",
    "date": "2026-08-07",
    "type": "fix",
    "scope": null,
    "subject": "make small text legible across the site"
   },
   {
-   "hash": "9d3532dbe17260d3bc2df53068b5c360cbdfe94a",
+   "hash": "89a2c11f0e1df353401368ea6cb23ab838db4da5",
    "date": "2026-08-07",
    "type": "feat",
    "scope": null,
    "subject": "stop the admin editor losing unsaved work"
   },
   {
-   "hash": "2f2c2c3456328e35a0e92eda6169a1305753b947",
+   "hash": "2773e8f3782c7e8203912f15eb0b5ff7e887a8c5",
    "date": "2026-08-07",
    "type": "content",
    "scope": null,
    "subject": "add post \"Explaining my weird home network & services setup\""
   },
   {
-   "hash": "a61a1052d638dc68a357ef06845fcc619aeaa936",
+   "hash": "6281e38f6c84df8282147b8067892cbc8d078254",
    "date": "2026-08-07",
    "type": "feat",
    "scope": null,
    "subject": "drafts folder in the admin editor"
   },
   {
-   "hash": "288bdf093aeb72e00d57e43ef02323e0987f782c",
+   "hash": "72f2dbae548ae3afdcd05aea3ff63b652a888ae7",
    "date": "2026-08-07",
    "type": "fix",
    "scope": null,
    "subject": "stop the admin editor eating characters during IME input"
   },
   {
-   "hash": "d2a77a032ebe82958022db70d18c7bc36bccae42",
+   "hash": "416b20a4de6302fed89b86471f6680dc2a7a88e4",
    "date": "2026-08-07",
    "type": "feat",
    "scope": null,
    "subject": "GitHub-style callouts for important sections"
   },
   {
-   "hash": "3cff129fcd7db383a584f1150b3397a18bb804f6",
+   "hash": "371c68fafd323b3d17813aab10673a06818267ae",
    "date": "2026-08-06",
    "type": "feat",
    "scope": null,
    "subject": "render mermaid diagrams with pan/zoom controls"
   },
   {
-   "hash": "7c4927ba0e2a4d54bdb3f628c3c3a6bd71027191",
+   "hash": "b351884363a426f50dcf0648eea109cac464de75",
    "date": "2026-08-06",
    "type": "fix",
    "scope": null,
    "subject": "style headings, links and the rest of .prose"
   },
   {
-   "hash": "1c5c6baab9b851785876755a10d8a8e710a4cbf8",
+   "hash": "cbb9a43e6a0b4e4ffde89e103281033e86e2e21a",
    "date": "2026-08-06",
    "type": "content",
    "scope": null,
    "subject": "update post \"I Forked Tailscale's Android App So My Phone Could Find My Homelab\""
   },
   {
-   "hash": "8a0f6085e2ac34768ebe6bbfaa041e94a068e85d",
+   "hash": "b6cdb1b4338ad7c99c3e32468d79e780d320b031",
    "date": "2026-08-06",
    "type": "content",
    "scope": null,
    "subject": "rename post to \"i-forked-tailscales-android-app-so-my-phone-could-find-my-homelab\""
   },
   {
-   "hash": "8ee2765960eb41ee80ce642ba2cc3afc5f47e32c",
+   "hash": "a950ad319428ddfb9298a2e8900b9c096f69239f",
    "date": "2026-08-06",
    "type": "content",
    "scope": null,
    "subject": "update post \"I Forked Tailscale's Android App So My Phone Could Find My Homelab\""
   },
   {
-   "hash": "19873a5d2629639e1584d92c55bfe4bdc407517f",
+   "hash": "7946deec11cfe31cdcf257c0a2b2fcd2b5f6d039",
    "date": "2026-08-06",
    "type": "fix",
    "scope": null,
    "subject": "stop /admin being cached at the edge"
   },
   {
-   "hash": "d7c908af0961bf19ca1bd49cd12671d437aa7b5f",
+   "hash": "855b933d9ab41c0905da7a114556dae8c5631506",
    "date": "2026-08-06",
    "type": "feat",
    "scope": null,
    "subject": "replace Decap CMS with a self-built editor at /admin"
   },
   {
-   "hash": "3bf0981738767cdaf836a85ba7628903c2c0949c",
+   "hash": "7919f8d9e15ab0c479598e1d5547a3a805c7e694",
    "date": "2026-08-06",
    "type": "fix",
    "scope": null,
    "subject": "parse multi-line YAML frontmatter so descriptions aren't truncated"
   },
   {
-   "hash": "18caf62b31587a0f9cc01da5ba704419f827e43d",
+   "hash": "dc9389afa44e6559acec5492d088088d9da31608",
    "date": "2026-08-05",
    "type": "content",
    "scope": null,
    "subject": "Create Blog Posts “i-forked-a-vpn-app-so-my-phone-could-find-my-house”"
   },
   {
-   "hash": "b1b84d62dc9a8c67d899e176887b1de92feb50e9",
+   "hash": "82d8119d3df5110f7a967b7f320c8160e17c78b4",
    "date": "2026-08-05",
    "type": "content",
    "scope": null,
    "subject": "Update Blog Posts “tailscale-headscale-setup-blog”"
   },
   {
-   "hash": "2a94bf0b1c838c828b45d28b946518f963351b4a",
+   "hash": "26c037b302519b858d0cfdc5dc52d093995f16d0",
    "date": "2026-08-02",
    "type": "fix",
    "scope": null,
    "subject": "Update to correct microphone model"
   },
   {
-   "hash": "0ef1088370fc5602485249ddf819f6813edf2794",
+   "hash": "193f962ef511c0c8705a13c772f527d58c28885d",
    "date": "2026-07-30",
    "type": "feat",
    "scope": null,
    "subject": "redesign contact page, fix casing across pages"
   },
   {
-   "hash": "2e10f2c78113a378b2b0d5bcf3d317273188719b",
+   "hash": "80b274193e697e5057084b77b72471f89dbd8e8b",
    "date": "2026-07-28",
    "type": "content",
    "scope": null,
    "subject": "Update Blog Posts “tailscale-headscale-setup-blog”"
   },
   {
-   "hash": "b16c5bba36184af06d0cd5e5dbbdfcd04b59d031",
+   "hash": "d8a8c9b6a1f50f61b50c813acdb84ee3b79e5a54",
    "date": "2026-07-27",
    "type": "feat",
    "scope": null,
    "subject": "split gallery into paginated collections, add Stack page"
   },
   {
-   "hash": "2e5f65a56aac8127592eeed42f81fc9a584be0e5",
+   "hash": "68b331fdc30f72d138b3d2a9e04d4683d842ee02",
    "date": "2026-07-24",
    "type": "fix",
    "scope": null,
    "subject": "match Apple Music embed theme to site's dark/light toggle"
   },
   {
-   "hash": "735bf4f0a4453dba1500b977862026a5e3299428",
+   "hash": "02ce451d42b4a740c65e3a5c51c312c2dc7684bb",
    "date": "2026-07-24",
    "type": "feat",
    "scope": null,
    "subject": "add live GitHub stats and contribution graph to About page"
   },
   {
-   "hash": "587e9b07b7adf2584350d2c9d0338603d73f7c3f",
+   "hash": "6dfb9a474a21153efaeb23d7c182df543dae4bce",
    "date": "2026-07-24",
    "type": "fix",
    "scope": null,
    "subject": "self-host decap-cms bundle instead of loading from unpkg"
   },
   {
-   "hash": "df113970157c4c4a0bc2d50011cd7f95ba700f3a",
+   "hash": "584f7ce7e99e2192e681a1d6ba97667f87c52870",
    "date": "2026-07-23",
    "type": "feat",
    "scope": null,
    "subject": "add Decap CMS admin panel, fix blog post timestamps"
   },
   {
-   "hash": "c8e38b49dfd89c62db67ac8347226f6b10b32f3a",
+   "hash": "cef3193aaec77b69157bc257686c7579a22da94d",
    "date": "2026-07-23",
    "type": "feat",
    "scope": null,
    "subject": "use profile pic as favicon, optimize avatar, update YouTube link"
   },
   {
-   "hash": "4eb4cd4b329f0b074e8fc92fe4a0767566f8b121",
+   "hash": "83d2dfc13845a81ed30ee65eb4319646eea80e2c",
    "date": "2026-07-23",
    "type": "feat",
    "scope": null,
    "subject": "add RSS explainer page, restyle footer with social icons"
   },
   {
-   "hash": "498946e89bf3943d1c985638fb2224bc5bdfb941",
+   "hash": "315c6e2bc9b6f2d1d8067a8ddb962e291f654a7d",
    "date": "2026-07-23",
    "type": "feat",
    "scope": null,
    "subject": "add /now page and RSS feed for the blog"
   },
   {
-   "hash": "6265b6b5b0ae2dce4353645507a70385f7179435",
+   "hash": "b09babc8a0d038b52f9f179b4051896808c10f76",
    "date": "2026-07-23",
    "type": "feat",
    "scope": null,

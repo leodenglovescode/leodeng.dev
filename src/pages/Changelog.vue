@@ -65,11 +65,6 @@ function meta(type) {
       <a :href="REPO_URL" target="_blank" rel="noopener noreferrer" class="text-fg hover:text-accent transition-colors">the repo</a>.
     </p>
 
-    <p class="text-[15px] leading-relaxed text-muted mb-8">
-      This site is never really finished. Here's the whole trail of it —
-      generated at build time from git history, so it updates itself.
-    </p>
-
     <div v-if="!data.commits.length" class="text-sm text-muted italic">
       No history available. Try
       <a :href="REPO_URL" target="_blank" rel="noopener noreferrer" class="text-fg hover:text-accent transition-colors">GitHub</a>

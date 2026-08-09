@@ -58,6 +58,18 @@ function fromGit() {
     })
 }
 
+function fromExisting() {
+  if (!fs.existsSync(OUT_PATH)) return []
+
+  try {
+    const data = JSON.parse(fs.readFileSync(OUT_PATH, 'utf-8'))
+    return Array.isArray(data.commits) ? data.commits : []
+  } catch (err) {
+    console.warn(`  Existing changelog.json unavailable (${err.message})`)
+    return []
+  }
+}
+
 async function fromGitHub() {
   // Cloudflare Pages clones shallowly on some build images, so `git log` can
   // come back with a single commit. The API has the whole history.
@@ -85,6 +97,7 @@ async function fromGitHub() {
 }
 
 async function main() {
+  const existing = fromExisting()
   let commits = []
   let source = 'git'
 
@@ -103,6 +116,15 @@ async function main() {
     } catch (err) {
       console.warn(`  GitHub API fallback failed (${err.message})`)
     }
+  }
+
+  // A failed/rate-limited API request used to leave the one commit from a
+  // shallow Pages clone in `commits`, which then overwrote the complete
+  // committed index. Never replace a fuller known-good history with that.
+  if (commits.length <= 1 && existing.length > commits.length) {
+    console.warn(`  Keeping existing changelog.json (${existing.length} commits) instead of incomplete ${source} history (${commits.length})`)
+    commits = existing
+    source = 'existing index'
   }
 
   if (!commits.length) {
