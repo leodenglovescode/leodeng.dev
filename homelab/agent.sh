@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pushes a heartbeat to https://leodeng.dev/api/homelab, and a Claude Code
+# Pushes a heartbeat to https://leodeng.dev/api/homelab, and an LLM CLI
 # token rollup to https://leodeng.dev/api/tokens.
 #
 # Runs on the home server, which is behind Headscale and has no inbound path
@@ -10,7 +10,7 @@
 # lands: uptime, load, memory, CPU temperature. Nothing that identifies the
 # machine or what runs on it — see functions/api/homelab.js for why.
 #
-# The token rollup additionally reads ~/.claude/projects and needs python3.
+# The token rollup additionally reads Claude/Codex session logs and needs python3.
 # It sends per-day token counts and nothing else — see homelab/tokens.py and
 # functions/api/tokens.js.
 #
@@ -80,9 +80,9 @@ curl --silent --show-error --fail \
      -d "$payload" \
      -o /dev/null
 
-# --- Claude Code token usage -------------------------------------------------
+# --- LLM CLI token usage -----------------------------------------------------
 # Deliberately never fails the unit. The heartbeat is the job this timer exists
-# for, and a box with no Claude Code transcripts on it — or no python3 — is a
+# for, and a box with no supported CLI transcripts — or no python3 — is a
 # perfectly healthy box. Problems go to the journal and the run still exits 0.
 push_tokens() {
   local endpoint script min_interval state_dir

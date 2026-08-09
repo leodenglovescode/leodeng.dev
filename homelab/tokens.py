@@ -9,7 +9,7 @@ Two jobs, in order:
 2. Roll up. The rollup is computed *from that database*, never from the logs
    directly, and printed on stdout for homelab/agent.sh to POST.
 
-The database is the point. Claude Code prunes its transcripts after a few
+The database is the point. LLM CLIs prune their transcripts after a few
 weeks, so anything derived only from what's currently on disk is a number that
 quietly loses its own history — and an aggregation bug found later can no
 longer be corrected, because the evidence is gone. Keeping one row per
@@ -73,7 +73,7 @@ CREATE INDEX IF NOT EXISTS message_day ON message(day);
 """
 
 
-def transcripts(root: Path):
+def claude_transcripts(root: Path):
     """Yield (project_directory_name, path) for every session log.
 
     Recursive on purpose. A main session sits at `<project>/<uuid>.jsonl`, but
@@ -132,12 +132,12 @@ def open_db(path: Path) -> sqlite3.Connection:
     return conn
 
 
-def ingest(conn: sqlite3.Connection, root: Path) -> dict:
-    """Insert every response found on disk that isn't already recorded."""
+def ingest_claude(conn: sqlite3.Connection, root: Path) -> dict:
+    """Insert every Claude response found on disk that isn't already recorded."""
     rows = []
     skipped = 0
 
-    for project, path in transcripts(root):
+    for project, path in claude_transcripts(root):
         try:
             handle = path.open(encoding="utf-8", errors="replace")
         except OSError:
@@ -211,6 +211,99 @@ def ingest(conn: sqlite3.Connection, root: Path) -> dict:
     conn.commit()
     after = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
 
+    return {"scanned": len(rows), "inserted": after - before, "skipped": skipped, "total": after}
+
+
+def codex_transcripts(root: Path):
+    """Yield every Codex rollout log below its date-based session tree."""
+    yield from sorted(root.glob("**/*.jsonl"))
+
+
+def codex_response_id(session: str, total: dict) -> str:
+    """Build a stable id from Codex's session-cumulative token counter."""
+    material = json.dumps(total, separators=(",", ":"), sort_keys=True)
+    digest = hashlib.sha256(f"{session}\0{material}".encode()).hexdigest()
+    return f"codex:{digest}"
+
+
+def ingest_codex(conn: sqlite3.Connection, root: Path) -> dict:
+    """Insert every Codex response found on disk that isn't already recorded."""
+    rows = []
+    skipped = 0
+
+    for path in codex_transcripts(root):
+        session = ""
+        project = ""
+        model = ""
+        sidechain = 0
+        try:
+            handle = path.open(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+
+        with handle:
+            for line in handle:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    skipped += 1
+                    continue
+
+                payload = row.get("payload") or {}
+                if row.get("type") == "session_meta":
+                    session = payload.get("id") or payload.get("session_id") or session
+                    project = payload.get("cwd") or project
+                    sidechain = 1 if payload.get("parent_thread_id") else 0
+                    continue
+                if row.get("type") == "turn_context":
+                    model = payload.get("model") or model
+                    project = payload.get("cwd") or project
+                    continue
+                if row.get("type") != "event_msg" or payload.get("type") != "token_count":
+                    continue
+
+                info = payload.get("info") or {}
+                usage = info.get("last_token_usage") or {}
+                total = info.get("total_token_usage") or {}
+                stamp = row.get("timestamp")
+                if not session or not model or not stamp or not usage or not total:
+                    continue
+                try:
+                    day = local_day(stamp)
+                except ValueError:
+                    continue
+
+                # Codex input_tokens includes cached_input_tokens. Split it
+                # into disjoint buckets so the rollup counts each token once.
+                # reasoning_output_tokens is already part of output_tokens.
+                cached = int(usage.get("cached_input_tokens", 0) or 0)
+                input_tokens = int(usage.get("input_tokens", 0) or 0)
+                rows.append((
+                    codex_response_id(session, total),
+                    "",
+                    stamp,
+                    day,
+                    model,
+                    project,
+                    f"codex:{session}",
+                    sidechain,
+                    max(0, input_tokens - cached),
+                    int(usage.get("output_tokens", 0) or 0),
+                    int(usage.get("cache_write_input_tokens", 0) or 0),
+                    0,
+                    cached,
+                ))
+
+    before = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    conn.executemany(
+        "INSERT OR IGNORE INTO message"
+        " (id, request_id, ts, day, model, project, session, sidechain,"
+        "  input, output, cw5m, cw1h, cache_read)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        rows,
+    )
+    conn.commit()
+    after = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
     return {"scanned": len(rows), "inserted": after - before, "skipped": skipped, "total": after}
 
 
@@ -301,21 +394,30 @@ def main() -> int:
     ) / "tokens.db"
     conn = open_db(db_path)
 
-    root = Path(
+    claude_root = Path(
         os.environ.get("CLAUDE_PROJECTS_DIR") or Path.home() / ".claude" / "projects"
     )
-    if root.is_dir():
-        result = ingest(conn, root)
-        if result["inserted"]:
-            print(
-                f"archived {result['inserted']} new responses "
-                f"({result['total']} total)",
-                file=sys.stderr,
-            )
-    elif not conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]:
+    codex_root = Path(
+        os.environ.get("CODEX_SESSIONS_DIR") or Path.home() / ".codex" / "sessions"
+    )
+    inserted = 0
+    for name, root, collector in (
+        ("Claude", claude_root, ingest_claude),
+        ("Codex", codex_root, ingest_codex),
+    ):
+        if root.is_dir():
+            result = collector(conn, root)
+            inserted += result["inserted"]
+            if result["inserted"]:
+                print(f"archived {result['inserted']} new {name} responses", file=sys.stderr)
+
+    total = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    if inserted:
+        print(f"{total} responses total", file=sys.stderr)
+    if not claude_root.is_dir() and not codex_root.is_dir() and not total:
         # No logs to read and nothing archived from an earlier run: there is
         # genuinely nothing to report.
-        print(f"no session logs at {root} and an empty archive", file=sys.stderr)
+        print("no Claude or Codex session logs and an empty archive", file=sys.stderr)
         return 1
 
     if args.stats:

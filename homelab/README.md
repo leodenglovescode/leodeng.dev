@@ -1,6 +1,6 @@
 # Homelab status
 
-Live status for [/homelab](https://leodeng.dev/homelab) and Claude Code token
+Live status for [/homelab](https://leodeng.dev/homelab) and LLM CLI token
 usage for [/tokens](https://leodeng.dev/tokens).
 
 The server is behind Headscale with no inbound path from the internet, so this
@@ -99,18 +99,19 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now homelab-status.timer
 ```
 
-**Edit `User=`, `Group=` and `CLAUDE_PROJECTS_DIR=` in the unit** to whoever
-runs Claude Code on the box. The heartbeat alone ran under `DynamicUser=yes`;
-the token rollup can't, because `~/.claude/projects` is mode 700 and a per-boot
-dynamic UID cannot read it. Relaxing those permissions instead would expose
-every transcript to every account on the machine, so the service runs as the
-real user and gives back the isolation a different way: `ProtectHome=tmpfs`
-replaces the home directory with an empty one, and a single `BindReadOnlyPaths`
-mounts just the transcripts back in. The agent can read those and nothing else
+**Edit `User=`, `Group=`, `CLAUDE_PROJECTS_DIR=` and `CODEX_SESSIONS_DIR=`
+in the unit** to whoever runs the CLIs on the box. The heartbeat alone ran
+under `DynamicUser=yes`; the token rollup can't, because the session trees are
+private and a per-boot dynamic UID cannot read them. Relaxing those permissions
+instead would expose every transcript to every account on the machine, so the
+service runs as the real user and gives back the isolation a different way:
+`ProtectHome=tmpfs` replaces the home directory with an empty one, and
+`BindReadOnlyPaths` mounts just the two transcript trees back in. The agent
+can read those and nothing else
 under `/home` — not SSH keys, not `.dev.vars`, not the rest of `~/.claude`,
 which holds OAuth credentials.
 
-If the box has no Claude Code on it, install only `agent.sh`: a missing
+If the box has neither CLI on it, install only `agent.sh`: a missing
 `homelab-tokens.py` (or a missing `python3`) is skipped and the heartbeat is
 unaffected.
 
@@ -139,6 +140,7 @@ Useful by hand:
 ```bash
 # what's archived, without sending anything
 sudo -u leodeng CLAUDE_PROJECTS_DIR=~/.claude/projects \
+  CODEX_SESSIONS_DIR=~/.codex/sessions \
   /usr/local/bin/homelab-tokens.py --db /var/lib/homelab-status/tokens.db --stats
 
 # ad-hoc queries — the archive keeps per-project and per-session detail that
@@ -148,14 +150,19 @@ sqlite3 /var/lib/homelab-status/tokens.db \
      FROM message GROUP BY project ORDER BY t DESC;"
 ```
 
-Three things in the counting are less obvious than they look:
+Five things in the counting are less obvious than they look:
 
-**Deduplicate on `(message.id, requestId)`.** The CLI rewrites a response's line
+**Deduplicate Claude on `(message.id, requestId)`.** The CLI rewrites a response's line
 as a turn develops, so one response appears three or four times in a single log,
 and resuming a session copies earlier turns into the new file. On this machine
 that was 6,294 duplicate lines against 6,318 real ones — summing the raw lines
 roughly *doubles* every number. That pair is the primary key of the `message`
 table, so `INSERT OR IGNORE` enforces it across runs rather than only within one.
+
+**Deduplicate Codex on session plus cumulative usage.** A Codex `token_count`
+event has usage for the last API response but no response id, and status updates
+can repeat the event. The session's cumulative token counter changes only for a
+new response, so its hash is the stable archive key.
 
 **Recurse into subagent logs.** A main session is `<project>/<uuid>.jsonl`, but
 subagents get their own two levels further down at
@@ -170,6 +177,12 @@ day the work happened.
 rate for the 5-minute cache and 2× for the 1-hour one, and these tools use
 1-hour entries almost exclusively. Folding them together understates the cost of
 a cache-heavy workload badly.
+
+**Split Codex cached input out of input.** Codex's `input_tokens` includes
+`cached_input_tokens`, while Claude reports disjoint fields. Storing the
+difference as input and the cached portion as cache-read keeps the shared
+rollup from counting those tokens twice. Reasoning tokens already belong to
+Codex's output total and likewise are not added again.
 
 Pushes are throttled: the rollup goes out when the numbers change, and at most
 once every 10 minutes either way. A routine push carries only the trailing 7
