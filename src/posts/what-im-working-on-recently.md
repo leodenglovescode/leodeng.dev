@@ -7,7 +7,7 @@ description: "HackGen, 6th grade online classes, CS:GO screenshots on a GTX 960,
 > [!NOTE]
 > Originally posted on my old blog in July 2022, lightly trimmed since. It points at a "Downloads" page that only existed there, so that reference has nowhere to go now.
 
-So, Recently I was spending a lot of time doing boring online classes of 6th grade *(Which sucks, IRL SCHOOLS ARE THE BEST)*, and also my programming project "HackGen — A hacking/programming simulator" which is currently now available on MacOS and Linux! (Most distros) … find it on the "Downloads" Page of my blog to download it if you want, or just click on this repo card and go to the "releases" section of the repo page.
+So, Recently I was spending a lot of time doing boring online classes of 6th grade *(Which sucks, IRL SCHOOLS ARE THE BEST)*, and also my programming project "HackGen: A hacking/programming simulator" which is currently now available on MacOS and Linux! (Most distros) … find it on the "Downloads" Page of my blog to download it if you want, or just click on this repo card and go to the "releases" section of the repo page.
 
 Oh right, check out and follow my [Github profile](https://github.com/leodenglovescode) too!
 

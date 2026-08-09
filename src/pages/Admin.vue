@@ -12,6 +12,7 @@ const POSTS_DIR = 'src/posts'
 // pre-rendered or listed — a `draft: true` flag inside src/posts would still
 // ship the whole text to every visitor in the client bundle.
 const DRAFTS_DIR = 'src/drafts'
+const NOW_PATH = 'src/content/now.json'
 
 const session = ref(null)
 const booting = ref(true)
@@ -19,7 +20,10 @@ const view = ref('list')
 const tab = ref('posts')
 const posts = ref([])
 const drafts = ref([])
+const nowEvents = ref([])
+const nowSha = ref(null)
 const loadingPosts = ref(false)
+const loadingNow = ref(false)
 const error = ref('')
 const notice = ref('')
 const saving = ref(false)
@@ -108,6 +112,9 @@ watch(
 
 function restoreRecovery(entry) {
   form.value = { ...entry.form }
+  // Recoveries created before the Now editor existed are all post buffers.
+  form.value.kind ||= 'post'
+  tab.value = form.value.kind === 'now' ? 'now' : (form.value.dir === DRAFTS_DIR ? 'drafts' : 'posts')
   pristine.value = entry.pristine ?? ''
   activeRecoveryKey.value = entry.key
   recoveries.value = recoveries.value.filter((r) => r.key !== entry.key)
@@ -188,7 +195,7 @@ onMounted(async () => {
   try {
     session.value = await getSession()
     if (session.value) {
-      await loadPosts()
+      await Promise.all([loadPosts(), loadNow()])
       recoveries.value = readRecoveries()
     }
   } catch (err) {
@@ -234,6 +241,9 @@ async function signOut() {
   await logout()
   session.value = null
   posts.value = []
+  drafts.value = []
+  nowEvents.value = []
+  nowSha.value = null
   form.value = null
   view.value = 'list'
 }
@@ -241,7 +251,7 @@ async function signOut() {
 function handleAuthError(err) {
   if (err.status === 401) {
     session.value = null
-    error.value = 'Your session expired — sign in again.'
+    error.value = 'Your session expired. Sign in again.'
   } else {
     error.value = err.message
   }
@@ -288,9 +298,38 @@ async function loadPosts() {
   }
 }
 
+async function loadNow() {
+  loadingNow.value = true
+  error.value = ''
+  try {
+    const file = await getFile(NOW_PATH)
+    if (!file) throw new Error(`${NOW_PATH} does not exist.`)
+
+    const data = JSON.parse(file.text)
+    if (!Array.isArray(data.events)) throw new Error(`${NOW_PATH} has no events array.`)
+
+    nowEvents.value = data.events
+    nowSha.value = file.sha
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      error.value = `${NOW_PATH} contains invalid JSON.`
+    } else {
+      handleAuthError(err)
+    }
+  } finally {
+    loadingNow.value = false
+  }
+}
+
 const items = computed(() => (tab.value === 'drafts' ? drafts.value : posts.value))
 
 function snapshot(d) {
+  if (d.kind === 'now') {
+    return JSON.stringify([
+      d.id, d.flight, d.title, d.startedAt, d.sinceLabel,
+      d.remark, d.tone, d.details,
+    ])
+  }
   return JSON.stringify([d.slug, d.title, d.description, d.date, d.body])
 }
 
@@ -298,6 +337,7 @@ const isDirty = computed(() => !!form.value && snapshot(form.value) !== pristine
 
 function newPost() {
   form.value = {
+    kind: 'post',
     // `dir: null` means nothing has been written yet — the button you press
     // decides whether it lands in src/posts or src/drafts.
     dir: null,
@@ -318,6 +358,7 @@ function newPost() {
 
 function editPost(post) {
   form.value = {
+    kind: 'post',
     dir: post.dir,
     slug: post.slug,
     originalSlug: post.slug,
@@ -330,6 +371,55 @@ function editPost(post) {
   }
   pristine.value = snapshot(form.value)
   activeRecoveryKey.value = `${RECOVERY_PREFIX}${post.dir}/${post.slug}`
+  view.value = 'edit'
+  notice.value = ''
+}
+
+function nextFlight() {
+  const highest = nowEvents.value.reduce((max, event) => {
+    const match = String(event.flight || '').match(/^LD\s+(\d+)$/i)
+    return match ? Math.max(max, Number(match[1])) : max
+  }, 0)
+  return `LD ${String(highest + 1).padStart(3, '0')}`
+}
+
+function newNowEvent() {
+  const id = `now-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+  form.value = {
+    kind: 'now',
+    id,
+    originalId: null,
+    flight: nextFlight(),
+    title: '',
+    startedAt: nowLocal(),
+    sinceLabel: '',
+    remark: 'Boarding',
+    tone: 'go',
+    details: '',
+  }
+  pristine.value = snapshot(form.value)
+  activeRecoveryKey.value = `${RECOVERY_PREFIX}now/${id}`
+  tab.value = 'now'
+  view.value = 'edit'
+  notice.value = ''
+}
+
+function editNowEvent(event) {
+  form.value = {
+    kind: 'now',
+    id: event.id,
+    originalId: event.id,
+    flight: event.flight || '',
+    title: event.title || '',
+    startedAt: event.startedAt ? toLocalInput(event.startedAt) : '',
+    sinceLabel: event.sinceLabel || '',
+    remark: event.remark || '',
+    tone: event.tone || 'go',
+    details: event.details || '',
+  }
+  pristine.value = snapshot(form.value)
+  activeRecoveryKey.value = `${RECOVERY_PREFIX}now/${event.id}`
+  tab.value = 'now'
   view.value = 'edit'
   notice.value = ''
 }
@@ -377,9 +467,27 @@ function validate(d, targetDir) {
   return null
 }
 
+function validateNowEvent(d) {
+  if (!d || d.kind !== 'now') return null
+  if (!d.title.trim()) return 'A title is required.'
+  if (!d.flight.trim()) return 'A flight code is required.'
+  if (!d.startedAt && !d.sinceLabel.trim()) return 'Add a start date and time or a custom Since label.'
+  if (!d.remark.trim()) return 'A board remark is required.'
+  if (!['ok', 'go', 'warn'].includes(d.tone)) return 'Choose a valid status colour.'
+  if (!d.details.trim()) return 'Details are required for the plain list below the board.'
+
+  const clash = nowEvents.value.some(
+    (event) => event.flight.toLowerCase() === d.flight.trim().toLowerCase()
+      && event.id !== d.originalId,
+  )
+  if (clash) return `The flight code "${d.flight.trim()}" is already in use.`
+  return null
+}
+
 // Drives the Publish button's disabled state and tooltip.
 const validation = computed(() => validate(form.value, POSTS_DIR))
 const draftValidation = computed(() => validate(form.value, DRAFTS_DIR))
+const nowValidation = computed(() => validateNowEvent(form.value))
 
 function commitMessage(d, targetDir) {
   const title = d.title.trim()
@@ -435,7 +543,7 @@ async function saveTo(targetDir) {
     pristine.value = snapshot(d)
     notice.value = targetDir === DRAFTS_DIR
       ? 'Draft saved. It stays out of the build until you publish it.'
-      : 'Published — Cloudflare Pages will rebuild in a minute or two.'
+      : 'Published. Cloudflare Pages will rebuild in a minute or two.'
     await loadPosts()
     return true
   } catch (err) {
@@ -454,6 +562,79 @@ async function saveTo(targetDir) {
 
 const save = () => saveTo(isPublished.value ? POSTS_DIR : DRAFTS_DIR)
 const publish = () => saveTo(POSTS_DIR)
+
+function eventFromForm(d) {
+  return {
+    id: d.id,
+    flight: d.flight.trim().toUpperCase(),
+    title: d.title.trim(),
+    startedAt: d.startedAt ? toIsoWithOffset(d.startedAt) : '',
+    sinceLabel: d.sinceLabel.trim(),
+    remark: d.remark.trim(),
+    tone: d.tone,
+    details: d.details.trim(),
+  }
+}
+
+async function commitNowEvents(events, message) {
+  if (!nowSha.value) throw new Error('The Now file is not loaded. Reload the admin page and try again.')
+
+  const updatedAt = toIsoWithOffset(nowLocal())
+  const result = await putFile({
+    path: NOW_PATH,
+    base64: encodeBase64(`${JSON.stringify({ updatedAt, events }, null, 2)}\n`),
+    message,
+    sha: nowSha.value,
+  })
+  nowEvents.value = events
+  nowSha.value = result.content.sha
+}
+
+async function saveNowEvent() {
+  if (saving.value) return false
+
+  const d = form.value
+  const problem = validateNowEvent(d)
+  if (problem) {
+    error.value = problem
+    return false
+  }
+
+  saving.value = true
+  error.value = ''
+  notice.value = ''
+
+  const event = eventFromForm(d)
+  const index = nowEvents.value.findIndex((item) => item.id === d.originalId)
+  const events = [...nowEvents.value]
+  if (index === -1) events.push(event)
+  else events.splice(index, 1, event)
+
+  try {
+    await commitNowEvents(
+      events,
+      `content: ${d.originalId ? 'update' : 'add'} now event "${event.title}"`,
+    )
+    d.originalId = d.id
+    d.flight = event.flight
+    d.title = event.title
+    d.sinceLabel = event.sinceLabel
+    d.remark = event.remark
+    d.details = event.details
+    pristine.value = snapshot(d)
+    notice.value = 'Now event saved. Cloudflare Pages will rebuild in a minute or two.'
+    return true
+  } catch (err) {
+    if (err.status === 409 || err.status === 422) {
+      error.value = 'The Now file changed in the repo since you opened it. Reload the list and reapply your edit.'
+    } else {
+      handleAuthError(err)
+    }
+    return false
+  } finally {
+    saving.value = false
+  }
+}
 
 /** Publishes straight from the list, reusing the editor's validation. */
 async function publishDraft(item) {
@@ -492,6 +673,42 @@ async function deleteCurrent() {
   const list = isDraft.value ? drafts.value : posts.value
   const post = list.find((p) => p.slug === form.value.originalSlug)
   if (await removePost(post)) {
+    dropRecovery(activeRecoveryKey.value)
+    form.value = null
+    activeRecoveryKey.value = null
+    view.value = 'list'
+  }
+}
+
+async function removeNowEvent(event) {
+  if (!event || saving.value) return false
+  if (!confirm(`Delete "${event.title}"? This commits the change to main and rebuilds the site.`)) return false
+
+  saving.value = true
+  error.value = ''
+  notice.value = ''
+  try {
+    await commitNowEvents(
+      nowEvents.value.filter((item) => item.id !== event.id),
+      `content: delete now event "${event.title}"`,
+    )
+    notice.value = `Deleted "${event.title}".`
+    return true
+  } catch (err) {
+    if (err.status === 409 || err.status === 422) {
+      error.value = 'The Now file changed in the repo. Reload the list and try again.'
+    } else {
+      handleAuthError(err)
+    }
+    return false
+  } finally {
+    saving.value = false
+  }
+}
+
+async function deleteCurrentNow() {
+  const event = nowEvents.value.find((item) => item.id === form.value.originalId)
+  if (await removeNowEvent(event)) {
     dropRecovery(activeRecoveryKey.value)
     form.value = null
     activeRecoveryKey.value = null
@@ -549,7 +766,7 @@ function displayDate(iso) {
       <section v-else-if="!session" class="max-w-md mx-auto text-center py-20">
         <h2 class="text-lg font-semibold text-fg mb-2">Sign in to edit</h2>
         <p class="text-sm text-muted mb-8">
-          GitHub is the only way in — there's no password to guess, and only allowlisted
+          GitHub is the only way in. There is no password to guess, and only allowlisted
           accounts get a session.
         </p>
         <button
@@ -599,7 +816,8 @@ function displayDate(iso) {
           <div class="flex items-center gap-1">
             <button
               v-for="option in [{ key: 'posts', label: 'Posts', count: posts.length },
-                                { key: 'drafts', label: 'Drafts', count: drafts.length }]"
+                                { key: 'drafts', label: 'Drafts', count: drafts.length },
+                                { key: 'now', label: 'Now', count: nowEvents.length }]"
               :key="option.key"
               type="button"
               class="h-8 px-3 rounded-md text-xs font-mono uppercase tracking-widest transition-colors"
@@ -615,17 +833,59 @@ function displayDate(iso) {
           <div class="ml-auto flex items-center gap-2">
             <button
               type="button"
+              v-if="tab !== 'now'"
               class="h-9 px-3 rounded-md border border-fg/10 text-sm text-muted hover:text-fg hover:border-fg/20 transition-colors"
               @click="mediaOpen = true"
             >Media</button>
             <button
               type="button"
               class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110 transition-colors"
-              @click="newPost"
-            >New post</button>
+              @click="tab === 'now' ? newNowEvent() : newPost()"
+            >{{ tab === 'now' ? 'New event' : 'New post' }}</button>
           </div>
         </div>
 
+        <template v-if="tab === 'now'">
+          <p v-if="loadingNow" class="text-sm text-muted font-mono">Loading Now events…</p>
+          <p v-else-if="!nowEvents.length" class="text-sm text-muted/90 italic py-10">
+            No Now events yet.
+          </p>
+
+          <ul v-else class="flex flex-col">
+            <li
+              v-for="event in nowEvents"
+              :key="event.id"
+              class="group flex items-start gap-4 py-4 border-b border-fg/5"
+            >
+              <button type="button" class="flex-1 min-w-0 text-left" @click="editNowEvent(event)">
+                <h3 class="text-fg font-semibold text-sm group-hover:text-accent transition-colors truncate">
+                  {{ event.title }}
+                </h3>
+                <p v-if="event.details" class="text-xs text-muted mt-1 line-clamp-2">{{ event.details }}</p>
+                <p class="text-xs font-mono text-muted/90 mt-1.5">
+                  {{ event.flight }} ·
+                  {{ event.startedAt ? displayDate(event.startedAt) : event.sinceLabel }} ·
+                  {{ event.remark }}
+                </p>
+              </button>
+              <div class="flex items-center gap-3 shrink-0 pt-0.5">
+                <a
+                  href="/now"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-xs text-muted/90 hover:text-fg transition-colors no-underline"
+                >View</a>
+                <button
+                  type="button"
+                  class="text-xs text-muted/90 hover:text-red-400 transition-colors"
+                  @click="removeNowEvent(event)"
+                >Delete</button>
+              </div>
+            </li>
+          </ul>
+        </template>
+
+        <template v-else>
         <p v-if="loadingPosts" class="text-sm text-muted font-mono">Loading posts…</p>
         <p v-else-if="!items.length" class="text-sm text-muted/90 italic py-10">
           {{ tab === 'drafts' ? 'No drafts. Start a post and hit “Save draft” to park it here.' : 'No posts yet.' }}
@@ -668,10 +928,11 @@ function displayDate(iso) {
             </div>
           </li>
         </ul>
+        </template>
       </section>
 
       <!-- editor -->
-      <section v-else-if="form">
+      <section v-else-if="form?.kind === 'post'">
         <div class="flex items-center gap-3 mb-6">
           <button
             type="button"
@@ -779,11 +1040,138 @@ function displayDate(iso) {
           >Delete {{ isDraft ? 'draft' : 'post' }}</button>
         </div>
       </section>
+
+      <!-- Now editor. It deliberately reuses the post editor's controls,
+           spacing and feedback instead of introducing a second admin style. -->
+      <section v-else-if="form?.kind === 'now'">
+        <div class="flex items-center gap-3 mb-6">
+          <button
+            type="button"
+            class="text-sm font-mono text-muted hover:text-fg transition-colors"
+            @click="backToList"
+          >← Now</button>
+          <span v-if="isDirty" class="text-xs font-mono text-accent">unsaved</span>
+          <div class="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              :disabled="saving || !!nowValidation"
+              :title="nowValidation || 'Commit to main'"
+              class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110
+                     disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              @click="saveNowEvent"
+            >{{ saving ? 'Saving…' : form.originalId ? 'Update' : 'Add event' }}</button>
+          </div>
+        </div>
+
+        <div class="grid gap-4 mb-5">
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-mono text-muted uppercase tracking-wider">Title</span>
+            <input
+              v-model="form.title"
+              type="text"
+              placeholder="What I am working on"
+              class="h-11 px-3 rounded-md bg-surface border border-fg/10 text-base text-fg
+                     outline-none focus:border-accent/50 placeholder:text-muted/90"
+            />
+          </label>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Flight code</span>
+              <input
+                v-model="form.flight"
+                type="text"
+                maxlength="12"
+                class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
+                       outline-none focus:border-accent/50"
+              />
+              <span class="text-xs font-mono text-muted/90">Shown on the board and details list.</span>
+            </label>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Start date &amp; time</span>
+              <input
+                v-model="form.startedAt"
+                type="datetime-local"
+                class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
+                       outline-none focus:border-accent/50"
+              />
+              <span class="text-xs font-mono text-muted/90">
+                {{ form.startedAt ? `saved as ${toIsoWithOffset(form.startedAt)}` : 'using the custom Since label' }}
+              </span>
+            </label>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Board remark</span>
+              <input
+                v-model="form.remark"
+                type="text"
+                maxlength="20"
+                placeholder="Boarding"
+                class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
+                       outline-none focus:border-accent/50 placeholder:text-muted/90"
+              />
+            </label>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Status colour</span>
+              <select
+                v-model="form.tone"
+                class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
+                       outline-none focus:border-accent/50"
+              >
+                <option value="ok">Green</option>
+                <option value="go">Blue</option>
+                <option value="warn">Gold</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-mono text-muted uppercase tracking-wider">Since label override</span>
+            <input
+              v-model="form.sinceLabel"
+              type="text"
+              maxlength="12"
+              placeholder="Always"
+              class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
+                     outline-none focus:border-accent/50 placeholder:text-muted/90"
+            />
+            <span class="text-xs font-mono text-muted/90">Leave blank to use the start month and year.</span>
+          </label>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-mono text-muted uppercase tracking-wider">Details</span>
+            <textarea
+              v-model="form.details"
+              rows="5"
+              placeholder="Describe the work. Markdown links such as [blog](/blog) work here."
+              class="px-3 py-2.5 rounded-md bg-surface border border-fg/10 text-sm text-text resize-y
+                     outline-none focus:border-accent/50 placeholder:text-muted/90"
+            />
+          </label>
+        </div>
+
+        <div class="flex items-center gap-4 mt-4">
+          <p class="text-xs text-muted/90">
+            Saving commits <code class="font-mono">{{ NOW_PATH }}</code> to
+            <code class="font-mono">main</code> and rebuilds <code class="font-mono">/now</code>.
+          </p>
+          <button
+            v-if="form.originalId"
+            type="button"
+            class="ml-auto text-xs text-muted/90 hover:text-red-400 transition-colors shrink-0"
+            @click="deleteCurrentNow"
+          >Delete event</button>
+        </div>
+      </section>
     </div>
 
     <MediaManager
       :open="mediaOpen"
-      :insertable="view === 'edit'"
+      :insertable="view === 'edit' && form?.kind === 'post'"
       @close="mediaOpen = false"
       @insert="onMediaInsert"
     />

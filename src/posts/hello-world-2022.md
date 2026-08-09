@@ -5,7 +5,7 @@ description: "The very first post on my very first blog, running on a Raspberry 
 ---
 
 > [!NOTE]
-> Originally posted on my old blog in April 2022 — the first thing I ever put on it.
+> Originally posted on my old blog in April 2022. It was the first thing I ever put on it.
 
 Hello, World!
 

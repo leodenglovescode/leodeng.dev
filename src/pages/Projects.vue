@@ -48,7 +48,7 @@ onMounted(() => {
         </div>
         <p class="text-sm text-muted leading-relaxed">
           Aviation and railway photography platform built with React, Vite, and Node.js.
-          A fairly active community — {{ swUsers }} users and {{ swPhotos }} photos.
+          A fairly active community with {{ swUsers }} users and {{ swPhotos }} photos.
           Self-hosted on a home server. Worth a visit if you like planes, trains, or good photos.
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
@@ -194,7 +194,7 @@ onMounted(() => {
       </a>
 
       <p class="text-sm text-muted/90 italic pt-2">
-        Actively building new stuff — check back later or browse my GitHub.
+        Actively building new stuff. Check back later or browse my GitHub.
       </p>
     </div>
   </section>

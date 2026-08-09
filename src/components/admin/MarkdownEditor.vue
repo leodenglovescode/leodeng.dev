@@ -359,7 +359,7 @@ const groups = [
   [
     { label: '“ ”', title: 'Blockquote', run: () => togglePrefix('> ') },
     { label: '[!]', title: 'Important callout', run: () => insertCallout(), mono: true },
-    { label: '• —', title: 'Bullet list', run: () => togglePrefix('- ') },
+    { label: '•', title: 'Bullet list', run: () => togglePrefix('- ') },
     { label: '1.', title: 'Numbered list', run: toggleOrderedList, mono: true },
   ],
   [
@@ -371,7 +371,7 @@ const groups = [
       run: () => insertBlock('```mermaid\nflowchart LR\n  A[Start] --> B{Choice}\n  B -->|yes| C[Do it]\n  B -->|no| D[Skip]\n```\n'),
     },
     { label: 'Video', title: 'Video embed (R2-hosted)', run: insertVideo },
-    { label: '—', title: 'Horizontal rule', run: () => insertBlock('---\n\n') },
+    { label: 'HR', title: 'Horizontal rule', run: () => insertBlock('---\n\n') },
     { label: '🔗', title: 'Link  (ctrl+K)', run: insertLink },
   ],
 ]

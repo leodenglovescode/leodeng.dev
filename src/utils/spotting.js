@@ -2,14 +2,14 @@
 // scripts/optimize-photos.js commits.
 //
 // Everything here is computed at module load from data that only exists
-// because the photos exist — no hand-maintained counters, so the page can't
+// because the photos exist: no hand-maintained counters, so the page can't
 // drift away from the gallery. Both read the same manifest, so they can't
 // disagree about which frames exist either.
 import manifest from '../generated/photos.json'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-// "2025:10:18 10:43:39" — a wall clock with no timezone attached, which is
+// "2025:10:18 10:43:39": a wall clock with no timezone attached, which is
 // exactly what the hour-of-day and per-month buckets want.
 function parseShotAt(raw) {
   const m = String(raw).match(/^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/)
@@ -67,7 +67,7 @@ export function shortLens(model) {
 }
 
 export function formatShutter(seconds) {
-  if (seconds == null) return '—'
+  if (seconds == null) return 'N/A'
   if (seconds >= 1) return `${Number(seconds.toFixed(1))}s`
   return `1/${Math.round(1 / seconds)}`
 }
@@ -81,10 +81,10 @@ export function formatDay(dayKey) {
 // buckets would be mostly empty. These edges match how the lenses are used.
 const FOCAL_BUCKETS = [
   { label: '≤ 70mm', test: f => f <= 70 },
-  { label: '71–120', test: f => f > 70 && f <= 120 },
-  { label: '121–199', test: f => f > 120 && f < 200 },
+  { label: '71 to 120', test: f => f > 70 && f <= 120 },
+  { label: '121 to 199', test: f => f > 120 && f < 200 },
   { label: '200mm', test: f => f === 200 },
-  { label: '201–500', test: f => f > 200 && f <= 500 },
+  { label: '201 to 500', test: f => f > 200 && f <= 500 },
   { label: '> 500mm', test: f => f > 500 },
 ]
 
@@ -95,7 +95,7 @@ function buildStats() {
     return { empty: true, frames: [], total: 0 }
   }
 
-  // A "session" is a calendar day with at least one frame — planespotting
+  // A "session" is a calendar day with at least one frame: planespotting
   // happens in outings, so days are the unit that actually means something.
   const byDay = new Map()
   for (const f of frames) {

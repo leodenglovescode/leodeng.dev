@@ -8,7 +8,7 @@ const posts = getAllPosts()
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-10">Blog</h2>
 
     <div v-if="posts.length === 0" class="text-sm text-muted/90 italic">
-      No posts yet — check back soon.
+      No posts yet. Check back soon.
     </div>
 
     <div v-else class="flex flex-col">

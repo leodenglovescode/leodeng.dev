@@ -13,7 +13,7 @@ I've been thinking about writing a blog for a long time but never really committ
 Probably a mix of:
 
 - Build logs / project updates (ShutterWingPhotos, llmgps, basically whatever I am working on)
-- Self-hosting stuff — things that took me WAYYYY too long to figure out
+- Self-hosting stuff: things that took me WAYYYY too long to figure out
 - IoT and HomeAssistant experiments
 - Occasional hot takes on AI tools
 

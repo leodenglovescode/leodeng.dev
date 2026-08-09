@@ -55,6 +55,10 @@ const months = computed(() => {
 function meta(type) {
   return TYPES[type] ?? TYPES.other
 }
+
+function subjectText(subject) {
+  return String(subject || '').replace(/\s*[—–]\s*/g, ': ')
+}
 </script>
 
 <template>
@@ -109,7 +113,7 @@ function meta(type) {
               >{{ meta(commit.type).label }}</span>
 
               <span class="text-sm text-fg flex-1 min-w-0">
-                <span v-if="commit.scope" class="font-mono text-muted">{{ commit.scope }}: </span>{{ commit.subject }}
+                <span v-if="commit.scope" class="font-mono text-muted">{{ commit.scope }}: </span>{{ subjectText(commit.subject) }}
               </span>
 
               <a
@@ -117,7 +121,7 @@ function meta(type) {
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-xs font-mono text-muted hover:text-accent transition-colors shrink-0"
-                :title="`${commit.date} — view on GitHub`"
+                :title="`${commit.date}: view on GitHub`"
               >{{ commit.hash.slice(0, 7) }}</a>
             </div>
           </li>

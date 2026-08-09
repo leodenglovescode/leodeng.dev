@@ -10,7 +10,7 @@ const error = ref(null)
 const loading = ref(true)
 
 // Which window the range-scoped sections describe. The all-time total and
-// today's number sit outside this and never move — those are the two figures
+// today's number sit outside this and never move: those are the two figures
 // worth being able to read without touching anything.
 const range = ref('d30')
 const RANGES = [
@@ -47,16 +47,16 @@ const active = computed(() => data.value?.ranges?.[range.value] ?? null)
 const activeLabel = computed(() => RANGES.find(r => r.key === range.value)?.label ?? '')
 
 // Billions of tokens don't fit in a stat tile, and nobody reads the digits
-// anyway — the exact figure goes in the `title` attribute for whoever wants it.
+// anyway: the exact figure goes in the `title` attribute for whoever wants it.
 function compact(n) {
-  if (n == null) return '—'
+  if (n == null) return 'N/A'
   if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`
   if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`
   if (n >= 1e3) return `${(n / 1e3).toFixed(1)}k`
   return String(n)
 }
 
-const full = n => (n == null ? '—' : n.toLocaleString())
+const full = n => (n == null ? 'N/A' : n.toLocaleString())
 
 const pad = n => String(n).padStart(2, '0')
 const asDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -127,12 +127,12 @@ function pctLabel(pct) {
 const modelMax = computed(() => Math.max(...(data.value?.byModel ?? []).map(m => m.tokens), 1))
 
 function dayTitle(d) {
-  return `${d.day} — ${full(d.tokens)} tokens across ${full(d.messages)} responses`
+  return `${d.day}: ${full(d.tokens)} tokens across ${full(d.messages)} responses`
 }
 
 const money = n =>
   n == null
-    ? '—'
+    ? 'N/A'
     : n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 </script>
 
@@ -152,7 +152,7 @@ const money = n =>
     </p>
 
     <p v-else-if="!data.seen" class="text-sm text-muted">
-      Nothing pushed yet — the agent hasn't reported any usage.
+      Nothing pushed yet. The agent hasn't reported any usage.
     </p>
 
     <template v-else>
@@ -173,7 +173,7 @@ const money = n =>
       </div>
 
       <p class="text-xs text-muted mb-12">
-        {{ totals.firstDay }} — {{ totals.lastDay }} · {{ full(totals.days) }} days with usage ·
+        {{ totals.firstDay }} to {{ totals.lastDay }} · {{ full(totals.days) }} days with usage ·
         {{ full(totals.messages) }} API responses<template v-if="totals.sessions">
         · {{ full(totals.sessions) }} sessions</template>. Counted from local session logs,
         deduplicated per response, and archived so the total survives the logs being pruned.
@@ -242,7 +242,7 @@ const money = n =>
       <!-- Where they go -->
       <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">Where they go</h3>
       <p class="text-xs text-muted mb-5">
-        Cache reads are almost all of it. That's the point of the cache — re-sending a
+        Cache reads are almost all of it. That's the point of the cache. Re-sending a
         long conversation costs a tenth of reading it fresh.
       </p>
       <div class="flex h-3 rounded-full overflow-hidden bg-fg/8 mb-3">
@@ -293,7 +293,7 @@ const money = n =>
           <span class="text-2xl font-semibold text-fg font-mono">{{ money(active.cost) }}</span>
         </div>
         <p class="text-xs text-muted">
-          What this usage would have cost on the API at list price — input and output per
+          What this usage would have cost on the API at list price. Input and output per
           model, cache reads at a tenth of the input rate, cache writes at 1.25× or 2×
           depending on how long they live. It is
           <em class="not-italic text-fg">not a bill</em>: this runs on a subscription, so
@@ -308,7 +308,7 @@ const money = n =>
       </div>
 
       <p class="text-xs text-muted/90 font-mono mt-12">
-        Counts only — no prompts, no file paths, no project names.
+        Counts only. No prompts, no file paths, no project names.
       </p>
     </template>
   </section>

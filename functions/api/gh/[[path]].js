@@ -13,11 +13,10 @@ import { json, repoSlug, requireSession, USER_AGENT } from '../../../lib/auth.js
 
 // Everything the editor touches lives under one of these. `src/drafts/` holds
 // unpublished posts — nothing globs it, so it never reaches the build.
-//
-// Media is deliberately absent: images and video both live in R2 now and go
-// through /api/media, so this proxy only ever sees markdown.
 const WRITABLE_PREFIXES = ['src/posts/', 'src/drafts/']
 const READABLE_PREFIXES = ['src/posts', 'src/drafts']
+// /now is build-time JSON, so grant exactly this file rather than its directory.
+const CONTENT_FILES = new Set(['src/content/now.json'])
 
 function decodePath(params) {
   const parts = Array.isArray(params.path) ? params.path : [params.path]
@@ -57,8 +56,9 @@ export async function onRequest(context) {
 
   const target = contentPath(ghPath, slug) ?? ''
   const allowed = isWrite
-    ? WRITABLE_PREFIXES.some((p) => target.startsWith(p))
-    : READABLE_PREFIXES.some((p) => target === p || target.startsWith(`${p}/`))
+    ? CONTENT_FILES.has(target) || WRITABLE_PREFIXES.some((p) => target.startsWith(p))
+    : CONTENT_FILES.has(target)
+      || READABLE_PREFIXES.some((p) => target === p || target.startsWith(`${p}/`))
 
   if (!allowed) {
     return json({ error: `Content path not allowed: ${target || '(root)'}` }, 403)
