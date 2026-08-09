@@ -302,6 +302,8 @@ const money = n =>
             {{ compact(active.unpricedTokens) }} tokens came from models with no rate in the
             table and are left out of this figure.
           </template>
+          Copilot VS Code totals are estimates from visible transcript history; its hidden
+          system prompts and tool results are not stored locally.
         </p>
       </div>
 

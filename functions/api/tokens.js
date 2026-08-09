@@ -40,7 +40,9 @@ const EDGE_TTL_SECONDS = 60
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const MODEL_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/
 
-// Anthropic list prices, USD per million tokens. Matched by longest prefix so
+// Anthropic list prices, USD per million tokens. The Copilot entry applies the
+// same Sonnet list rate to explicitly estimated visible-transcript tokens.
+// Matched by longest prefix so
 // a dated model id (claude-haiku-4-5-20251001) resolves without a table entry
 // of its own.
 //
@@ -49,6 +51,12 @@ const MODEL_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/
 // charged per token. The page says so out loud — an unlabelled dollar figure
 // would read as money spent.
 const PRICES = [
+  {
+    prefix: 'copilot-claude-sonnet-4-6-estimate',
+    label: 'Copilot · Sonnet 4.6 (est.)',
+    input: 3,
+    output: 15,
+  },
   { prefix: 'claude-fable-5', label: 'Fable 5', input: 10, output: 50 },
   { prefix: 'claude-opus-5', label: 'Opus 5', input: 5, output: 25 },
   { prefix: 'claude-opus-4-8', label: 'Opus 4.8', input: 5, output: 25 },
