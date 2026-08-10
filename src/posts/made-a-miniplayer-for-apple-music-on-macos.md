@@ -23,7 +23,7 @@ After I had the framework, it was easy down the road, I gave an agent my prompt,
 
 Then it was done! A full-fledged miniplayer that shows even when your desktop is in fullscreen mode. 😉😉
 
-You can download it [here](https://https://github.com/leodenglovescode/MacMusicOverlay/releases).
+You can download it [here](https://github.com/leodenglovescode/MacMusicOverlay/releases).
 
 ## Some Screenshots
 ![macmusicoverlay style 1 new](https://media.leodeng.dev/macmusicoverlay-style-1-new.png)
