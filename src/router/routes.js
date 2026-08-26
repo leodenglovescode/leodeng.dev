@@ -11,6 +11,7 @@ import Changelog from '../pages/Changelog.vue'
 import Stack from '../pages/Stack.vue'
 import Feed from '../pages/Feed.vue'
 import Contact from '../pages/Contact.vue'
+import Pgp from '../pages/Pgp.vue'
 import Blog from '../pages/Blog.vue'
 import BlogPost from '../pages/BlogPost.vue'
 import NotFound from '../pages/NotFound.vue'
@@ -31,6 +32,7 @@ export default [
   { path: '/blog',      component: Blog,     meta: { title: 'Blog' } },
   { path: '/blog/:slug',component: BlogPost, meta: { title: 'Blog' } },
   { path: '/contact',   component: Contact,  meta: { title: 'Contact' } },
+  { path: '/pgp',       component: Pgp,      meta: { title: 'OpenPGP' } },
   // Lazy so the editor (and its markdown/preview weight) never lands in the
   // bundle a normal reader downloads. `chrome: false` drops the site navbar and
   // footer — the editor wants the full viewport.
