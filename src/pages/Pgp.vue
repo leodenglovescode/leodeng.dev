@@ -1,26 +1,19 @@
 <script setup>
 import { onUnmounted, ref } from 'vue'
 
-const fingerprint = 'E094 528D 309A 2FF1 944C CD16 F125 FF88 CB72 9CCC'
+const fingerprint = '4478 B336 64E8 9E1C A0F4 797F FD79 0850 033F B9A4'
 const publicKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
-mDMEao703RYJKwYBBAHaRw8BAQdA/dCjqV/k11lf0gQDfjMDbLY9BOq89TblV7wx
-k1FezAm0HkxlbyBEZW5nIDxsZW9kZW5nQGxlb2RlbmcuZGV2PoiZBBMWCgBBFiEE
-4JRSjTCaL/GUTM0W8SX/iMtynMwFAmqO9N0CGwEFCQlmAYAFCwkIBwICIgIGFQoJ
-CAsCBBYCAwECHgcCF4AACgkQ8SX/iMtynMzjsAEAtC1Zq7d0CwMqQ+sr136DjsYx
-iw+dYNITA8Q0lo4jYMgBAIP5qOSw441pRZml2yDx50F1Gl5diWcDyS/W8U0o9yoA
-uDMEao71VBYJKwYBBAHaRw8BAQdA/Mn4EXXS3+XNHLUC6Ud4EvrpMTuEwT3J3EJ1
-GTXeocCI9QQYFgoAJhYhBOCUUo0wmi/xlEzNFvEl/4jLcpzMBQJqjvVUAhsCBQkJ
-ZgGAAIEJEPEl/4jLcpzMdiAEGRYKAB0WIQQifeuMA16wxlkgYEzuqJyBfOISPAUC
-ao71VAAKCRDuqJyBfOISPCsGAQCX+YV3eRH+UHSfFOY51Y2xeXYTtP8QSlr+fy/T
-tZVD8wEAk4g3en45HJ74qPI3/UF+QQTx9cbKiKtX31+nwWbpEQW/VwEArM1QCU9r
-N10iANFWYz9OgBGRKjzAOuI7s9/7bvMuprYBAO7PbpL7ZZv2PtpvIs9vsQBgE8H6
-oUMKbPvx0dfIUt0IuDgEao71XhIKKwYBBAGXVQEFAQEHQMzVqRUtANHQDl54AuMO
-CPHpVMXHn6JYF82mnz3sZKYiAwEIB4h+BBgWCgAmFiEE4JRSjTCaL/GUTM0W8SX/
-iMtynMwFAmqO9V4CGwwFCQlmAYAACgkQ8SX/iMtynMz5bwD/WqKV0wLUtIkKTJYF
-a785DBXEevXOo83je292iVtKPAcBAKn1NqCWW3Tum9JOBp2W5Qssfa+at7uAHM0i
-stVvwtEI
-=IUSk
+xjMEapwuQRYJKwYBBAHaRw8BAQdAE+a88PS7DnYco+7XPNsVHrZQx1CNKU+TSv8K
+8oIyh63NHkxlbyBEZW5nIDxsZW9kZW5nQGxlb2RlbmcuZGV2PsKPBBMWCAA3FiEE
+RHizNmTonhyg9Hl//XkIUAM/uaQFAmqcLkEFCQlmAYACGwMECwkIBwUVCAkKCwUW
+AgMBAAAKCRD9eQhQAz+5pKgiAP9AdpTgAVqcqABy5ADjm0ivUQ6Cxmq1I/zPn3oq
+cxwtLAD9FiGo5vD/ek76WgZ1liomdEKUubEBzmR2bBbtO7fhDAPOOARqnC5CEgor
+BgEEAZdVAQUBAQdA3I5MZeVcPNo8v+8haA1MlhEU3nAj468eb27aXlDkFVYDAQgH
+wn4EGBYIACYWIQREeLM2ZOieHKD0eX/9eQhQAz+5pAUCapwuQgUJCWYBgAIbDAAK
+CRD9eQhQAz+5pKE7AQD+fIYMcwtSnfgWDDUwamZl6RJdgkgSYOwkeLepfk6LOwEA
+qQxamj5omwWNlqtyOFjkQo3zG8CqgrM9BGIfKilXlQs=
+=XXOd
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
@@ -75,7 +68,7 @@ onUnmounted(() => clearTimeout(resetTimer))
     </div>
 
     <p class="text-[15px] text-muted leading-relaxed mb-10 max-w-2xl">
-      This is my public OpenPGP key for verifying signed email and encrypting mail to me.
+      This is my current public OpenPGP key for verifying signed email and encrypting mail to me.
     </p>
 
     <div class="rounded-lg border border-fg/8 divide-y divide-fg/5 mb-8">
@@ -126,7 +119,7 @@ onUnmounted(() => clearTimeout(resetTimer))
         class="text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
       >Download public key (.asc)</a>
       <a
-        href="https://keys.openpgp.org/search?q=E094528D309A2FF1944CCD16F125FF88CB729CCC"
+        href="https://keys.openpgp.org/search?q=4478B33664E89E1CA0F4797FFD790850033FB9A4"
         target="_blank"
         rel="noopener noreferrer"
         class="text-muted hover:text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm transition-colors"
