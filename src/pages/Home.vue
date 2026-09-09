@@ -11,11 +11,11 @@ const age = calcAge()
 const currentStatus = ref('')
 
 const statuses = [
-  'probably debugging something rn',
+  'probably debugging something right now',
   'making LLMs argue with each other',
   'self-hosting things I don\'t need',
   'googling how to do basic stuff in Docker',
-  'yelling at CSS again',
+  'trying too hard to center a div in css',
   'writing prompts that are too long',
   'refactoring code I wrote yesterday',
   'convincing JavaScript to cooperate',

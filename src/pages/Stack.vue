@@ -47,7 +47,7 @@ const devices = [
   },
   {
     category: 'Desktop',
-    model: 'Custom Build',
+    model: 'Custom Built PC',
     icon: 'desktop',
     specs: [
       { label: 'CPU', value: 'Intel Core i7-14700K' },
@@ -62,7 +62,7 @@ const devices = [
     model: 'Google Pixel 9 Pro XL',
     icon: 'phone',
     specs: [
-      { label: 'Chip', value: 'Google Tensor G4' },
+      { label: 'CPU', value: 'Google Tensor G4' },
       { label: 'RAM', value: '16GB' },
       { label: 'Storage', value: '256GB' },
       { label: 'Display', value: '6.8" Super Actua LTPO OLED · 120Hz' },
@@ -77,8 +77,18 @@ const devices = [
     icon: 'laptop',
     specs: [
       { label: 'CPU', value: 'Intel Core i7-4870HQ' },
-      { label: 'GPU', value: 'AMD Radeon R9 M370X · 2GB VRAM' },
+      { label: 'GPU', value: 'AMD Radeon R9 M370X / 2GB VRAM' },
       { label: 'RAM', value: '16GB' },
+    ],
+  },
+  {
+    category: 'Laptop (Cyberdeck)',
+    model: 'ThinkPad E450c',
+    icon: 'laptop',
+    specs: [
+      { label: 'CPU', value: 'Intel Core i5-4210' },
+      { label: 'GPU', value: 'AMD Radeon R9 M370X / 2GB VRAM' },
+      { label: 'RAM', value: '12GB' },
     ],
   },
 ]
@@ -92,10 +102,12 @@ const software = [
     name: 'Operating Systems',
     icon: 'layers',
     rows: [
-      { label: 'Desktop', value: 'Windows 11' },
-      { label: 'Server', value: 'Ubuntu 24.04 LTS' },
+      { label: 'Desktop PC', value: 'Windows 11' },
+      { label: 'Main Server', value: 'Ubuntu 24.04 LTS' },
+      { label: 'Raspberry Pi', value: 'Raspberry Pi OS Lite' },
+      { label: 'Thinkpad E450c', value: 'Debian 13 + KDE' },
       { label: 'Mac', value: 'macOS Sequoia (15) via OCLP' },
-      { label: 'Phone', value: 'Android 16 (CP1A.260305.018)' },
+      { label: 'Phone', value: 'Android 16' },
     ],
   },
   {
@@ -137,7 +149,8 @@ const software = [
     <section>
       <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Stack</h2>
       <p class="text-[15px] text-muted leading-relaxed mb-10">
-        What I'm actually typing, shooting, and shipping code on.
+        My tech stack is a mix of personal preference, performance, and nostalgia,<br/> 
+        Here's a peek at what I'm currently using.
       </p>
 
       <h3 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-4">Hardware</h3>
