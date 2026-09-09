@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-07T00:00:00+08:00",
+  "updatedAt": "2026-09-09T12:09:00+08:00",
   "events": [
     {
       "id": "planespotting-gallery",
@@ -60,6 +60,16 @@
       "remark": "Weather",
       "tone": "warn",
       "details": "Planespotting whenever the weather and the schedule line up."
+    },
+    {
+      "id": "now-mttkvxty-oek8rs",
+      "flight": "LD 007",
+      "title": "PiWatch",
+      "startedAt": "2026-09-08T12:08:00+08:00",
+      "sinceLabel": "",
+      "remark": "Boarding",
+      "tone": "go",
+      "details": "A small Pi Watchdog I am currently building"
     }
   ]
 }
