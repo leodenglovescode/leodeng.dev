@@ -1,7 +1,56 @@
 {
  "repo": "leodenglovescode/leodeng.dev",
- "generatedAt": "2026-08-09",
+ "generatedAt": "2026-09-09",
  "commits": [
+  {
+   "hash": "1754ef213b400f5ae7dbe6fc20770f682a7a8741",
+   "date": "2026-09-06",
+   "type": "content",
+   "scope": null,
+   "subject": "update OpenPGP key"
+  },
+  {
+   "hash": "bdc3057ab155118e3ea6f21e81e92cc952488d13",
+   "date": "2026-08-26",
+   "type": "feat",
+   "scope": null,
+   "subject": "add OpenPGP page"
+  },
+  {
+   "hash": "b5d75a29859cb53fa0550c4c791665095852fad0",
+   "date": "2026-08-10",
+   "type": "content",
+   "scope": null,
+   "subject": "update post \"Made a miniplayer for Apple Music on MacOS\""
+  },
+  {
+   "hash": "120cf63f260291a8adf8dc9ec146d962a62d15b3",
+   "date": "2026-08-10",
+   "type": "content",
+   "scope": null,
+   "subject": "update post \"Made a miniplayer for Apple Music on MacOS\""
+  },
+  {
+   "hash": "4dcc32c8a3d9e71045bcc0891e1c84155a590624",
+   "date": "2026-08-10",
+   "type": "content",
+   "scope": null,
+   "subject": "add post \"Made a miniplayer for Apple Music on MacOS\""
+  },
+  {
+   "hash": "9036c0ae375ea812dfbe08ef62fe4dbcca75fa46",
+   "date": "2026-08-10",
+   "type": "feat",
+   "scope": null,
+   "subject": "add now event editor"
+  },
+  {
+   "hash": "3eb694a64d643eaf53395719d5e5170e4dd9a28d",
+   "date": "2026-08-10",
+   "type": "fix",
+   "scope": "changelog",
+   "subject": "preserve history on shallow builds"
+  },
   {
    "hash": "31407becf42ecbb92a0211a61cacbf9a0e6ca31c",
    "date": "2026-08-09",
