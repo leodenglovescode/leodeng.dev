@@ -30,10 +30,6 @@ const devices = [
     model: 'Canon EOS R6 Mark II',
     icon: 'camera',
     specs: [
-      { label: 'Sensor', value: '24.2MP Full-Frame CMOS' },
-      { label: 'Processor', value: 'DIGIC X' },
-      { label: 'Autofocus', value: 'Dual Pixel CMOS AF II' },
-      { label: 'Stabilization', value: 'Up to 8-stop IBIS' },
       { label: 'Lens', value: 'RF 70-200mm f/2.8' },
       { label: 'Lens', value: 'EF 24-105mm f/4' },
       { label: 'Adapter', value: 'RF-EF Connector Ring' },
@@ -65,10 +61,6 @@ const devices = [
       { label: 'CPU', value: 'Google Tensor G4' },
       { label: 'RAM', value: '16GB' },
       { label: 'Storage', value: '256GB' },
-      { label: 'Display', value: '6.8" Super Actua LTPO OLED · 120Hz' },
-      { label: 'Resolution', value: '2992 x 1344 · 486 PPI' },
-      { label: 'Rear Camera', value: '50MP main + 48MP UW + 48MP 5x tele' },
-      { label: 'Front Camera', value: '42MP' },
     ],
   },
   {
@@ -82,15 +74,41 @@ const devices = [
     ],
   },
   {
-    category: 'Laptop (Cyberdeck)',
+    category: 'Cyberdeck',
     model: 'ThinkPad E450c',
     icon: 'laptop',
     specs: [
       { label: 'CPU', value: 'Intel Core i5-4210' },
       { label: 'GPU', value: 'AMD Radeon R9 M370X / 2GB VRAM' },
       { label: 'RAM', value: '12GB' },
+      { label: 'Storage', value: '240GB' },
     ],
   },
+  {
+    category: 'Home Assistant Server',
+    model: 'ThinkPad E450',
+    icon: 'laptop',
+    specs: [
+      { label: 'CPU', value: 'Intel Core i5-5200U' },
+      { label: 'GPU', value: 'Intel Integrated Graphics 5500' },
+      { label: 'RAM', value: '8GB' },
+      { label: 'Storage', value: '240GB' },
+      
+    ],
+  },
+  {
+    category: 'Raspberry Pi Server (Watchdog)',
+    model: 'Raspberry Pi 4 Model B',
+    icon: 'laptop',
+    specs: [
+      { label: 'CPU', value: 'Broadcom BCM2711' },
+      { label: 'GPU', value: 'Broadcom VideoCore VI' },
+      { label: 'RAM', value: '2GB' },
+      { label: 'Storage', value: '32GB' },
+      
+    ],
+  },
+  
 ]
 
 // Sorted by spec count so items paired in the 2-col grid are close in
@@ -104,8 +122,9 @@ const software = [
     rows: [
       { label: 'Desktop PC', value: 'Windows 11' },
       { label: 'Main Server', value: 'Ubuntu 24.04 LTS' },
-      { label: 'Raspberry Pi', value: 'Raspberry Pi OS Lite' },
-      { label: 'Thinkpad E450c', value: 'Debian 13 + KDE' },
+      { label: 'Raspberry Pi Watchdog', value: 'Raspberry Pi OS Lite' },
+      { label: 'Cyberdeck', value: 'Debian 13 + KDE' },
+      { label: 'Home Assistant Server', value: 'Home Assistant OS' },
       { label: 'Mac', value: 'macOS Sequoia (15) via OCLP' },
       { label: 'Phone', value: 'Android 16' },
     ],
