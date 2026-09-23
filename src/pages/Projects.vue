@@ -142,7 +142,7 @@
         </div>
         <p class="text-sm text-muted leading-relaxed">
           Aviation and railway photography platform built with React, Vite, and Node.js.
-          It grew to more than 1,500 users and 14,000 photos before the website was discontinued.
+          It grew to more than 2,600 registered users and 23,800 photos before the website was discontinued.
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['react', 'javascript', 'self-hosting', 'aviation', 'railway', 'photography']" :key="t"
