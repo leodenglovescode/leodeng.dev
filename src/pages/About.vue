@@ -376,7 +376,7 @@ onMounted(() => {
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2026 (now)</span>
           <p class="text-muted">
-            Continuously updating ShutterWingPhotos, building llmgps, and getting into IoT.
+            Building llmgps, getting into IoT, and working on new projects.
             More on the <RouterLink to="/now" class="text-fg hover:text-accent transition-colors">/now page</RouterLink>.
           </p>
         </div>

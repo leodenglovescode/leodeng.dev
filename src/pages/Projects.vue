@@ -1,70 +1,13 @@
-<script setup>
-import { ref, onMounted } from 'vue'
-
-const hoveredProject = ref(null)
-const swUsers = ref('1.5k+')
-const swPhotos = ref('14k+')
-
-function formatK(n) {
-  return n >= 1000 ? (Math.floor(n / 100) / 10) + 'k+' : n + '+'
-}
-
-async function fetchSwStats() {
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 5000)
-    const res = await fetch('https://api.shutterwingphotos.com/api/stats', { signal: controller.signal })
-    clearTimeout(timeout)
-    const data = await res.json()
-    if (data.registeredUsers) swUsers.value = formatK(data.registeredUsers)
-    if (data.photoCount) swPhotos.value = formatK(data.photoCount)
-  } catch {
-    // fallback values already set
-  }
-}
-
-onMounted(() => {
-  fetchSwStats()
-})
-</script>
-
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-10">Projects</h2>
 
     <div class="space-y-10">
       <a
-        href="https://shutterwingphotos.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="group block"
-        @mouseenter="hoveredProject = 'ShutterWingPhotos'"
-        @mouseleave="hoveredProject = null"
-      >
-        <img src="/projects_screenshots/shutterwingphotos_screenshot.png" alt="ShutterWingPhotos screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
-        <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">ShutterWingPhotos</h3>
-          <span class="text-xs font-mono text-muted/90 shrink-0">↗ website</span>
-        </div>
-        <p class="text-sm text-muted leading-relaxed">
-          Aviation and railway photography platform built with React, Vite, and Node.js.
-          A fairly active community with {{ swUsers }} users and {{ swPhotos }} photos.
-          Self-hosted on a home server. Worth a visit if you like planes, trains, or good photos.
-        </p>
-        <div class="flex flex-wrap gap-2 mt-3">
-          <span v-for="t in ['react', 'javascript', 'self-hosting', 'aviation', 'railway', 'photography']" :key="t"
-            class="text-xs font-mono px-2 py-0.5 rounded bg-fg/5 text-muted"
-          >{{ t }}</span>
-        </div>
-      </a>
-
-      <a
         href="https://github.com/leodenglovescode/llmgps"
         target="_blank"
         rel="noopener noreferrer"
         class="group block"
-        @mouseenter="hoveredProject = 'llmgps'"
-        @mouseleave="hoveredProject = null"
       >
         <img src="/projects_screenshots/llmgps_screenshot.png" alt="llmgps screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
@@ -87,8 +30,6 @@ onMounted(() => {
         target="_blank"
         rel="noopener noreferrer"
         class="group block"
-        @mouseenter="hoveredProject = 'DragonSea'"
-        @mouseleave="hoveredProject = null"
       >
         <img src="/projects_screenshots/dragonsea_website.png" alt="DragonSea MC screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
@@ -192,6 +133,23 @@ onMounted(() => {
           >{{ t }}</span>
         </div>
       </a>
+
+      <div>
+        <img src="/projects_screenshots/shutterwingphotos_screenshot.png" alt="ShutterWingPhotos screenshot" class="w-full rounded-lg mb-4 border border-fg/8 opacity-80" />
+        <div class="flex items-baseline justify-between gap-4 mb-1">
+          <h3 class="text-fg font-semibold">ShutterWingPhotos</h3>
+          <span class="text-xs font-mono text-muted/90 shrink-0">discontinued</span>
+        </div>
+        <p class="text-sm text-muted leading-relaxed">
+          Aviation and railway photography platform built with React, Vite, and Node.js.
+          It grew to more than 1,500 users and 14,000 photos before the website was discontinued.
+        </p>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span v-for="t in ['react', 'javascript', 'self-hosting', 'aviation', 'railway', 'photography']" :key="t"
+            class="text-xs font-mono px-2 py-0.5 rounded bg-fg/5 text-muted"
+          >{{ t }}</span>
+        </div>
+      </div>
 
       <p class="text-sm text-muted/90 italic pt-2">
         Actively building new stuff. Check back later or browse my GitHub.
