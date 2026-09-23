@@ -26,23 +26,22 @@
       </a>
 
       <a
-        href="https://dragonsea.shutterwingphotos.cn/"
+        href="https://github.com/leodenglovescode/CarbonPanel"
         target="_blank"
         rel="noopener noreferrer"
         class="group block"
       >
-        <img src="/projects_screenshots/dragonsea_website.png" alt="DragonSea MC screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
+        <img src="/projects_screenshots/carbonpanel_screenshot.png" alt="CarbonPanel screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
         <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">龙海 DragonSea MC</h3>
-          <span class="text-xs font-mono text-muted/90 shrink-0">↗ website</span>
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">CarbonPanel</h3>
+          <span class="text-xs font-mono text-muted/90 shrink-0">↗ github</span>
         </div>
         <p class="text-sm text-muted leading-relaxed">
-          DragonSea MC is a Forge-based city-building community. We're currently in active development,
-          working to build a fully fictional nation and city. Whether you're an architect or an explorer,
-          there's a place for you here.
+          Lightweight self-hosted server monitoring panel. Real-time metrics and 2FA security.
+          Built because I needed something simple to keep an eye on my home server.
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
-          <span v-for="t in ['minecraft', 'forge', 'city-building', 'community', 'self-hosting']" :key="t"
+          <span v-for="t in ['python', 'self-hosting', 'monitoring', 'docker']" :key="t"
             class="text-xs font-mono px-2 py-0.5 rounded bg-fg/5 text-muted"
           >{{ t }}</span>
         </div>
@@ -64,28 +63,6 @@
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['vue', 'vite', 'tailwind']" :key="t"
-            class="text-xs font-mono px-2 py-0.5 rounded bg-fg/5 text-muted"
-          >{{ t }}</span>
-        </div>
-      </a>
-
-      <a
-        href="https://github.com/leodenglovescode/CarbonPanel"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="group block"
-      >
-        <img src="/projects_screenshots/carbonpanel_screenshot.png" alt="CarbonPanel screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
-        <div class="flex items-baseline justify-between gap-4 mb-1">
-          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">CarbonPanel</h3>
-          <span class="text-xs font-mono text-muted/90 shrink-0">↗ github</span>
-        </div>
-        <p class="text-sm text-muted leading-relaxed">
-          Lightweight self-hosted server monitoring panel. Real-time metrics and 2FA security.
-          Built because I needed something simple to keep an eye on my home server.
-        </p>
-        <div class="flex flex-wrap gap-2 mt-3">
-          <span v-for="t in ['python', 'self-hosting', 'monitoring', 'docker']" :key="t"
             class="text-xs font-mono px-2 py-0.5 rounded bg-fg/5 text-muted"
           >{{ t }}</span>
         </div>
@@ -129,6 +106,29 @@
         </p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span v-for="t in ['esp32', 'homeassistant', 'iot', 'c++']" :key="t"
+            class="text-xs font-mono px-2 py-0.5 rounded bg-fg/5 text-muted"
+          >{{ t }}</span>
+        </div>
+      </a>
+
+      <a
+        href="https://dragonsea.shutterwingphotos.cn/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="group block"
+      >
+        <img src="/projects_screenshots/dragonsea_website.png" alt="DragonSea MC screenshot" class="w-full rounded-lg mb-4 border border-fg/8 group-hover:border-accent/20 transition-colors" />
+        <div class="flex items-baseline justify-between gap-4 mb-1">
+          <h3 class="text-fg font-semibold group-hover:text-accent transition-colors">龙海 DragonSea MC</h3>
+          <span class="text-xs font-mono text-muted/90 shrink-0">↗ website</span>
+        </div>
+        <p class="text-sm text-muted leading-relaxed">
+          DragonSea MC is a Forge-based city-building community. We're currently in active development,
+          working to build a fully fictional nation and city. Whether you're an architect or an explorer,
+          there's a place for you here.
+        </p>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span v-for="t in ['minecraft', 'forge', 'city-building', 'community', 'self-hosting']" :key="t"
             class="text-xs font-mono px-2 py-0.5 rounded bg-fg/5 text-muted"
           >{{ t }}</span>
         </div>
