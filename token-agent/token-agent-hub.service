@@ -1,0 +1,29 @@
+[Unit]
+Description=Receive private LLM token usage from Headscale devices
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=leodeng
+Group=leodeng
+StateDirectory=token-agent
+EnvironmentFile=/etc/token-agent.env
+ExecStart=/usr/local/bin/token-agent hub --listen 100.64.0.2:9464 --inbox /var/lib/token-agent/inbox.jsonl
+Restart=on-failure
+RestartSec=5s
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+SystemCallFilter=@system-service
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

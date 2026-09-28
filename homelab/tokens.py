@@ -333,6 +333,87 @@ def ingest_codex(conn: sqlite3.Connection, root: Path) -> dict:
     }
 
 
+def ingest_remote_codex(conn: sqlite3.Connection, path: Path) -> dict:
+    """Import normalized Codex usage received by the private token hub.
+
+    token-agent writes an append-only JSONL inbox on the super server. The
+    event key uses the same session-plus-cumulative-counter digest as the local
+    Codex collector, so a transcript copied between machines is still counted
+    once. Only counts and opaque hashes cross the network; prompts, paths and
+    project names are never present in this file.
+    """
+    rows = []
+    skipped = 0
+    try:
+        handle = path.open(encoding="utf-8", errors="replace")
+    except OSError:
+        return {"scanned": 0, "inserted": 0, "responses": 0, "skipped": 0,
+                "total": conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]}
+
+    with handle:
+        for line in handle:
+            try:
+                record = json.loads(line)
+                event = record.get("event") or {}
+                if event.get("provider") != "codex":
+                    skipped += 1
+                    continue
+                identifier = event["eventKey"]
+                stamp = event["timestamp"]
+                day = event["localDay"]
+                model = event["model"]
+                session = event["sessionKey"]
+                counts = [
+                    int(event.get("input", 0)),
+                    int(event.get("output", 0)),
+                    int(event.get("cacheWrite5m", 0)),
+                    int(event.get("cacheWrite1h", 0)),
+                    int(event.get("cacheRead", 0)),
+                    int(event.get("responses", 1)),
+                ]
+                if (
+                    not identifier.startswith("codex:")
+                    or len(identifier) != 70
+                    or not session.startswith("codex-session:")
+                    or len(day) != 10
+                    or any(value < 0 for value in counts)
+                ):
+                    raise ValueError("invalid normalized event")
+                datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+            except (KeyError, TypeError, ValueError):
+                skipped += 1
+                continue
+
+            rows.append((
+                identifier, "", stamp, day, model, "", session,
+                1 if event.get("sidechain") else 0, *counts,
+            ))
+
+    before_rows = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    before_responses = conn.execute(
+        "SELECT COALESCE(SUM(responses), 0) FROM message"
+    ).fetchone()[0]
+    conn.executemany(
+        "INSERT OR IGNORE INTO message"
+        " (id, request_id, ts, day, model, project, session, sidechain,"
+        "  input, output, cw5m, cw1h, cache_read, responses)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        rows,
+    )
+    conn.commit()
+    after_rows = conn.execute("SELECT COUNT(*) FROM message").fetchone()[0]
+    after_responses = conn.execute(
+        "SELECT COALESCE(SUM(responses), 0) FROM message"
+    ).fetchone()[0]
+    return {
+        "scanned": len(rows),
+        "inserted": after_rows - before_rows,
+        "responses": after_responses - before_responses,
+        "skipped": skipped,
+        "total": after_rows,
+    }
+
+
 def copilot_transcripts(root: Path):
     """Yield Copilot CLI's durable event log for every local session."""
     yield from sorted(root.glob("**/events.jsonl"))
@@ -810,6 +891,9 @@ def main() -> int:
     copilot_vscode_model = os.environ.get(
         "COPILOT_VSCODE_MODEL", COPILOT_VSCODE_MODEL
     )
+    remote_codex_file = Path(
+        os.environ.get("REMOTE_TOKENS_FILE") or "/var/lib/token-agent/inbox.jsonl"
+    )
     inserted = 0
     for name, root, collector in (
         ("Claude", claude_root, ingest_claude),
@@ -837,6 +921,15 @@ def main() -> int:
                     "estimated responses",
                     file=sys.stderr,
                 )
+
+    if remote_codex_file.is_file():
+        result = ingest_remote_codex(conn, remote_codex_file)
+        inserted += result["inserted"]
+        if result["inserted"]:
+            print(
+                f"archived {result['responses']} remote Codex responses",
+                file=sys.stderr,
+            )
 
     total = conn.execute("SELECT COALESCE(SUM(responses), 0) FROM message").fetchone()[0]
     if inserted:

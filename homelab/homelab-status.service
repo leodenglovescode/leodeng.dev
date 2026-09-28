@@ -38,6 +38,9 @@ Environment=CODEX_SESSIONS_DIR=/home/leodeng/.codex/sessions
 Environment=COPILOT_SESSIONS_DIR=/home/leodeng/.copilot/session-state
 Environment=COPILOT_VSCODE_WORKSPACES_DIR=/home/leodeng/.vscode-server/data/User/workspaceStorage
 Environment=COPILOT_VSCODE_MODEL=copilot-claude-sonnet-4-6-estimate
+# Normalized, counts-only Codex events received from other machines by the
+# Headscale-only token-agent hub. This remains readable under ProtectSystem.
+Environment=REMOTE_TOKENS_FILE=/var/lib/token-agent/inbox.jsonl
 
 # The agent reads /proc, /sys, the transcripts, and talks to one host. It has
 # no business doing anything else, so it isn't allowed to.
