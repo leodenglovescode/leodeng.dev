@@ -4,6 +4,16 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ isSsrBuild }) => ({
   plugins: [vue(), tailwindcss()],
+  server: {
+    // Plain Vite does not run Pages Functions. Proxy the public, read-only
+    // endpoint so the homepage can preview live now-playing data locally.
+    proxy: {
+      '/api/now-playing': {
+        target: 'https://leodeng.dev',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: isSsrBuild ? {} : {

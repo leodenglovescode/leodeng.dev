@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { calcAge } from '../utils/age'
+import NowPlaying from '../components/NowPlaying.vue'
 
 // Fast enough to feel alive. Most phrases need a beat longer than this to
 // actually read, so hovering pauses it.
@@ -118,10 +119,13 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <img
-      src="/leo_profilepic.webp"
-      alt="Leo Deng"
-      class="w-32 h-32 sm:w-48 sm:h-48 rounded-full object-cover border-2 border-accent shrink-0"
-    />
+    <div class="flex w-full shrink-0 flex-col items-center gap-4 sm:w-64">
+      <img
+        src="/leo_profilepic.webp"
+        alt="Leo Deng"
+        class="h-32 w-32 rounded-full border-2 border-accent object-cover sm:h-48 sm:w-48"
+      />
+      <NowPlaying />
+    </div>
   </header>
 </template>
