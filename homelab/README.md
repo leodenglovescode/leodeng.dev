@@ -25,6 +25,14 @@ home server                      Cloudflare Pages            leodeng.dev
 └──────────────┘
 ```
 
+Codex usage from other machines reaches the same archive through the private
+Go service in `token-agent/`. Each device parses its own session logs, keeps a
+local counts-only archive, and pushes normalized events to the super server at
+`100.64.0.2:9464` over Headscale. The hub writes an append-only inbox that
+`tokens.py` imports before creating its rollup. Stable Codex response keys make
+the import idempotent even if a client retries or a transcript exists on more
+than one machine. See `token-agent/README.md` for setup.
+
 **Two stores, two jobs.** SQLite on the box is the system of record: immutable
 usage records, never deleted. Claude and Codex provide one record per response;
 Copilot CLI's durable event log provides cumulative per-model snapshots with an

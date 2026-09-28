@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>dev.leodeng.token-agent</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/token-agent</string>
+    <string>run</string>
+    <string>--server</string>
+    <string>http://100.64.0.2:9464</string>
+    <string>--token-file</string>
+    <string>/Users/YOUR_USERNAME/Library/Application Support/dev.leodeng.token-agent/token</string>
+  </array>
+
+  <key>StartInterval</key>
+  <integer>300</integer>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/dev.leodeng.token-agent.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/dev.leodeng.token-agent.err</string>
+</dict>
+</plist>

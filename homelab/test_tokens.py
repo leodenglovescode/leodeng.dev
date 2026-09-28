@@ -198,6 +198,54 @@ class CopilotIngestTest(unittest.TestCase):
             migrated.close()
 
 
+class RemoteCodexIngestTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.db = tokens.open_db(Path(self.temp.name) / "tokens.db")
+        self.inbox = Path(self.temp.name) / "inbox.jsonl"
+
+    def tearDown(self):
+        self.db.close()
+        self.temp.cleanup()
+
+    def test_import_is_idempotent_and_keeps_private_fields_out(self):
+        event_key = "codex:" + "a" * 64
+        record = {
+            "deviceId": "b" * 32,
+            "receivedAt": "2026-09-27T10:01:00Z",
+            "event": {
+                "eventKey": event_key,
+                "timestamp": "2026-09-27T10:00:00Z",
+                "localDay": "2026-09-27",
+                "provider": "codex",
+                "model": "gpt-5.4",
+                "input": 100,
+                "output": 10,
+                "cacheWrite5m": 2,
+                "cacheWrite1h": 0,
+                "cacheRead": 50,
+                "responses": 1,
+                "sessionKey": "codex-session:" + "c" * 64,
+                "sidechain": True,
+            },
+        }
+        self.inbox.write_text(json.dumps(record) + "\n")
+
+        first = tokens.ingest_remote_codex(self.db, self.inbox)
+        second = tokens.ingest_remote_codex(self.db, self.inbox)
+
+        self.assertEqual(first["inserted"], 1)
+        self.assertEqual(second["inserted"], 0)
+        row = self.db.execute(
+            "SELECT id, model, project, session, sidechain, input, output,"
+            " cw5m, cw1h, cache_read, responses FROM message"
+        ).fetchone()
+        self.assertEqual(row, (
+            event_key, "gpt-5.4", "", "codex-session:" + "c" * 64,
+            1, 100, 10, 2, 0, 50, 1,
+        ))
+
+
 class CopilotVSCodeIngestTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
