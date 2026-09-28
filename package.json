@@ -12,6 +12,7 @@
     "generate": "node scripts/optimize-photos.js && node scripts/build-changelog.js",
     "build:client": "vite build",
     "preview": "vite preview",
+    "test:server": "node --test functions/tests/*.test.js",
     "dev:admin": "npm run build:client && npx wrangler pages dev dist --port 8788 --r2 MEDIA",
     "photos:optimize": "node scripts/optimize-photos.js",
     "photos:rename": "node scripts/rename-photos.js",
@@ -31,6 +32,7 @@
     "exifr": "^7.1.3",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.2.1",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "wrangler": "^4.142.0"
   }
 }

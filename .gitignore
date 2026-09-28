@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Python bytecode and test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # local Cloudflare Functions secrets (dev GitHub OAuth app) — see .dev.vars.example
 .dev.vars
 .wrangler
@@ -42,3 +47,10 @@ AGENTS.md
 #Obsidian Files
 .obsidian/
 src/posts/.obsidian/
+
+# Cross-compiled token-agent binaries. Source and service definitions are tracked.
+token-agent/bin/
+token-agent/.cache/
+
+# Local macOS Apple Music publisher, including its binary and setup material.
+now-playing-agent/
