@@ -16,6 +16,10 @@
 GITHUB_CLIENT_ID=your_dev_app_client_id
 GITHUB_CLIENT_SECRET=your_dev_app_client_secret
 
+# Separate bearer secret for the private Apple Music now-playing ingest routes.
+# Generate with `openssl rand -hex 32`. Do not reuse HOMELAB_TOKEN.
+NOW_PLAYING_TOKEN=your_now_playing_token
+
 # Optional — both default to the production values in lib/auth.js.
 # GITHUB_ALLOWED_USER=leodenglovescode
 # GITHUB_REPO=leodenglovescode/leodeng.dev

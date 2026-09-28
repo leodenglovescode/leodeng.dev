@@ -63,3 +63,26 @@ CREATE TABLE IF NOT EXISTS token_day (
   sessions INTEGER NOT NULL DEFAULT 0,
   projects INTEGER NOT NULL DEFAULT 0
 ) WITHOUT ROWID;
+
+-- Ephemeral Apple Music state for the home-page now-playing widget. There is
+-- deliberately one row and no history. The Mac refreshes it while playing;
+-- the public endpoint hides it when received_at is stale, so sleep, shutdown
+-- or a lost network cannot leave an old song displayed indefinitely.
+CREATE TABLE IF NOT EXISTS now_playing (
+  singleton   INTEGER PRIMARY KEY CHECK (singleton = 1),
+  track_key   TEXT    NOT NULL,
+  title       TEXT    NOT NULL,
+  artist      TEXT    NOT NULL,
+  album       TEXT,
+  duration_ms INTEGER NOT NULL CHECK (duration_ms > 0),
+  position_ms INTEGER NOT NULL CHECK (position_ms >= 0 AND position_ms <= duration_ms),
+  artwork_key TEXT,
+  received_at INTEGER NOT NULL
+);
+
+-- Exact, global rate limit for the low-frequency artwork path. Metadata uses
+-- now_playing.received_at itself, so it needs no second bookkeeping write.
+CREATE TABLE IF NOT EXISTS now_playing_rate (
+  name             TEXT PRIMARY KEY CHECK (name = 'artwork'),
+  last_accepted_at INTEGER NOT NULL
+) WITHOUT ROWID;
