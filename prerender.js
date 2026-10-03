@@ -19,6 +19,7 @@ const staticRoutes = [
   { path: '/blog',      title: 'Blog' },
   { path: '/contact',   title: 'Contact' },
   { path: '/pgp',       title: 'OpenPGP', description: 'Leo Deng\'s current public OpenPGP key for verifying signed email and encrypting mail.' },
+  { path: '/interests', title: 'Interests', description: 'Leo Deng\'s current rabbit holes, arranged by how often he comes back to them lately.' },
 ]
 
 function escapeXml(str) {
