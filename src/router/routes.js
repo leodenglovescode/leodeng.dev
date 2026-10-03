@@ -33,6 +33,10 @@ export default [
   { path: '/blog/:slug',component: BlogPost, meta: { title: 'Blog' } },
   { path: '/contact',   component: Contact,  meta: { title: 'Contact' } },
   { path: '/pgp',       component: Pgp,      meta: { title: 'OpenPGP' } },
+  // The Three.js renderer is only useful here, so keep its bundle off every
+  // other route just like the admin editor and its markdown dependencies.
+  { path: '/interests', component: () => import('../pages/Interests.vue'), meta: { title: 'Interests' } },
+  { path: '/personality', redirect: '/interests' },
   // Lazy so the editor (and its markdown/preview weight) never lands in the
   // bundle a normal reader downloads. `chrome: false` drops the site navbar and
   // footer — the editor wants the full viewport.
