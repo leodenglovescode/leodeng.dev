@@ -1,65 +1,59 @@
 {
-  "updatedAt": "2026-09-23T20:40:00+08:00",
+  "updatedAt": "2026-10-04T22:46:35+08:00",
   "events": [
     {
       "id": "planespotting-gallery",
-      "flight": "LD 001",
       "title": "Planespotting Gallery",
+      "status": "finished",
       "startedAt": "2026-07-01T00:00:00+08:00",
-      "sinceLabel": "",
-      "remark": "Landed",
-      "tone": "ok",
+      "updatedAt": "",
+      "finishedAt": "2026-07-01T00:00:00+08:00",
       "details": "Shipped the planespotting [gallery](/gallery), with build-time photo compression and a [stats page](/spotting) built from its EXIF."
     },
     {
       "id": "llmgps",
-      "flight": "LD 003",
       "title": "llmgps",
+      "status": "active",
       "startedAt": "2026-06-01T00:00:00+08:00",
-      "sinceLabel": "",
-      "remark": "Boarding",
-      "tone": "go",
+      "updatedAt": "",
+      "finishedAt": "",
       "details": "Building [llmgps](https://github.com/leodenglovescode/llmgps), a multi-LLM chat workspace with a debate mode."
     },
     {
       "id": "esp32-iot",
-      "flight": "LD 004",
       "title": "ESP32 IoT",
+      "status": "paused",
       "startedAt": "2026-03-01T00:00:00+08:00",
-      "sinceLabel": "",
-      "remark": "Delayed",
-      "tone": "warn",
+      "updatedAt": "",
+      "finishedAt": "",
       "details": "Tinkering with ESP32-based IoT for Home Assistant."
     },
     {
       "id": "headscale-mesh",
-      "flight": "LD 005",
       "title": "Headscale Mesh",
+      "status": "recurring",
       "startedAt": "2026-02-01T00:00:00+08:00",
-      "sinceLabel": "",
-      "remark": "Cruising",
-      "tone": "go",
+      "updatedAt": "",
+      "finishedAt": "",
       "details": "Running a self-hosted Headscale mesh for remote access to my home server (wrote it up on the [blog](/blog))."
     },
     {
       "id": "planespotting",
-      "flight": "LD 006",
       "title": "Planespotting",
+      "status": "recurring",
       "startedAt": "",
-      "sinceLabel": "Always",
-      "remark": "Weather",
-      "tone": "warn",
+      "updatedAt": "",
+      "finishedAt": "",
       "details": "Planespotting whenever the weather and the schedule line up."
     },
     {
       "id": "now-mttkvxty-oek8rs",
-      "flight": "LD 007",
       "title": "PiWatch",
+      "status": "active",
       "startedAt": "2026-09-08T12:08:00+08:00",
-      "sinceLabel": "",
-      "remark": "Boarding",
-      "tone": "go",
-      "details": "A small Pi Watchdog I am currently building"
+      "updatedAt": "",
+      "finishedAt": "",
+      "details": "Building a small Raspberry Pi watchdog."
     }
   ]
 }

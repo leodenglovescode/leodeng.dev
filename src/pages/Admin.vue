@@ -114,6 +114,20 @@ function restoreRecovery(entry) {
   form.value = { ...entry.form }
   // Recoveries created before the Now editor existed are all post buffers.
   form.value.kind ||= 'post'
+  // Recoveries from the old departure-board editor may still be sitting in
+  // localStorage. Keep the writing and translate its presentation fields.
+  if (form.value.kind === 'now' && !form.value.status) {
+    const oldRemark = String(form.value.remark || '').toLowerCase()
+    form.value.status = oldRemark === 'landed'
+      ? 'finished'
+      : oldRemark === 'delayed'
+        ? 'paused'
+        : ['weather', 'cruising'].includes(oldRemark)
+          ? 'recurring'
+          : 'active'
+    form.value.finishedAt = form.value.status === 'finished' ? form.value.startedAt : ''
+    form.value.updatedAt = ''
+  }
   tab.value = form.value.kind === 'now' ? 'now' : (form.value.dir === DRAFTS_DIR ? 'drafts' : 'posts')
   pristine.value = entry.pristine ?? ''
   activeRecoveryKey.value = entry.key
@@ -326,8 +340,7 @@ const items = computed(() => (tab.value === 'drafts' ? drafts.value : posts.valu
 function snapshot(d) {
   if (d.kind === 'now') {
     return JSON.stringify([
-      d.id, d.flight, d.title, d.startedAt, d.sinceLabel,
-      d.remark, d.tone, d.details,
+      d.id, d.title, d.status, d.startedAt, d.finishedAt, d.details,
     ])
   }
   return JSON.stringify([d.slug, d.title, d.description, d.date, d.body])
@@ -375,26 +388,17 @@ function editPost(post) {
   notice.value = ''
 }
 
-function nextFlight() {
-  const highest = nowEvents.value.reduce((max, event) => {
-    const match = String(event.flight || '').match(/^LD\s+(\d+)$/i)
-    return match ? Math.max(max, Number(match[1])) : max
-  }, 0)
-  return `LD ${String(highest + 1).padStart(3, '0')}`
-}
-
 function newNowEvent() {
   const id = `now-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
   form.value = {
     kind: 'now',
     id,
     originalId: null,
-    flight: nextFlight(),
     title: '',
+    status: 'active',
     startedAt: nowLocal(),
-    sinceLabel: '',
-    remark: 'Boarding',
-    tone: 'go',
+    updatedAt: '',
+    finishedAt: '',
     details: '',
   }
   pristine.value = snapshot(form.value)
@@ -409,12 +413,11 @@ function editNowEvent(event) {
     kind: 'now',
     id: event.id,
     originalId: event.id,
-    flight: event.flight || '',
     title: event.title || '',
+    status: event.status || 'active',
     startedAt: event.startedAt ? toLocalInput(event.startedAt) : '',
-    sinceLabel: event.sinceLabel || '',
-    remark: event.remark || '',
-    tone: event.tone || 'go',
+    updatedAt: event.updatedAt || '',
+    finishedAt: event.finishedAt ? toLocalInput(event.finishedAt) : '',
     details: event.details || '',
   }
   pristine.value = snapshot(form.value)
@@ -470,17 +473,9 @@ function validate(d, targetDir) {
 function validateNowEvent(d) {
   if (!d || d.kind !== 'now') return null
   if (!d.title.trim()) return 'A title is required.'
-  if (!d.flight.trim()) return 'A flight code is required.'
-  if (!d.startedAt && !d.sinceLabel.trim()) return 'Add a start date and time or a custom Since label.'
-  if (!d.remark.trim()) return 'A board remark is required.'
-  if (!['ok', 'go', 'warn'].includes(d.tone)) return 'Choose a valid status colour.'
-  if (!d.details.trim()) return 'Details are required for the plain list below the board.'
-
-  const clash = nowEvents.value.some(
-    (event) => event.flight.toLowerCase() === d.flight.trim().toLowerCase()
-      && event.id !== d.originalId,
-  )
-  if (clash) return `The flight code "${d.flight.trim()}" is already in use.`
+  if (!['active', 'recurring', 'paused', 'finished'].includes(d.status)) return 'Choose a valid status.'
+  if (d.status === 'finished' && !d.finishedAt) return 'Add a finish date for a finished event.'
+  if (!d.details.trim()) return 'Details are required.'
   return null
 }
 
@@ -566,12 +561,11 @@ const publish = () => saveTo(POSTS_DIR)
 function eventFromForm(d) {
   return {
     id: d.id,
-    flight: d.flight.trim().toUpperCase(),
     title: d.title.trim(),
+    status: d.status,
     startedAt: d.startedAt ? toIsoWithOffset(d.startedAt) : '',
-    sinceLabel: d.sinceLabel.trim(),
-    remark: d.remark.trim(),
-    tone: d.tone,
+    updatedAt: toIsoWithOffset(nowLocal()),
+    finishedAt: d.status === 'finished' && d.finishedAt ? toIsoWithOffset(d.finishedAt) : '',
     details: d.details.trim(),
   }
 }
@@ -616,10 +610,10 @@ async function saveNowEvent() {
       `content: ${d.originalId ? 'update' : 'add'} now event "${event.title}"`,
     )
     d.originalId = d.id
-    d.flight = event.flight
     d.title = event.title
-    d.sinceLabel = event.sinceLabel
-    d.remark = event.remark
+    d.status = event.status
+    d.updatedAt = event.updatedAt
+    d.finishedAt = event.finishedAt ? toLocalInput(event.finishedAt) : ''
     d.details = event.details
     pristine.value = snapshot(d)
     notice.value = 'Now event saved. Cloudflare Pages will rebuild in a minute or two.'
@@ -863,9 +857,13 @@ function displayDate(iso) {
                 </h3>
                 <p v-if="event.details" class="text-xs text-muted mt-1 line-clamp-2">{{ event.details }}</p>
                 <p class="text-xs font-mono text-muted/90 mt-1.5">
-                  {{ event.flight }} ·
-                  {{ event.startedAt ? displayDate(event.startedAt) : event.sinceLabel }} ·
-                  {{ event.remark }}
+                  {{ { active: 'Active', recurring: 'Ongoing', paused: 'Paused', finished: 'Finished' }[event.status] || 'Active' }}
+                  <template v-if="event.status === 'finished' && event.finishedAt">
+                    · finished {{ displayDate(event.finishedAt) }}
+                  </template>
+                  <template v-else-if="event.startedAt">
+                    · started {{ displayDate(event.startedAt) }}
+                  </template>
                 </p>
               </button>
               <div class="flex items-center gap-3 shrink-0 pt-0.5">
@@ -1077,15 +1075,18 @@ function displayDate(iso) {
 
           <div class="grid sm:grid-cols-2 gap-4">
             <label class="flex flex-col gap-1.5">
-              <span class="text-xs font-mono text-muted uppercase tracking-wider">Flight code</span>
-              <input
-                v-model="form.flight"
-                type="text"
-                maxlength="12"
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Status</span>
+              <select
+                v-model="form.status"
                 class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
                        outline-none focus:border-accent/50"
-              />
-              <span class="text-xs font-mono text-muted/90">Shown on the board and details list.</span>
+              >
+                <option value="active">Active</option>
+                <option value="recurring">Ongoing</option>
+                <option value="paused">Paused</option>
+                <option value="finished">Finished</option>
+              </select>
+              <span class="text-xs font-mono text-muted/90">Controls which section contains the event.</span>
             </label>
 
             <label class="flex flex-col gap-1.5">
@@ -1096,58 +1097,29 @@ function displayDate(iso) {
                 class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
                        outline-none focus:border-accent/50"
               />
-              <span class="text-xs font-mono text-muted/90">
-                {{ form.startedAt ? `saved as ${toIsoWithOffset(form.startedAt)}` : 'using the custom Since label' }}
-              </span>
+              <span class="text-xs font-mono text-muted/90">Optional for activities without a meaningful start date.</span>
             </label>
           </div>
 
-          <div class="grid sm:grid-cols-2 gap-4">
+          <div v-if="form.status === 'finished'" class="grid sm:grid-cols-2 gap-4">
             <label class="flex flex-col gap-1.5">
-              <span class="text-xs font-mono text-muted uppercase tracking-wider">Board remark</span>
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Finish date &amp; time</span>
               <input
-                v-model="form.remark"
-                type="text"
-                maxlength="20"
-                placeholder="Boarding"
-                class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
-                       outline-none focus:border-accent/50 placeholder:text-muted/90"
-              />
-            </label>
-
-            <label class="flex flex-col gap-1.5">
-              <span class="text-xs font-mono text-muted uppercase tracking-wider">Status colour</span>
-              <select
-                v-model="form.tone"
+                v-model="form.finishedAt"
+                type="datetime-local"
                 class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
                        outline-none focus:border-accent/50"
-              >
-                <option value="ok">Green</option>
-                <option value="go">Blue</option>
-                <option value="warn">Gold</option>
-              </select>
+              />
+              <span class="text-xs font-mono text-muted/90">Required for finished events.</span>
             </label>
           </div>
-
-          <label class="flex flex-col gap-1.5">
-            <span class="text-xs font-mono text-muted uppercase tracking-wider">Since label override</span>
-            <input
-              v-model="form.sinceLabel"
-              type="text"
-              maxlength="12"
-              placeholder="Always"
-              class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
-                     outline-none focus:border-accent/50 placeholder:text-muted/90"
-            />
-            <span class="text-xs font-mono text-muted/90">Leave blank to use the start month and year.</span>
-          </label>
 
           <label class="flex flex-col gap-1.5">
             <span class="text-xs font-mono text-muted uppercase tracking-wider">Details</span>
             <textarea
               v-model="form.details"
               rows="5"
-              placeholder="Describe the work. Markdown links such as [blog](/blog) work here."
+              placeholder="Describe the activity. Markdown links such as [blog](/blog) work here."
               class="px-3 py-2.5 rounded-md bg-surface border border-fg/10 text-sm text-text resize-y
                      outline-none focus:border-accent/50 placeholder:text-muted/90"
             />
@@ -1157,7 +1129,7 @@ function displayDate(iso) {
         <div class="flex items-center gap-4 mt-4">
           <p class="text-xs text-muted/90">
             Saving commits <code class="font-mono">{{ NOW_PATH }}</code> to
-            <code class="font-mono">main</code> and rebuilds <code class="font-mono">/now</code>.
+            <code class="font-mono">main</code>, records the update time, and rebuilds <code class="font-mono">/now</code>.
           </p>
           <button
             v-if="form.originalId"
