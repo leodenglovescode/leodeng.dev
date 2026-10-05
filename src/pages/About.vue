@@ -245,20 +245,19 @@ onMounted(() => {
       <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">About Me</h2>
       <div class="space-y-4 text-[15px] leading-relaxed text-muted">
         <p>
-          I'm Leo, {{ age }}, from Beijing. I build full-stack web apps and like building with IoT
-          on the side, Got into coding by just making random small projects, broke things, learned a lot of valuable lessons,
-          and somewhere along the way it became my hobby.
+          I'm Leo, {{ age }} years old, from Beijing.
+          I am a full-stack developer. I got into coding by making random projects that make my life easier,
+          breaking things, and learning a lot of valuable lessons. Somewhere along the way, coding became my hobby.
         </p>
         <p>
-          Outside of code I like planespotting & aviation photography (that's where ShutterWingPhotos came from).
-          The <RouterLink to="/gallery/planespotting" class="text-fg hover:text-accent transition-colors">photos</RouterLink>
-          are here, and the <RouterLink to="/spotting" class="text-fg hover:text-accent transition-colors">numbers behind them</RouterLink> are too.
-          I watch some F1, and bike around the city when the weather lets me. I also self-host
-          a bunch of services: Home Servers, Docker, Home Assistant, the usual rabbit hole.
+          Outside of code I like tinkering with my homelab, electronics (ESP/Arduino/IoT), home automation, computers, and photography.
+          The <RouterLink to="/gallery" class="text-fg hover:text-accent transition-colors">photos</RouterLink>
+          are here. I also watch some F1 and bike around the city when the weather lets me. Self-hosting is one of my favorite things to do.
+          I run Home Assistant, Jellyfin, Immich, AdGuard, and a few others, plus some services I made myself. It is really just the usual homelabbing rabbit hole.
         </p>
         <p>
-          I mostly build with React, Vue, Node.js, and Python right now, and I lean on AI tools a lot
-          to move faster from idea to a working prototype.
+          I mostly use Vue and React for frontend development, and Python (FastAPI), Go, and Node.js for backend development. I frequently use AI tools
+          to move faster from an idea to a working prototype and then to a finished product.
         </p>
       </div>
     </section>
