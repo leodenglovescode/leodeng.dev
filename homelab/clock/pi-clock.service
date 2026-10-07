@@ -1,0 +1,34 @@
+[Unit]
+Description=GPS clock HTTP service
+After=network.target chrony.service
+
+[Service]
+Type=simple
+User=pi-clock
+Group=pi-clock
+Environment=CLOCK_PPS_REFID=PPS
+EnvironmentFile=-/etc/pi-clock.env
+ExecStart=/opt/pi-clock/venv/bin/python /opt/pi-clock/clock.py
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost
+CapabilityBoundingSet=
+UMask=0077
+CPUQuota=10%
+MemoryMax=96M
+TasksMax=16
+LimitNOFILE=64
+
+[Install]
+WantedBy=multi-user.target
