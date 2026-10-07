@@ -32,5 +32,9 @@
   "interests": {
     "title": "兴趣",
     "description": "Leo Deng 最近常折腾的兴趣和小坑，按最近想起它们的频率排列。"
+  },
+  "time": {
+    "title": "时间",
+    "description": "来自树莓派的实时 GPS/PPS 时间，分别以你的时区、北京时间和 UTC 显示。"
   }
 }

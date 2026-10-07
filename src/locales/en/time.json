@@ -1,0 +1,31 @@
+{
+  "eyebrow": "GPS/PPS clock",
+  "title": "Time, from my Raspberry Pi.",
+  "intro": "I built a Stratum 1 time server at home. These clocks use its GPS/PPS time when connected, displayed in your timezone, mine, and UTC.",
+  "roundTrip": "Round-trip latency",
+  "deviceOffset": "Estimated correction to your device clock",
+  "lastSync": "Last synchronization",
+  "refresh": "Synchronization interval",
+  "refreshValue": "Every 60 seconds while this tab is visible",
+  "unavailable": "Not synchronized",
+  "offsetNote": "A positive correction means the Pi clock was ahead of your device at synchronization. This is an estimate, limited by network delay.",
+  "sourceTitle": "Where the time comes from",
+  "sourceBody": "My Raspberry Pi gets time from a GPS receiver and its pulse-per-second signal. It also serves NTP to my home network. This page reads that same disciplined system clock through a small time API.",
+  "steps": [
+    {
+      "title": "GPS → Raspberry Pi",
+      "body": "GPS and PPS discipline the Pi clock. The API checks that PPS is selected, Stratum 1 is reported, and synchronization is healthy."
+    },
+    {
+      "title": "Pi → Cloudflare",
+      "body": "A protected tunnel carries fresh timestamps to the website. The browser never receives the service credentials."
+    },
+    {
+      "title": "Cloudflare → Your browser",
+      "body": "Three samples estimate the time correction. The browser advances that clock locally between synchronizations."
+    }
+  ],
+  "accuracyTitle": "Milliseconds, with context",
+  "accuracyBody": "The digits show milliseconds, but they do not promise millisecond accuracy. I subtract the Pi's processing time from the round trip and estimate the return journey as half the remaining delay. Unequal travel times still introduce error.",
+  "fallbackBody": "If the request fails, times out, or reports an unhealthy clock, every display immediately uses Your Device Clock (Fallback). Your timezone comes from your browser settings; it does not decide the synchronized time."
+}

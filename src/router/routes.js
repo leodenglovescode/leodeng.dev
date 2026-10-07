@@ -7,6 +7,7 @@ import Now from '../pages/Now.vue'
 import Spotting from '../pages/Spotting.vue'
 import Homelab from '../pages/Homelab.vue'
 import Tokens from '../pages/Tokens.vue'
+import Time from '../pages/Time.vue'
 import Changelog from '../pages/Changelog.vue'
 import Stack from '../pages/Stack.vue'
 import Feed from '../pages/Feed.vue'
@@ -38,6 +39,7 @@ const publicRoutes = [
   { path: '/spotting', component: Spotting, meta: routeMeta('spotting') },
   { path: '/homelab', component: Homelab, meta: routeMeta('homelab') },
   { path: '/tokens', component: Tokens, meta: routeMeta('tokens') },
+  { path: '/time', component: Time, meta: routeMeta('time') },
   { path: '/changelog', component: Changelog, meta: routeMeta('changelog') },
   { path: '/stack', component: Stack, meta: routeMeta('stack') },
   { path: '/feed', component: Feed, meta: routeMeta('feed') },

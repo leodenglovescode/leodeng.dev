@@ -7,8 +7,12 @@ export default defineConfig(({ isSsrBuild }) => ({
   plugins: [vue({ ...templateCompilerOptions }), tailwindcss()],
   server: {
     // Plain Vite does not run Pages Functions. Proxy the public, read-only
-    // endpoint so the homepage can preview live now-playing data locally.
+    // endpoints so the clock and now-playing data can be previewed locally.
     proxy: {
+      '/api/time': {
+        target: 'https://leodeng.dev',
+        changeOrigin: true,
+      },
       '/api/now-playing': {
         target: 'https://leodeng.dev',
         changeOrigin: true,

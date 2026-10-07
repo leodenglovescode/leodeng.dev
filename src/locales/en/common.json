@@ -20,5 +20,6 @@
   "switchToChinese": "切换到中文",
   "toggleMenu": "Toggle menu",
   "leoIsNowPlaying": "Leo is now playing",
-  "songProgress": "Song progress"
+  "songProgress": "Song progress",
+  "time": "Time"
 }
