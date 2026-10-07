@@ -52,7 +52,7 @@ features enforce these restrictions.
 
 Pages previews without secrets safely fall back to device time. The fixed
 origin URL is deliberately not selected from visitor input. The proxy
-refuses redirects, never forwards cookies or visitor headers, enforces a
+never follows redirects, never forwards cookies or visitor headers, enforces a
 2 KB response limit and a two-second timeout, and reconstructs a numeric
 JSON response. Only GET without query parameters is supported.
 

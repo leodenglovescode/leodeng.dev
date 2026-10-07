@@ -30,7 +30,8 @@ export async function onRequest({ request, env }) {
   let upstreamStatus = null
   try {
     const upstream = await fetch(ORIGIN, {
-      method: 'GET', redirect: 'error', signal: controller.signal,
+      // Observe redirects without following them or forwarding credentials.
+      method: 'GET', redirect: 'manual', signal: controller.signal,
       headers: {
         Accept: 'application/json',
         'Cache-Control': 'no-cache',
@@ -70,10 +71,15 @@ export async function onRequest({ request, env }) {
       receivedAtMs: body.receivedAtMs, sentAtMs: body.sentAtMs,
       synchronized: true, source: 'gps-pps', stratum: 1,
     }, 200)
-  } catch {
+  } catch (error) {
     // Fixed metadata only: never log upstream bodies, headers or exception text.
+    const message = String(error?.message || '').toLowerCase()
+    const reason = message.includes('redirect') ? 'redirect'
+      : message.includes('header') ? 'invalid_header'
+        : message.includes('network') || message.includes('fetch') ? 'network'
+          : 'other'
     console.warn(JSON.stringify({ event: 'clock_unavailable', phase, upstreamStatus,
-      timedOut: controller.signal.aborted }))
+      timedOut: controller.signal.aborted, reason }))
     return json({ error: 'Clock unavailable' }, 503)
   } finally {
     clearTimeout(timeout)
