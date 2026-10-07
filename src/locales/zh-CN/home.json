@@ -21,11 +21,13 @@
   "projects": "项目",
   "blog": "博客",
   "about": "关于",
-  "clockAccessible": "当前北京时间，UTC+08:00。",
+  "clockAccessible": "当前时间分别以你的本地时区和北京时间 UTC+08:00 显示。",
   "clockPiSource": "时间源：树莓派 · GPS/PPS · Stratum 1",
   "clockDeviceSource": "时间源：设备时钟",
   "clockDetails": "时钟详情",
   "clockRoundTrip": "往返延迟：{p0} 毫秒",
   "clockLastSync": "上次同步：{p0}",
-  "clockPrecision": "毫秒表示显示精度。网络延迟会限制时钟准确度。"
+  "clockPrecision": "毫秒表示显示精度。网络延迟会限制时钟准确度。",
+  "clockYourTime": "你的时间",
+  "clockLeoTime": "Leo 的时间"
 }

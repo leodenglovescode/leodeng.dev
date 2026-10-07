@@ -5,6 +5,7 @@ import { estimateClockSample } from '../../lib/clock.js'
 
 const { isZh, t } = useLocale('home')
 const now = ref(null)
+const localTimeZone = ref('UTC')
 const synchronized = ref(false)
 const roundTripMs = ref(null)
 const lastSync = ref(null)
@@ -22,6 +23,20 @@ const formatter = computed(() => new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 
   fractionalSecondDigits: 3, hourCycle: 'h23',
 }))
 const displayedTime = computed(() => now.value == null ? '--:--:--.---' : formatter.value.format(now.value))
+const localFormatter = computed(() => new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 'en-GB', {
+  timeZone: localTimeZone.value, hour: '2-digit', minute: '2-digit', second: '2-digit',
+  fractionalSecondDigits: 3, hourCycle: 'h23',
+}))
+const localOffsetFormatter = computed(() => new Intl.DateTimeFormat('en-GB', {
+  timeZone: localTimeZone.value, timeZoneName: 'longOffset',
+}))
+const displayedLocalTime = computed(() => now.value == null ? '--:--:--.---' : localFormatter.value.format(now.value))
+const localOffset = computed(() => {
+  if (now.value == null) return ''
+  const name = localOffsetFormatter.value.formatToParts(now.value)
+    .find(part => part.type === 'timeZoneName')?.value || 'GMT'
+  return name === 'GMT' ? 'UTC+00:00' : name.replace(/^GMT/, 'UTC')
+})
 const synchronizedAt = computed(() => lastSync.value == null ? '' : formatter.value.format(lastSync.value))
 
 function fallback() {
@@ -104,6 +119,9 @@ function visibilityChanged() {
 }
 
 onMounted(() => {
+  // Read the visitor's timezone, while both rows use the same corrected instant.
+  // Resolve only in the browser so prerendering never adopts the build server's zone.
+  localTimeZone.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
   reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
   fallback()
   tick()
@@ -123,7 +141,8 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="text-muted text-sm font-mono mb-6">
-    <p class="tabular-nums" aria-hidden="true">{{ displayedTime }} UTC+08:00</p>
+    <p class="tabular-nums" aria-hidden="true">{{ t('clockYourTime') }}: {{ displayedLocalTime }} {{ localOffset }}</p>
+    <p class="tabular-nums mt-1" aria-hidden="true">{{ t('clockLeoTime') }}: {{ displayedTime }} UTC+08:00</p>
     <p class="sr-only">{{ t('clockAccessible') }}</p>
     <p class="text-xs mt-1">{{ synchronized ? t('clockPiSource') : t('clockDeviceSource') }}</p>
     <details v-if="synchronized" class="text-xs mt-1">
