@@ -1,0 +1,19 @@
+{
+  "types": {
+    "feat": "Feature",
+    "fix": "Fix",
+    "content": "Post",
+    "chore": "Chore",
+    "other": "Change"
+  },
+  "everything": "Everything",
+  "changelog": "Changelog",
+  "everyCommitToThisSiteStraightFrom": "Every commit to this site, straight from",
+  "theRepo": "the repo",
+  "period": ".",
+  "noHistoryAvailableTry": "No history available. Try",
+  "instead": "instead.",
+  "viewOnGithub": "view on GitHub",
+  "commits": "{p0} commits",
+  "indexRebuilt": "index rebuilt"
+}

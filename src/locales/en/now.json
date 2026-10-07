@@ -1,0 +1,20 @@
+{
+  "buildingNow": "Building now",
+  "active": "Active",
+  "keepingRunning": "Keeping running",
+  "ongoing": "Ongoing",
+  "onPause": "On pause",
+  "paused": "Paused",
+  "recentlyFinished": "Recently finished",
+  "finished": "Finished",
+  "started": "Started {p0}",
+  "updated": "Updated {p0}",
+  "finished2": "Finished {p0}",
+  "recently": "recently",
+  "now": "Now",
+  "lastUpdated": "Last updated {p0}",
+  "aSnapshotOfWhatIAmBuilding": "A snapshot of what I am building, maintaining, and making time for lately.",
+  "inspiredByThe": "Inspired by the",
+  "nowPageMovement": "/now page movement",
+  "period": "."
+}

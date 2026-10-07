@@ -1,0 +1,19 @@
+{
+  "types": {
+    "feat": "功能",
+    "fix": "修复",
+    "content": "内容",
+    "chore": "维护",
+    "other": "变更"
+  },
+  "everything": "全部",
+  "changelog": "更新记录",
+  "everyCommitToThisSiteStraightFrom": "这里列出了网站的每次提交，数据直接来自",
+  "theRepo": "代码仓库",
+  "period": "。",
+  "noHistoryAvailableTry": "暂时没有提交记录，可以去",
+  "instead": "看看。",
+  "viewOnGithub": "在 GitHub 上查看",
+  "commits": "{p0} 次提交",
+  "indexRebuilt": "索引生成于"
+}

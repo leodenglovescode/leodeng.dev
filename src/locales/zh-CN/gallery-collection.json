@@ -1,0 +1,16 @@
+{
+  "planespotting": "拍机",
+  "shotsFromPlanespottingTrips": "外出拍机时拍下的照片。",
+  "gallery": "相册",
+  "photosComingSoon": "照片之后会慢慢补上。",
+  "prev": "上一页",
+  "pageOf": "第 {p0} 页，共 {p1} 页",
+  "next": "下一页",
+  "close": "关闭",
+  "previousPhoto": "上一张照片",
+  "nextPhoto": "下一张照片",
+  "shotAt": "拍摄于{p0}",
+  "collectionNotFound": "找不到这个相册。",
+  "backToTheGallery": "返回相册",
+  "period": "。"
+}

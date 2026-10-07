@@ -1,5 +1,9 @@
 <script setup>
 import { computed } from 'vue'
+import { useLocale } from '../utils/i18n.js'
+
+const { t } = useLocale('stack')
+const label = (value) => t('labels')[value] || value
 
 const ICONS = {
   desktop: 'M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Zm5 15h6M12 16v4',
@@ -166,13 +170,12 @@ const software = [
   <div class="pt-20 sm:pt-32 pb-20 space-y-16">
 
     <section>
-      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Stack</h2>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">{{ t('stack') }}</h2>
       <p class="text-[15px] text-muted leading-relaxed mb-10">
-        My tech stack is a mix of personal preference, performance, and nostalgia,<br/> 
-        Here's a peek at what I'm currently using.
+        {{ t('myTechStackIsAMixOf') }}
       </p>
 
-      <h3 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-4">Hardware</h3>
+      <h3 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-4">{{ t('hardware') }}</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
         <div
           v-for="d in sortedDevices"
@@ -186,7 +189,7 @@ const software = [
               </svg>
             </div>
             <div>
-              <div class="text-xs font-mono text-muted/90 uppercase tracking-widest">{{ d.category }}</div>
+              <div class="text-xs font-mono text-muted/90 uppercase tracking-widest">{{ label(d.category) }}</div>
               <div class="text-fg font-semibold leading-tight">{{ d.model }}</div>
             </div>
           </div>
@@ -197,8 +200,8 @@ const software = [
               :key="`${s.label}-${s.value}`"
               class="flex items-baseline justify-between gap-4 py-1.5 border-t border-fg/5 first:border-t-0 first:pt-0"
             >
-              <dt class="text-muted/90 font-mono text-xs uppercase tracking-wide shrink-0">{{ s.label }}</dt>
-              <dd class="text-muted text-right font-mono text-xs">{{ s.value }}</dd>
+              <dt class="text-muted/90 font-mono text-xs uppercase tracking-wide shrink-0">{{ label(s.label) }}</dt>
+              <dd class="text-muted text-right font-mono text-xs">{{ label(s.value) }}</dd>
             </div>
           </dl>
         </div>
@@ -206,7 +209,7 @@ const software = [
     </section>
 
     <section>
-      <h3 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-4">Software</h3>
+      <h3 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-4">{{ t('software') }}</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
         <div
           v-for="s in software"
@@ -219,7 +222,7 @@ const software = [
                 <path :d="ICONS[s.icon]" />
               </svg>
             </div>
-            <div class="text-fg font-semibold leading-tight">{{ s.name }}</div>
+            <div class="text-fg font-semibold leading-tight">{{ label(s.name) }}</div>
           </div>
 
           <dl v-if="s.rows" class="text-sm">
@@ -228,8 +231,8 @@ const software = [
               :key="r.label"
               class="flex items-baseline justify-between gap-4 py-1.5 border-t border-fg/5 first:border-t-0 first:pt-0"
             >
-              <dt class="text-muted/90 font-mono text-xs uppercase tracking-wide shrink-0">{{ r.label }}</dt>
-              <dd class="text-muted text-right font-mono text-xs">{{ r.value }}</dd>
+              <dt class="text-muted/90 font-mono text-xs uppercase tracking-wide shrink-0">{{ label(r.label) }}</dt>
+              <dd class="text-muted text-right font-mono text-xs">{{ label(r.value) }}</dd>
             </div>
           </dl>
 

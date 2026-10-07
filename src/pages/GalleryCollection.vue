@@ -2,13 +2,27 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCollection } from '../utils/gallery.js'
+import { useLocale } from '../utils/i18n.js'
 
 const PAGE_SIZE = 10
 
 const route = useRoute()
 const router = useRouter()
+const { isZh, t, localePath } = useLocale('gallery-collection')
 
 const collection = computed(() => getCollection(route.params.slug))
+const collectionTitle = computed(() => collection.value?.slug === 'planespotting' ? t('planespotting') : collection.value?.title)
+const collectionDescription = computed(() => collection.value?.slug === 'planespotting' ? t('shotsFromPlanespottingTrips') : collection.value?.description)
+
+function photoCaption(photo) {
+  const match = photo.sortKey.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})(?:-\d+)?$/)
+  if (!match) return photo.caption
+  const [, year, month, day, hour, minute, second] = match
+  const when = isZh.value
+    ? `${year}年${Number(month)}月${Number(day)}日 ${hour}:${minute}:${second}`
+    : `${year} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(month) - 1]} ${Number(day)} ${hour}:${minute}:${second}`
+  return t('shotAt', { p0: when })
+}
 
 const page = computed(() => {
   const p = Number(route.query.page)
@@ -66,11 +80,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
-    <RouterLink to="/gallery" class="text-sm font-mono text-muted hover:text-fg transition-colors">← Gallery</RouterLink>
+    <RouterLink :to="localePath('/gallery')" class="text-sm font-mono text-muted hover:text-fg transition-colors">← {{ t('gallery') }}</RouterLink>
 
     <template v-if="collection">
-      <h2 class="text-s font-mono text-muted uppercase tracking-widest mt-4 mb-2">{{ collection.title }}</h2>
-      <p class="text-sm text-muted leading-relaxed mb-10">{{ collection.description }}</p>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mt-4 mb-2">{{ collectionTitle }}</h2>
+      <p class="text-sm text-muted leading-relaxed mb-10">{{ collectionDescription }}</p>
 
       <div v-if="pagePhotos.length" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <button
@@ -81,7 +95,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         >
           <img
             :src="photo.thumbSrc"
-            :alt="photo.caption"
+            :alt="photoCaption(photo)"
             loading="lazy"
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -89,7 +103,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       </div>
 
       <p v-else class="text-sm text-muted/90 italic">
-        Photos coming soon.
+        {{ t('photosComingSoon') }}
       </p>
 
       <div v-if="pageCount > 1" class="flex items-center justify-center gap-6 mt-10 font-mono">
@@ -97,13 +111,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           class="text-sm text-muted hover:text-fg transition-colors disabled:opacity-30 disabled:pointer-events-none"
           :disabled="page <= 1"
           @click="goToPage(page - 1)"
-        >← Prev</button>
-        <span class="text-xs text-muted/90">Page {{ page }} of {{ pageCount }}</span>
+        >← {{ t('prev') }}</button>
+        <span class="text-xs text-muted/90">{{ t('pageOf', { p0: page, p1: pageCount }) }}</span>
         <button
           class="text-sm text-muted hover:text-fg transition-colors disabled:opacity-30 disabled:pointer-events-none"
           :disabled="page >= pageCount"
           @click="goToPage(page + 1)"
-        >Next →</button>
+        >{{ t('next') }} →</button>
       </div>
 
       <div
@@ -113,7 +127,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       >
         <button
           class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
-          aria-label="Close"
+          :aria-label="t('close')"
           @click="close"
         >
           <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -124,7 +138,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         <button
           v-if="pagePhotos.length > 1"
           class="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-          aria-label="Previous photo"
+          :aria-label="t('previousPhoto')"
           @click.stop="prev"
         >
           <svg viewBox="0 0 24 24" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -133,14 +147,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         </button>
 
         <figure class="max-w-full max-h-full flex flex-col items-center">
-          <img :src="pagePhotos[activeIndex].fullSrc" :alt="pagePhotos[activeIndex].caption" class="max-w-full max-h-[80vh] rounded-lg object-contain" />
-          <figcaption class="text-sm text-white/60 font-mono mt-3">{{ pagePhotos[activeIndex].caption }}</figcaption>
+          <img :src="pagePhotos[activeIndex].fullSrc" :alt="photoCaption(pagePhotos[activeIndex])" class="max-w-full max-h-[80vh] rounded-lg object-contain" />
+          <figcaption class="text-sm text-white/60 font-mono mt-3">{{ photoCaption(pagePhotos[activeIndex]) }}</figcaption>
         </figure>
 
         <button
           v-if="pagePhotos.length > 1"
           class="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-          aria-label="Next photo"
+          :aria-label="t('nextPhoto')"
           @click.stop="next"
         >
           <svg viewBox="0 0 24 24" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -151,7 +165,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     </template>
 
     <p v-else class="text-sm text-muted/90 italic mt-6">
-      Collection not found. <RouterLink to="/gallery" class="text-fg hover:text-accent transition-colors">Back to the gallery</RouterLink>.
+      {{ t('collectionNotFound') }} <RouterLink :to="localePath('/gallery')" class="text-fg hover:text-accent transition-colors">{{ t('backToTheGallery') }}</RouterLink>{{ t('period') }}
     </p>
   </section>
 </template>

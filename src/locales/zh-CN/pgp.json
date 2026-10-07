@@ -1,0 +1,17 @@
+{
+  "asciiArmoredOpenpgpPublicKey": "ASCII 封装的 OpenPGP 公钥",
+  "thisIsMyCurrentPublicOpenpgpKey": "这是我目前使用的 OpenPGP 公钥，可用于验证我的邮件签名，或加密发送给我的邮件。",
+  "identity": "身份",
+  "fingerprint": "指纹",
+  "copyOpenpgpFingerprint": "复制 OpenPGP 指纹",
+  "copied": "已复制 ✓",
+  "copy": "复制",
+  "publicKey": "公钥",
+  "copyCompleteAsciiArmoredOpenpgpPublicKey": "复制完整的 ASCII 封装 OpenPGP 公钥",
+  "copyPublicKey": "复制公钥",
+  "fingerprintCopied": "指纹已复制。",
+  "publicKeyCopied": "公钥已复制。",
+  "copyFailedPleaseSelectAndCopyThe": "复制失败，请手动选择并复制文本。",
+  "downloadPublicKeyAsc": "下载公钥（.asc）",
+  "viewOnKeysOpenpgpOrg": "在 keys.openpgp.org 上查看"
+}

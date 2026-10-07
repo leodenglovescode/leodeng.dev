@@ -1,0 +1,36 @@
+{
+  "defaultDescription": "Leo's corner of the internet. Projects, blog posts, and whatever I'm building lately.",
+  "home": { "title": null },
+  "about": { "title": "About" },
+  "projects": { "title": "Projects" },
+  "gallery": { "title": "Gallery" },
+  "now": { "title": "Now" },
+  "spotting": {
+    "title": "Spotting Stats",
+    "description": "Every frame in my planespotting gallery, counted: gear, focal lengths, exposure and time of day, read straight out of the EXIF."
+  },
+  "changelog": {
+    "title": "Changelog",
+    "description": "Every commit to leodeng.dev, generated from the repo at build time."
+  },
+  "homelab": {
+    "title": "Homelab",
+    "description": "Live status of my home server: uptime, load, memory and CPU temperature, pushed every minute."
+  },
+  "tokens": {
+    "title": "Token Stats",
+    "description": "How many LLM tokens I have burned through, today and all time, counted from local session logs and pushed from my server."
+  },
+  "stack": { "title": "Stack" },
+  "feed": { "title": "RSS Feed" },
+  "blog": { "title": "Blog" },
+  "contact": { "title": "Contact" },
+  "pgp": {
+    "title": "OpenPGP",
+    "description": "Leo Deng's current public OpenPGP key for verifying signed email and encrypting mail."
+  },
+  "interests": {
+    "title": "Interests",
+    "description": "Leo Deng's current rabbit holes, arranged by how often he comes back to them lately."
+  }
+}

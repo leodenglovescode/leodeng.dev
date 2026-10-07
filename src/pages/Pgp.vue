@@ -1,5 +1,8 @@
 <script setup>
 import { onUnmounted, ref } from 'vue'
+import { useLocale } from '../utils/i18n.js'
+
+const { t } = useLocale('pgp')
 
 const fingerprint = '4478 B336 64E8 9E1C A0F4 797F FD79 0850 033F B9A4'
 const publicKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -68,12 +71,12 @@ onUnmounted(() => clearTimeout(resetTimer))
     </div>
 
     <p class="text-[15px] text-muted leading-relaxed mb-10 max-w-2xl">
-      This is my current public OpenPGP key for verifying signed email and encrypting mail to me.
+      {{ t('thisIsMyCurrentPublicOpenpgpKey') }}
     </p>
 
     <div class="rounded-lg border border-fg/8 divide-y divide-fg/5 mb-8">
       <div class="p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
-        <div class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-2 sm:mb-0">Identity</div>
+        <div class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-2 sm:mb-0">{{ t('identity') }}</div>
         <div class="text-sm text-fg sm:text-right">
           Leo Deng ·
           <a class="text-accent hover:underline" href="mailto:leodeng@leodeng.dev">leodeng@leodeng.dev</a>
@@ -82,13 +85,13 @@ onUnmounted(() => clearTimeout(resetTimer))
 
       <div class="p-5">
         <div class="flex items-center justify-between gap-4 mb-3">
-          <div class="text-xs font-mono text-muted/90 uppercase tracking-widest">Fingerprint</div>
+          <div class="text-xs font-mono text-muted/90 uppercase tracking-widest">{{ t('fingerprint') }}</div>
           <button
             type="button"
             class="shrink-0 text-xs font-mono px-3 py-1.5 rounded-full border border-fg/10 text-muted hover:text-accent hover:border-accent/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors cursor-pointer"
-            aria-label="Copy OpenPGP fingerprint"
+            :aria-label="t('copyOpenpgpFingerprint')"
             @click="copy(fingerprint, 'fingerprint')"
-          >{{ copied === 'fingerprint' ? 'copied ✓' : 'copy' }}</button>
+          >{{ copied === 'fingerprint' ? t('copied') : t('copy') }}</button>
         </div>
         <div>
           <code class="block font-mono text-sm sm:text-base leading-loose text-fg break-words">{{ fingerprint }}</code>
@@ -97,19 +100,19 @@ onUnmounted(() => clearTimeout(resetTimer))
     </div>
 
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <h2 class="text-xs font-mono text-muted/90 uppercase tracking-widest">Public key</h2>
+      <h2 class="text-xs font-mono text-muted/90 uppercase tracking-widest">{{ t('publicKey') }}</h2>
       <button
         type="button"
         class="text-xs font-mono px-3 py-2 rounded-lg border border-fg/10 text-muted hover:text-accent hover:border-accent/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors cursor-pointer"
-        aria-label="Copy complete ASCII-armored OpenPGP public key"
+        :aria-label="t('copyCompleteAsciiArmoredOpenpgpPublicKey')"
         @click="copy(publicKey, 'key')"
-      >{{ copied === 'key' ? 'copied ✓' : 'Copy public key' }}</button>
+      >{{ copied === 'key' ? t('copied') : t('copyPublicKey') }}</button>
     </div>
 
-    <pre class="max-h-[360px] overflow-auto whitespace-pre rounded-lg border border-fg/8 bg-fg/5 p-4 text-[11px] sm:text-xs leading-relaxed text-muted font-mono mb-5" tabindex="0" aria-label="ASCII-armored OpenPGP public key"><code>{{ publicKey }}</code></pre>
+    <pre class="max-h-[360px] overflow-auto whitespace-pre rounded-lg border border-fg/8 bg-fg/5 p-4 text-[11px] sm:text-xs leading-relaxed text-muted font-mono mb-5" tabindex="0" :aria-label="t('asciiArmoredOpenpgpPublicKey')"><code>{{ publicKey }}</code></pre>
 
     <p class="sr-only" role="status" aria-live="polite">
-      {{ copied === 'fingerprint' ? 'Fingerprint copied.' : copied === 'key' ? 'Public key copied.' : copied === 'error' ? 'Copy failed. Please select and copy the text manually.' : '' }}
+      {{ copied === 'fingerprint' ? t('fingerprintCopied') : copied === 'key' ? t('publicKeyCopied') : copied === 'error' ? t('copyFailedPleaseSelectAndCopyThe') : '' }}
     </p>
 
     <div class="flex flex-wrap gap-x-6 gap-y-3 text-sm font-mono">
@@ -117,13 +120,13 @@ onUnmounted(() => clearTimeout(resetTimer))
         href="/pgp-public.asc"
         download
         class="text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
-      >Download public key (.asc)</a>
+      >{{ t('downloadPublicKeyAsc') }}</a>
       <a
         href="https://keys.openpgp.org/search?q=4478B33664E89E1CA0F4797FFD790850033FB9A4"
         target="_blank"
         rel="noopener noreferrer"
         class="text-muted hover:text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm transition-colors"
-      >View on keys.openpgp.org ↗</a>
+      >{{ t('viewOnKeysOpenpgpOrg') }} ↗</a>
     </div>
   </section>
 </template>

@@ -1,0 +1,8 @@
+{
+  "rssFeed": "RSS Feed",
+  "thisIsAWebFeedAlsoKnown": "This is a web feed, also known as an RSS feed. It lets you follow new blog posts from this site in a feed reader app, without an algorithm, an account, or any tracking. Just new posts, in order, the moment they are published.",
+  "pasteTheUrlBelowIntoAReader": "Paste the URL below into a reader like Feedly, NetNewsWire, Reeder, or Inoreader, and you will receive new posts automatically.",
+  "copied": "copied!",
+  "copy": "copy",
+  "viewTheRawFeed": "View the raw feed"
+}

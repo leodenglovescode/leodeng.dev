@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "projects": "Projects",
+    "gallery": "Gallery",
+    "stack": "Stack",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "now": "Now",
+  "spotting": "Spotting",
+  "homelab": "Homelab",
+  "tokens": "Tokens",
+  "changelog": "Changelog",
+  "interests": "Interests",
+  "switchToLightMode": "Switch to light mode",
+  "switchToDarkMode": "Switch to dark mode",
+  "switchToEnglish": "Switch to English",
+  "switchToChinese": "切换到中文",
+  "toggleMenu": "Toggle menu",
+  "leoIsNowPlaying": "Leo is now playing",
+  "songProgress": "Song progress"
+}

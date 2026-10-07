@@ -1,25 +1,17 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useLocale } from '../utils/i18n.js'
 
 const email = 'leodeng@leodeng.dev'
 const copied = ref(false)
-
-const statuses = [
-  'Coding...',
-  'Debugging...',
-  'Breaking things...',
-  'Fixing what I broke...',
-  'Drinking coffee...',
-  'Staring at error logs...',
-  'Shipping features...',
-  'Probably procrastinating...',
-]
+const { t } = useLocale('contact')
+const statuses = computed(() => t('statuses'))
 const statusIndex = ref(0)
 let statusTimer
 
 onMounted(() => {
   statusTimer = setInterval(() => {
-    statusIndex.value = (statusIndex.value + 1) % statuses.length
+    statusIndex.value = (statusIndex.value + 1) % statuses.value.length
   }, 1000)
 })
 
@@ -59,7 +51,7 @@ const links = [
 
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
-    <h2 class="text-xs font-mono text-muted uppercase tracking-widest mb-3">Get In Touch</h2>
+    <h2 class="text-xs font-mono text-muted uppercase tracking-widest mb-3">{{ t('getInTouch') }}</h2>
 
     <div class="flex items-center gap-2 mb-10">
       <span class="relative flex w-2 h-2">
@@ -75,14 +67,14 @@ const links = [
       class="group w-full flex items-center justify-between gap-4 px-5 py-5 mb-8 rounded-lg border border-fg/8 hover:border-accent/30 transition-colors text-left cursor-pointer"
     >
       <div class="min-w-0">
-        <div class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-1">Email</div>
+        <div class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-1">{{ t('email') }}</div>
         <div class="text-lg sm:text-xl text-fg font-medium truncate">{{ email }}</div>
       </div>
       <span
         class="shrink-0 text-xs font-mono px-3 py-1.5 rounded-full border transition-colors"
         :class="copied ? 'border-accent/40 text-accent' : 'border-fg/10 text-muted group-hover:text-accent group-hover:border-accent/30'"
       >
-        {{ copied ? 'copied ✓' : 'copy' }}
+        {{ copied ? t('copied') : t('copy') }}
       </span>
     </button>
 

@@ -1,42 +1,73 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { localePath } from './src/utils/localePath.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+const enMeta = JSON.parse(fs.readFileSync(path.join(__dirname, 'src/locales/en/meta.json'), 'utf8'))
+const zhMeta = JSON.parse(fs.readFileSync(path.join(__dirname, 'src/locales/zh-CN/meta.json'), 'utf8'))
+
 const staticRoutes = [
-  { path: '/',          title: null },
-  { path: '/about',     title: 'About' },
-  { path: '/projects',  title: 'Projects' },
-  { path: '/gallery',   title: 'Gallery' },
-  { path: '/now',       title: 'Now' },
-  { path: '/spotting',  title: 'Spotting Stats', description: "Every frame in my planespotting gallery, counted: gear, focal lengths, exposure and time of day, read straight out of the EXIF." },
-  { path: '/changelog', title: 'Changelog', description: 'Every commit to leodeng.dev, generated from the repo at build time.' },
-  { path: '/homelab',   title: 'Homelab', description: 'Live status of my home server: uptime, load, memory and CPU temperature, pushed every minute.' },
-  { path: '/tokens',    title: 'Token Stats', description: 'How many LLM tokens I have burned through, today and all time, counted from local session logs and pushed from my server.' },
-  { path: '/stack',     title: 'Stack' },
-  { path: '/feed',      title: 'RSS Feed' },
-  { path: '/blog',      title: 'Blog' },
-  { path: '/contact',   title: 'Contact' },
-  { path: '/pgp',       title: 'OpenPGP', description: 'Leo Deng\'s current public OpenPGP key for verifying signed email and encrypting mail.' },
-  { path: '/interests', title: 'Interests', description: 'Leo Deng\'s current rabbit holes, arranged by how often he comes back to them lately.' },
+  { path: '/', key: 'home' },
+  { path: '/about', key: 'about' },
+  { path: '/projects', key: 'projects' },
+  { path: '/gallery', key: 'gallery' },
+  { path: '/now', key: 'now' },
+  { path: '/spotting', key: 'spotting' },
+  { path: '/changelog', key: 'changelog' },
+  { path: '/homelab', key: 'homelab' },
+  { path: '/tokens', key: 'tokens' },
+  { path: '/stack', key: 'stack' },
+  { path: '/feed', key: 'feed' },
+  { path: '/blog', key: 'blog' },
+  { path: '/contact', key: 'contact' },
+  { path: '/pgp', key: 'pgp' },
+  { path: '/interests', key: 'interests' },
 ]
 
 function escapeXml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function withMeta(html, { title, description }) {
+function escapeAttribute(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
+function withMeta(html, { path: routePath, title, description, locale }) {
   const fullTitle = title ? `${title} | leodeng.dev` : 'leodeng.dev'
-  let out = html.replace(/<title>.*?<\/title>/, `<title>${fullTitle}</title>`)
-  out = out.replace(/(<meta property="og:title"\s+content=").*?(")/, `$1${fullTitle}$2`)
-  out = out.replace(/(<meta name="twitter:title"\s+content=").*?(")/, `$1${fullTitle}$2`)
-  if (description) {
-    out = out.replace(/(<meta name="description" content=").*?(")/, `$1${description}$2`)
-    out = out.replace(/(<meta property="og:description" content=").*?(")/, `$1${description}$2`)
-    out = out.replace(/(<meta name="twitter:description" content=").*?(")/, `$1${description}$2`)
-  }
+  const safeTitle = escapeAttribute(fullTitle)
+  const safeDescription = escapeAttribute(description)
+  const basePath = locale === 'zh' ? routePath.replace(/^\/zh(?=\/|$)/, '') || '/' : routePath
+  const enUrl = `https://leodeng.dev${localePath(basePath, 'en')}`
+  const zhUrl = `https://leodeng.dev${localePath(basePath, 'zh')}`
+  const currentUrl = locale === 'zh' ? zhUrl : enUrl
+  let out = html.replace(/<html lang="[^"]*"/, `<html lang="${locale === 'zh' ? 'zh-CN' : 'en'}"`)
+  out = out.replace(/<title>.*?<\/title>/, `<title>${safeTitle}</title>`)
+  out = out.replace(/(<meta name="description" content=").*?(")/, `$1${safeDescription}$2`)
+  out = out.replace(/(<meta property="og:title"\s+content=").*?(")/, `$1${safeTitle}$2`)
+  out = out.replace(/(<meta property="og:description" content=").*?(")/, `$1${safeDescription}$2`)
+  out = out.replace(/(<meta property="og:url"\s+content=").*?(")/, `$1${currentUrl}$2`)
+  out = out.replace(/(<meta property="og:locale"\s+content=").*?(")/, `$1${locale === 'zh' ? 'zh_CN' : 'en_US'}$2`)
+  out = out.replace(/(<meta name="twitter:title"\s+content=").*?(")/, `$1${safeTitle}$2`)
+  out = out.replace(/(<meta name="twitter:description" content=").*?(")/, `$1${safeDescription}$2`)
+  out = out.replace(/(<link rel="canonical" href=").*?(")/, `$1${currentUrl}$2`)
+  out = out.replace(/(<link rel="alternate" hreflang="en" href=").*?(")/, `$1${enUrl}$2`)
+  out = out.replace(/(<link rel="alternate" hreflang="zh-CN" href=").*?(")/, `$1${zhUrl}$2`)
+  out = out.replace(/(<link rel="alternate" hreflang="x-default" href=").*?(")/, `$1${enUrl}$2`)
   return out
+}
+
+function localizeRoute(route, locale) {
+  const meta = locale === 'zh' ? zhMeta : enMeta
+  const entry = route.key ? meta[route.key] : null
+  return {
+    ...route,
+    locale,
+    path: localePath(route.path, locale),
+    title: entry?.title ?? route.title ?? null,
+    description: entry?.description ?? route.description ?? meta.defaultDescription,
+  }
 }
 
 async function prerender() {
@@ -57,7 +88,11 @@ async function prerender() {
     description: c.description,
   }))
 
-  const routes = [...staticRoutes, ...postRoutes, ...collectionRoutes]
+  const baseRoutes = [...staticRoutes, ...postRoutes, ...collectionRoutes]
+  const routes = baseRoutes.flatMap((route) => [
+    localizeRoute(route, 'en'),
+    localizeRoute(route, 'zh'),
+  ])
 
   for (const route of routes) {
     const appHtml = await render(route.path)
@@ -75,10 +110,21 @@ async function prerender() {
     console.log(`✓ Pre-rendered ${route.path}`)
   }
 
+  const sitemapRoutes = baseRoutes.map((route) => ({
+    en: `https://leodeng.dev${localePath(route.path, 'en')}`,
+    zh: `https://leodeng.dev${localePath(route.path, 'zh')}`,
+  }))
   const sitemap = [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...routes.map(r => `  <url><loc>https://leodeng.dev${r.path}</loc></url>`),
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+    ...sitemapRoutes.flatMap(({ en, zh }) => [en, zh].map((url) => [
+      '  <url>',
+      `    <loc>${url}</loc>`,
+      `    <xhtml:link rel="alternate" hreflang="en" href="${en}" />`,
+      `    <xhtml:link rel="alternate" hreflang="zh-CN" href="${zh}" />`,
+      `    <xhtml:link rel="alternate" hreflang="x-default" href="${en}" />`,
+      '  </url>',
+    ].join('\n'))),
     '</urlset>',
     '',
   ].join('\n')

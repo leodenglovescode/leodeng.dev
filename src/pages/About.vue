@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { calcAge } from '../utils/age'
+import { useLocale } from '../utils/i18n.js'
 
 const age = calcAge()
+const { isZh, t, localePath } = useLocale('about')
 
 // Site theme is a manual toggle (see Navbar.vue), not tied to OS
 // prefers-color-scheme, so the Apple Music embed has to watch the actual
@@ -36,7 +38,10 @@ const totalContributions = ref(null)
 const contributionDays = ref([]) // { date, level, gridColumn, gridRow }
 const monthLabels = ref([])
 const weeksCount = ref(0)
-const contributionRangeLabel = ref('contributions in the last year')
+const contributionRangeLabel = ref('year')
+const localizedContributionRange = computed(() => contributionRangeLabel.value === 'recent'
+  ? t('publicEventsInTheLast90Days')
+  : t('contributionsInTheLastYear'))
 
 const tooltip = ref({ visible: false, x: 0, y: 0, count: 0, dateLabel: '' })
 
@@ -54,10 +59,10 @@ const ICON_PATHS = {
 }
 
 const statTiles = computed(() => [
-  { icon: 'repo', value: repoCount.value, label: 'repos' },
-  { icon: 'starFill', value: starCount.value, label: 'stars' },
-  { icon: 'gitPullRequest', value: prCount.value, label: 'merged PRs' },
-  { icon: 'people', value: followerCount.value, label: 'followers' },
+  { icon: 'repo', value: repoCount.value, label: t('repos') },
+  { icon: 'starFill', value: starCount.value, label: t('stars') },
+  { icon: 'gitPullRequest', value: prCount.value, label: t('mergedPrs') },
+  { icon: 'people', value: followerCount.value, label: t('followers') },
 ].filter(t => t.value !== null))
 
 const levelClasses = [
@@ -97,7 +102,7 @@ function layoutCalendar(daysWithCount) {
 
     const month = date.getUTCMonth()
     if (column !== prevColumn && month !== prevMonth) {
-      labels[column] = date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' })
+      labels[column] = date.toLocaleString(isZh.value ? 'zh-CN' : 'en-US', { month: 'short', timeZone: 'UTC' })
       prevMonth = month
       prevColumn = column
     }
@@ -115,7 +120,7 @@ function showTooltip(event, day) {
     x: rect.left + rect.width / 2,
     y: rect.top - 6,
     count: day.count,
-    dateLabel: new Date(day.date + 'T00:00:00Z').toLocaleDateString('en-US', {
+    dateLabel: new Date(day.date + 'T00:00:00Z').toLocaleDateString(isZh.value ? 'zh-CN' : 'en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -146,7 +151,7 @@ async function fetchContributionsPrimary() {
   monthLabels.value = labels
   weeksCount.value = wc
   totalContributions.value = data.total.lastYear ?? 0
-  contributionRangeLabel.value = 'contributions in the last year'
+  contributionRangeLabel.value = 'year'
 }
 
 // Fallback: GitHub's own official REST API, no auth needed, but it only
@@ -184,7 +189,7 @@ async function fetchContributionsFallback() {
   monthLabels.value = labels
   weeksCount.value = wc
   totalContributions.value = [...counts.values()].reduce((a, b) => a + b, 0)
-  contributionRangeLabel.value = 'public events in the last ~90 days'
+  contributionRangeLabel.value = 'recent'
 }
 
 async function fetchGithubStats() {
@@ -242,22 +247,17 @@ onMounted(() => {
   <div class="pt-20 sm:pt-32 pb-20 space-y-20">
 
     <section>
-      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">About Me</h2>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">{{ t('aboutMe') }}</h2>
       <div class="space-y-4 text-[15px] leading-relaxed text-muted">
         <p>
-          I'm Leo, {{ age }} years old, from Beijing.
-          I am a full-stack developer. I got into coding by making random projects that make my life easier,
-          breaking things, and learning a lot of valuable lessons. Somewhere along the way, coding became my hobby.
+          {{ t('iMLeoYearsOldFromBeijing', { p0: age }) }}
         </p>
         <p>
-          Outside of code I like tinkering with my homelab, electronics (ESP/Arduino/IoT), home automation, computers, and photography.
-          The <RouterLink to="/gallery" class="text-fg hover:text-accent transition-colors">photos</RouterLink>
-          are here. I also watch some F1 and bike around the city when the weather lets me. Self-hosting is one of my favorite things to do.
-          I run Home Assistant, Jellyfin, Immich, AdGuard, and a few others, plus some services I made myself. It is really just the usual homelabbing rabbit hole.
+          {{ t('outsideOfCodeILikeTinkeringWith') }}
+          <RouterLink :to="localePath('/gallery')" class="text-fg hover:text-accent transition-colors">{{ t('photos') }}</RouterLink>{{ t('areHereIAlsoWatchSomeF1') }}
         </p>
         <p>
-          I mostly use Vue and React for frontend development, and Python (FastAPI), Go, and Node.js for backend development. I frequently use AI tools
-          to move faster from an idea to a working prototype and then to a finished product.
+          {{ t('iMostlyUseVueAndReactFor') }}
         </p>
       </div>
     </section>
@@ -289,7 +289,7 @@ onMounted(() => {
 
       <div v-if="contributionDays.length" class="overflow-x-auto">
         <p class="text-xs font-mono text-muted/90 mb-2">
-          {{ totalContributions }} {{ contributionRangeLabel }}
+          {{ totalContributions }} {{ localizedContributionRange }}
         </p>
         <div class="inline-grid gap-[3px] mb-1" :style="{ gridTemplateColumns: `repeat(${weeksCount}, 10px)` }">
           <span v-for="(label, i) in monthLabels" :key="i" class="text-xs font-mono text-muted/90 leading-none">
@@ -318,28 +318,28 @@ onMounted(() => {
           class="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-full px-2.5 py-1.5 rounded-md bg-surface border border-fg/10 shadow-lg text-xs font-mono whitespace-nowrap"
           :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
         >
-          <div class="text-fg font-semibold">{{ tooltip.count }} contribution{{ tooltip.count === 1 ? '' : 's' }}</div>
+          <div class="text-fg font-semibold">{{ t('contribution', { p0: tooltip.count, p1: tooltip.count === 1 ? '' : 's' }) }}</div>
           <div class="text-muted">{{ tooltip.dateLabel }}</div>
         </div>
       </Teleport>
     </section>
 
     <section>
-      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">My Favorite Rock Playlist</h2>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">{{ t('myFavoriteRockPlaylist') }}</h2>
       <iframe
         allow="autoplay *; encrypted-media *;"
         frameborder="0"
         height="450"
         style="width:100%;max-width:660px;overflow:hidden;background:transparent;"
         sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
-        :src="`https://embed.music.apple.com/cn/playlist/rock-essentials/pl.u-XkD0vBBs2bRAkr6?l=en&theme=${isDark ? 'dark' : 'light'}`"
+        :src="`https://embed.music.apple.com/cn/playlist/rock-essentials/pl.u-XkD0vBBs2bRAkr6?l=${isZh ? 'zh-CN' : 'en'}&theme=${isDark ? 'dark' : 'light'}`"
       ></iframe>
     </section>
 
     <section>
-      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">Tools I Use</h2>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">{{ t('toolsIUse') }}</h2>
       <p class="text-sm text-muted leading-relaxed mb-4">
-        Not a skill tree, just tools and tech I use regularly.
+        {{ t('notASkillTreeJustToolsAnd') }}
       </p>
       <div class="flex flex-wrap gap-2">
         <span v-for="s in [
@@ -354,41 +354,41 @@ onMounted(() => {
     </section>
 
     <section>
-      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">My Journey</h2>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">{{ t('myJourney') }}</h2>
       <div class="space-y-6 text-sm">
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2017</span>
-          <p class="text-muted">Started coding: school projects in Scratch</p>
+          <p class="text-muted">{{ t('startedCodingSchoolProjectsInScratch') }}</p>
         </div>
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2018/19</span>
-          <p class="text-muted">Started learning HTML, CSS, JS and built my first personal site</p>
+          <p class="text-muted">{{ t('startedLearningHtmlCssJsAndBuilt') }}</p>
         </div>
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2023</span>
-          <p class="text-muted">AI boom: started using AI tools to build websites and apps</p>
+          <p class="text-muted">{{ t('aiBoomStartedUsingAiToolsTo') }}</p>
         </div>
         <div class="flex gap-4">
           <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2025</span>
-          <p class="text-muted">Built ShutterWingPhotos (React, Vite, Node.js)</p>
+          <p class="text-muted">{{ t('builtShutterwingphotosReactViteNodeJs') }}</p>
         </div>
         <div class="flex gap-4">
-          <span class="text-muted/90 font-mono shrink-0 w-14 text-right">2026 (now)</span>
+          <span class="text-muted/90 font-mono shrink-0 w-14 text-right">{{ t('2026Now') }}</span>
           <p class="text-muted">
-            Building llmgps, getting into IoT, and working on new projects.
-            More on the <RouterLink to="/now" class="text-fg hover:text-accent transition-colors">/now page</RouterLink>.
+            {{ t('buildingLlmgpsGettingIntoIotAndWorking') }}
+            <RouterLink :to="localePath('/now')" class="text-fg hover:text-accent transition-colors">{{ t('nowPage') }}</RouterLink>{{ t('period') }}
           </p>
         </div>
       </div>
     </section>
 
     <section>
-      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">Languages</h2>
+      <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">{{ t('languages') }}</h2>
       <div class="flex flex-wrap gap-2">
         <span
           v-for="l in [
-            { flag: '🇨🇳', name: 'Chinese', level: '1st language' },
-            { flag: '🇺🇸', name: 'English', level: '2nd language' },
+            { flag: '🇨🇳', name: t('chinese'), level: t('1stLanguage') },
+            { flag: '🇺🇸', name: t('english'), level: t('2ndLanguage') },
           ]"
           :key="l.name"
           class="text-xs font-mono px-3 py-1.5 rounded-full border border-fg/8 text-muted hover:text-fg hover:border-accent/30 transition-all cursor-default"

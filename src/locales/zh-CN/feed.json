@@ -1,0 +1,8 @@
+{
+  "rssFeed": "RSS 订阅",
+  "thisIsAWebFeedAlsoKnown": "这是一个 RSS 订阅源。你可以通过阅读器关注本站的新博客文章，没有算法、不需要账号，也没有追踪，只有按发布时间排列的新文章。",
+  "pasteTheUrlBelowIntoAReader": "把下面的地址粘贴到 Feedly、NetNewsWire、Reeder 或 Inoreader 等阅读器中，就会自动收到新文章。",
+  "copied": "已复制！",
+  "copy": "复制",
+  "viewTheRawFeed": "查看原始订阅源"
+}

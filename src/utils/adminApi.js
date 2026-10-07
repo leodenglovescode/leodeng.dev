@@ -112,11 +112,11 @@ export function deleteFile({ path, sha, message }) {
   })
 }
 
-// --- R2 media (video) -------------------------------------------------------
+// --- R2 media ---------------------------------------------------------------
 //
 // Separate from the GitHub helpers above on purpose: these hit /api/media,
-// which writes to the R2 bucket instead of committing to the repo. Only video
-// goes here — see functions/api/media/[[path]].js for why.
+// which writes to the R2 bucket instead of committing to the repo. Images and
+// video both go here; see functions/api/media/[[path]].js for why.
 
 /** Returns `{ base, files }`. `base` is the public origin the bucket serves from. */
 export function listMedia() {

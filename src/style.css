@@ -25,7 +25,7 @@
   /* Inter is a fine typeface, just the default of every generated portfolio.
      IBM Plex Sans is the same SIL OFL licence as JetBrains Mono, and its
      humanist, slightly angular letterforms read as a deliberate choice. */
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* The whole small-text scale, lifted one notch. Overriding the tokens moves

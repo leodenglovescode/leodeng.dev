@@ -1,0 +1,20 @@
+{
+  "buildingNow": "正在做",
+  "active": "进行中",
+  "keepingRunning": "持续维护",
+  "ongoing": "持续进行",
+  "onPause": "暂时搁置",
+  "paused": "已暂停",
+  "recentlyFinished": "最近完成",
+  "finished": "已完成",
+  "started": "始于 {p0}",
+  "updated": "更新于 {p0}",
+  "finished2": "完成于 {p0}",
+  "recently": "最近",
+  "now": "近况",
+  "lastUpdated": "更新于 {p0}",
+  "aSnapshotOfWhatIAmBuilding": "简单记下最近在做、维护，还有愿意花时间折腾的东西。",
+  "inspiredByThe": "这个页面的灵感来自",
+  "nowPageMovement": "nownownow 的 /now 页面倡议",
+  "period": "。"
+}

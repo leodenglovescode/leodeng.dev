@@ -1,56 +1,49 @@
 <script setup>
 import { marked } from 'marked'
+import { computed } from 'vue'
 import nowData from '../content/now.json'
+import { useLocale } from '../utils/i18n.js'
 
-const STATUS = {
+const { isZh, t, localized, localePath } = useLocale('now')
+
+const STATUS = computed(() => ({
   active: {
-    heading: 'Building now',
-    label: 'Active',
+    heading: t('buildingNow'),
+    label: t('active'),
     dot: 'bg-accent',
   },
   recurring: {
-    heading: 'Keeping running',
-    label: 'Ongoing',
+    heading: t('keepingRunning'),
+    label: t('ongoing'),
     dot: 'bg-[#15a34a] dark:bg-[#4ade80]',
   },
   paused: {
-    heading: 'On pause',
-    label: 'Paused',
+    heading: t('onPause'),
+    label: t('paused'),
     dot: 'bg-highlight',
   },
   finished: {
-    heading: 'Recently finished',
-    label: 'Finished',
+    heading: t('recentlyFinished'),
+    label: t('finished'),
     dot: 'bg-muted',
   },
-}
-
-const STATUS_ORDER = ['active', 'recurring', 'paused', 'finished']
-const events = (nowData.events || []).map((event) => ({
-  ...event,
-  status: STATUS[event.status] ? event.status : 'active',
 }))
 
-const sections = STATUS_ORDER
+const STATUS_ORDER = ['active', 'recurring', 'paused', 'finished']
+const events = computed(() => (nowData.events || []).map((event) => ({
+  ...event,
+  title: localized(event.title),
+  details: localized(event.details),
+  status: STATUS.value[event.status] ? event.status : 'active',
+})))
+
+const sections = computed(() => STATUS_ORDER
   .map((status) => ({
     status,
-    ...STATUS[status],
-    events: events.filter((event) => event.status === status),
+    ...STATUS.value[status],
+    events: events.value.filter((event) => event.status === status),
   }))
-  .filter((section) => section.events.length)
-
-const monthYearFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-})
-
-const fullDateFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-  timeZone: 'UTC',
-})
+  .filter((section) => section.events.length))
 
 function dateFromIso(iso) {
   const match = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/)
@@ -60,38 +53,43 @@ function dateFromIso(iso) {
 
 function monthYear(iso) {
   const date = dateFromIso(iso)
-  return date ? monthYearFormatter.format(date) : ''
+  return date ? new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 'en-US', {
+    month: 'long', year: 'numeric', timeZone: 'UTC',
+  }).format(date) : ''
 }
 
 function fullDate(iso) {
   const date = dateFromIso(iso)
-  return date ? fullDateFormatter.format(date) : ''
+  return date ? new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 'en-US', {
+    month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+  }).format(date) : ''
 }
 
 function eventDates(event) {
   const dates = []
-  if (event.startedAt) dates.push(`Started ${monthYear(event.startedAt)}`)
-  if (event.updatedAt && event.status !== 'finished') dates.push(`Updated ${fullDate(event.updatedAt)}`)
-  if (event.finishedAt && event.status === 'finished') dates.push(`Finished ${monthYear(event.finishedAt)}`)
+  if (event.startedAt) dates.push(t('started', { p0: monthYear(event.startedAt) }))
+  if (event.updatedAt && event.status !== 'finished') dates.push(t('updated', { p0: fullDate(event.updatedAt) }))
+  if (event.finishedAt && event.status === 'finished') dates.push(t('finished2', { p0: monthYear(event.finishedAt) }))
   return dates
 }
 
 function renderDetails(source) {
   return marked.parseInline(String(source || ''))
+    .replace(/<a href="(\/[^"]+)"/g, (_match, href) => `<a href="${localePath(href)}"`)
     .replace(/<a href="(https?:\/\/[^\"]+)"/g,
       '<a href="$1" target="_blank" rel="noopener noreferrer"')
 }
 
-const lastUpdated = fullDate(nowData.updatedAt) || 'recently'
+const lastUpdated = computed(() => fullDate(nowData.updatedAt) || t('recently'))
 </script>
 
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
-    <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Now</h2>
-    <p class="text-xs font-mono text-muted/90 mb-10">Last updated {{ lastUpdated }}</p>
+    <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">{{ t('now') }}</h2>
+    <p class="text-xs font-mono text-muted/90 mb-10">{{ t('lastUpdated', { p0: lastUpdated }) }}</p>
 
     <div class="space-y-4 text-[15px] leading-relaxed text-muted mb-12">
-      <p>A snapshot of what I am building, maintaining, and making time for lately.</p>
+      <p>{{ t('aSnapshotOfWhatIAmBuilding') }}</p>
     </div>
 
     <div class="space-y-14">
@@ -136,7 +134,7 @@ const lastUpdated = fullDate(nowData.updatedAt) || 'recently'
     </div>
 
     <p class="text-xs text-muted/90 font-mono mt-14">
-      Inspired by the <a href="https://nownownow.com" target="_blank" rel="noopener noreferrer" class="hover:text-muted transition-colors">/now page movement</a>.
+      {{ t('inspiredByThe') }} <a href="https://nownownow.com" target="_blank" rel="noopener noreferrer" class="hover:text-muted transition-colors">{{ t('nowPageMovement') }}</a>{{ t('period') }}
     </p>
   </section>
 </template>

@@ -1,0 +1,16 @@
+{
+  "planespotting": "Planespotting",
+  "shotsFromPlanespottingTrips": "Shots from planespotting trips.",
+  "gallery": "Gallery",
+  "photosComingSoon": "Photos coming soon.",
+  "prev": "Prev",
+  "pageOf": "Page {p0} of {p1}",
+  "next": "Next",
+  "close": "Close",
+  "previousPhoto": "Previous photo",
+  "nextPhoto": "Next photo",
+  "shotAt": "Shot on {p0}",
+  "collectionNotFound": "Collection not found.",
+  "backToTheGallery": "Back to the gallery",
+  "period": "."
+}

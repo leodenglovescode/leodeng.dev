@@ -2,11 +2,13 @@
 import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPost, getAllPosts } from '../utils/posts.js'
-import { applyMeta, resetMeta } from '../utils/useMeta.js'
+import { applyMeta } from '../utils/useMeta.js'
 import { renderMermaid } from '../utils/mermaid.js'
+import { useLocale } from '../utils/i18n.js'
 
 const route  = useRoute()
 const router = useRouter()
+const { locale, t, localePath } = useLocale('blog-post')
 
 const post  = computed(() => getPost(route.params.slug))
 const posts = getAllPosts()
@@ -20,7 +22,7 @@ const next = computed(() => {
   return i > 0 ? posts[i - 1] : null
 })
 
-if (!post.value) router.replace('/blog')
+if (!post.value) router.replace(localePath('/blog'))
 
 // Scroll progress
 const scrollProgress = ref(0)
@@ -54,7 +56,7 @@ function addCopyButtons() {
 }
 
 // OG tags
-watch(post, (p) => {
+watch([post, locale], ([p]) => {
   if (p) applyMeta({ title: p.title, description: p.description })
 }, { immediate: true })
 
@@ -67,7 +69,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', onScroll)
-  resetMeta()
 })
 </script>
 
@@ -80,13 +81,13 @@ onUnmounted(() => {
     />
 
     <article v-if="post" class="pt-20 sm:pt-32 pb-20">
-      <RouterLink to="/blog" class="text-sm font-mono text-muted hover:text-fg transition-colors mb-10 block">
-        ← Back to blog
+      <RouterLink :to="localePath('/blog')" class="text-sm font-mono text-muted hover:text-fg transition-colors mb-10 block">
+        ← {{ t('backToBlog') }}
       </RouterLink>
 
       <h1 class="text-2xl sm:text-3xl font-bold text-fg mb-3">{{ post.title }}</h1>
       <p class="text-xs font-mono text-muted/90 mb-12">
-        {{ post.displayDate }} · {{ post.readingTime }} min read
+        {{ post.displayDate }} · {{ t('minRead', { p0: post.readingTime }) }}
       </p>
 
       <div class="prose" v-html="post.html" />
@@ -95,20 +96,20 @@ onUnmounted(() => {
       <div class="flex justify-between gap-6 mt-16 pt-8 border-t border-fg/5">
         <RouterLink
           v-if="prev"
-          :to="`/blog/${prev.slug}`"
+          :to="localePath(`/blog/${prev.slug}`)"
           class="group flex flex-col gap-1 max-w-[45%]"
         >
-          <span class="text-xs font-mono text-muted">← Older</span>
+          <span class="text-xs font-mono text-muted">← {{ t('older') }}</span>
           <span class="text-sm text-muted group-hover:text-fg transition-colors">{{ prev.title }}</span>
         </RouterLink>
         <div v-else />
 
         <RouterLink
           v-if="next"
-          :to="`/blog/${next.slug}`"
+          :to="localePath(`/blog/${next.slug}`)"
           class="group flex flex-col gap-1 items-end max-w-[45%]"
         >
-          <span class="text-xs font-mono text-muted">Newer →</span>
+          <span class="text-xs font-mono text-muted">{{ t('newer') }} →</span>
           <span class="text-sm text-muted group-hover:text-fg transition-colors text-right">{{ next.title }}</span>
         </RouterLink>
         <div v-else />

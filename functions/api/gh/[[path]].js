@@ -15,8 +15,9 @@ import { json, repoSlug, requireSession, USER_AGENT } from '../../../lib/auth.js
 // unpublished posts — nothing globs it, so it never reaches the build.
 const WRITABLE_PREFIXES = ['src/posts/', 'src/drafts/']
 const READABLE_PREFIXES = ['src/posts', 'src/drafts']
-// /now is build-time JSON, so grant exactly this file rather than its directory.
-const CONTENT_FILES = new Set(['src/content/now.json'])
+// Structured site content is build-time JSON, so grant exact files rather
+// than the whole directory.
+const CONTENT_FILES = new Set(['src/content/now.json', 'src/content/projects.json'])
 
 function decodePath(params) {
   const parts = Array.isArray(params.path) ? params.path : [params.path]

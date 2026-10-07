@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import data from '../generated/changelog.json'
+import { useLocale } from '../utils/i18n.js'
+
+const { isZh, t } = useLocale('changelog')
 
 // Generated at build time by scripts/build-changelog.js from the repo's git
 // history, so this page can't drift out of date the way a hand-written
@@ -8,15 +11,13 @@ import data from '../generated/changelog.json'
 const REPO_URL = `https://github.com/${data.repo}`
 
 const TYPES = {
-  feat:    { label: 'Feature', color: 'var(--color-accent)' },
-  fix:     { label: 'Fix',     color: '#fb923c' },
-  content: { label: 'Post',    color: '#4ade80' },
-  chore:   { label: 'Chore',   color: 'var(--color-muted)' },
-  other:   { label: 'Change',  color: 'var(--color-muted)' },
+  feat:    { color: 'var(--color-accent)' },
+  fix:     { color: '#fb923c' },
+  content: { color: '#4ade80' },
+  chore:   { color: 'var(--color-muted)' },
+  other:   { color: 'var(--color-muted)' },
 }
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December']
+const typeLabels = computed(() => t('types'))
 
 const filter = ref('all')
 
@@ -28,10 +29,10 @@ const counts = computed(() => {
 
 // Only offer filters that would actually return something.
 const filters = computed(() => [
-  { key: 'all', label: 'Everything' },
+  { key: 'all', label: t('everything') },
   ...Object.keys(TYPES)
     .filter(key => counts.value[key])
-    .map(key => ({ key, label: TYPES[key].label })),
+    .map(key => ({ key, label: typeLabels.value[key] })),
 ])
 
 const visible = computed(() =>
@@ -45,7 +46,14 @@ const months = computed(() => {
     const key = commit.date.slice(0, 7)
     if (groups.at(-1)?.key !== key) {
       const [year, month] = key.split('-').map(Number)
-      groups.push({ key, label: `${MONTHS[month - 1]} ${year}`, commits: [] })
+      const date = new Date(Date.UTC(year, month - 1, 1))
+      groups.push({
+        key,
+        label: new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 'en-US', {
+          month: 'long', year: 'numeric', timeZone: 'UTC',
+        }).format(date),
+        commits: [],
+      })
     }
     groups.at(-1).commits.push(commit)
   }
@@ -53,7 +61,8 @@ const months = computed(() => {
 })
 
 function meta(type) {
-  return TYPES[type] ?? TYPES.other
+  const value = TYPES[type] ?? TYPES.other
+  return { ...value, label: typeLabels.value[type] ?? typeLabels.value.other }
 }
 
 function subjectText(subject) {
@@ -63,16 +72,16 @@ function subjectText(subject) {
 
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
-    <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Changelog</h2>
+    <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">{{ t('changelog') }}</h2>
     <p class="text-xs font-mono text-muted/90 mb-10">
-      Every commit to this site, straight from
-      <a :href="REPO_URL" target="_blank" rel="noopener noreferrer" class="text-fg hover:text-accent transition-colors">the repo</a>.
+      {{ t('everyCommitToThisSiteStraightFrom') }}
+      <a :href="REPO_URL" target="_blank" rel="noopener noreferrer" class="text-fg hover:text-accent transition-colors">{{ t('theRepo') }}</a>{{ t('period') }}
     </p>
 
     <div v-if="!data.commits.length" class="text-sm text-muted italic">
-      No history available. Try
+      {{ t('noHistoryAvailableTry') }}
       <a :href="REPO_URL" target="_blank" rel="noopener noreferrer" class="text-fg hover:text-accent transition-colors">GitHub</a>
-      instead.
+      {{ t('instead') }}
     </div>
 
     <template v-else>
@@ -121,7 +130,7 @@ function subjectText(subject) {
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-xs font-mono text-muted hover:text-accent transition-colors shrink-0"
-                :title="`${commit.date}: view on GitHub`"
+                :title="`${commit.date}: ${t('viewOnGithub')}`"
               >{{ commit.hash.slice(0, 7) }}</a>
             </div>
           </li>
@@ -129,7 +138,7 @@ function subjectText(subject) {
       </div>
 
       <p class="text-xs text-muted/90 font-mono mt-12">
-        {{ data.commits.length }} commits · index rebuilt {{ data.generatedAt }}.
+        {{ t('commits', { p0: data.commits.length }) }} · {{ t('indexRebuilt') }} {{ data.generatedAt }}{{ t('period') }}
       </p>
     </template>
   </section>

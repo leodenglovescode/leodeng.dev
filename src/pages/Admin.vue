@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import MarkdownEditor from '../components/admin/MarkdownEditor.vue'
 import MediaManager from '../components/admin/MediaManager.vue'
+import ProjectManager from '../components/admin/ProjectManager.vue'
 import { deleteFile, getFile, getSession, listDir, logout, putFile, encodeBase64 } from '../utils/adminApi.js'
 import { parseFrontmatter } from '../utils/posts.js'
 
@@ -29,6 +30,7 @@ const notice = ref('')
 const saving = ref(false)
 const mediaOpen = ref(false)
 const editor = ref(null)
+const projectDirty = ref(false)
 
 const form = ref(null)
 const pristine = ref('')
@@ -127,6 +129,14 @@ function restoreRecovery(entry) {
           : 'active'
     form.value.finishedAt = form.value.status === 'finished' ? form.value.startedAt : ''
     form.value.updatedAt = ''
+  }
+  if (form.value.kind === 'now') {
+    if (typeof form.value.title !== 'object') {
+      form.value.title = { en: form.value.title || '', zh: '' }
+    }
+    if (typeof form.value.details !== 'object') {
+      form.value.details = { en: form.value.details || '', zh: '' }
+    }
   }
   tab.value = form.value.kind === 'now' ? 'now' : (form.value.dir === DRAFTS_DIR ? 'drafts' : 'posts')
   pristine.value = entry.pristine ?? ''
@@ -346,7 +356,13 @@ function snapshot(d) {
   return JSON.stringify([d.slug, d.title, d.description, d.date, d.body])
 }
 
-const isDirty = computed(() => !!form.value && snapshot(form.value) !== pristine.value)
+const isDirty = computed(() => projectDirty.value || (!!form.value && snapshot(form.value) !== pristine.value))
+
+function selectTab(nextTab) {
+  if (nextTab === tab.value) return
+  if (projectDirty.value && !confirm('Discard unsaved project changes?')) return
+  tab.value = nextTab
+}
 
 function newPost() {
   form.value = {
@@ -394,12 +410,12 @@ function newNowEvent() {
     kind: 'now',
     id,
     originalId: null,
-    title: '',
+    title: { en: '', zh: '' },
     status: 'active',
     startedAt: nowLocal(),
     updatedAt: '',
     finishedAt: '',
-    details: '',
+    details: { en: '', zh: '' },
   }
   pristine.value = snapshot(form.value)
   activeRecoveryKey.value = `${RECOVERY_PREFIX}now/${id}`
@@ -413,12 +429,16 @@ function editNowEvent(event) {
     kind: 'now',
     id: event.id,
     originalId: event.id,
-    title: event.title || '',
+    title: typeof event.title === 'object'
+      ? { en: event.title.en || '', zh: event.title.zh || '' }
+      : { en: event.title || '', zh: '' },
     status: event.status || 'active',
     startedAt: event.startedAt ? toLocalInput(event.startedAt) : '',
     updatedAt: event.updatedAt || '',
     finishedAt: event.finishedAt ? toLocalInput(event.finishedAt) : '',
-    details: event.details || '',
+    details: typeof event.details === 'object'
+      ? { en: event.details.en || '', zh: event.details.zh || '' }
+      : { en: event.details || '', zh: '' },
   }
   pristine.value = snapshot(form.value)
   activeRecoveryKey.value = `${RECOVERY_PREFIX}now/${event.id}`
@@ -472,10 +492,10 @@ function validate(d, targetDir) {
 
 function validateNowEvent(d) {
   if (!d || d.kind !== 'now') return null
-  if (!d.title.trim()) return 'A title is required.'
+  if (!d.title.en.trim() || !d.title.zh.trim()) return 'English and Chinese titles are required.'
   if (!['active', 'recurring', 'paused', 'finished'].includes(d.status)) return 'Choose a valid status.'
   if (d.status === 'finished' && !d.finishedAt) return 'Add a finish date for a finished event.'
-  if (!d.details.trim()) return 'Details are required.'
+  if (!d.details.en.trim() || !d.details.zh.trim()) return 'English and Chinese details are required.'
   return null
 }
 
@@ -561,12 +581,12 @@ const publish = () => saveTo(POSTS_DIR)
 function eventFromForm(d) {
   return {
     id: d.id,
-    title: d.title.trim(),
+    title: { en: d.title.en.trim(), zh: d.title.zh.trim() },
     status: d.status,
     startedAt: d.startedAt ? toIsoWithOffset(d.startedAt) : '',
     updatedAt: toIsoWithOffset(nowLocal()),
     finishedAt: d.status === 'finished' && d.finishedAt ? toIsoWithOffset(d.finishedAt) : '',
-    details: d.details.trim(),
+    details: { en: d.details.en.trim(), zh: d.details.zh.trim() },
   }
 }
 
@@ -607,14 +627,14 @@ async function saveNowEvent() {
   try {
     await commitNowEvents(
       events,
-      `content: ${d.originalId ? 'update' : 'add'} now event "${event.title}"`,
+      `content: ${d.originalId ? 'update' : 'add'} now event "${event.title.en}"`,
     )
     d.originalId = d.id
-    d.title = event.title
+    d.title = { ...event.title }
     d.status = event.status
     d.updatedAt = event.updatedAt
     d.finishedAt = event.finishedAt ? toLocalInput(event.finishedAt) : ''
-    d.details = event.details
+    d.details = { ...event.details }
     pristine.value = snapshot(d)
     notice.value = 'Now event saved. Cloudflare Pages will rebuild in a minute or two.'
     return true
@@ -676,7 +696,8 @@ async function deleteCurrent() {
 
 async function removeNowEvent(event) {
   if (!event || saving.value) return false
-  if (!confirm(`Delete "${event.title}"? This commits the change to main and rebuilds the site.`)) return false
+  const title = event.title?.en || event.title || event.id
+  if (!confirm(`Delete "${title}"? This commits the change to main and rebuilds the site.`)) return false
 
   saving.value = true
   error.value = ''
@@ -684,9 +705,9 @@ async function removeNowEvent(event) {
   try {
     await commitNowEvents(
       nowEvents.value.filter((item) => item.id !== event.id),
-      `content: delete now event "${event.title}"`,
+      `content: delete now event "${title}"`,
     )
-    notice.value = `Deleted "${event.title}".`
+    notice.value = `Deleted "${title}".`
     return true
   } catch (err) {
     if (err.status === 409 || err.status === 422) {
@@ -786,7 +807,7 @@ function displayDate(iso) {
         >
           <div class="min-w-0 flex-1">
             <p class="text-sm text-fg truncate">
-              Unsaved changes to “{{ entry.form.title || 'Untitled' }}”
+              Unsaved changes to “{{ entry.form.kind === 'now' ? (entry.form.title?.en || entry.form.title || 'Untitled') : (entry.form.title || 'Untitled') }}”
             </p>
             <p class="text-xs font-mono text-muted/90 mt-0.5">
               kept on this device · {{ savedAgo(entry.savedAt) }}
@@ -811,35 +832,39 @@ function displayDate(iso) {
             <button
               v-for="option in [{ key: 'posts', label: 'Posts', count: posts.length },
                                 { key: 'drafts', label: 'Drafts', count: drafts.length },
-                                { key: 'now', label: 'Now', count: nowEvents.length }]"
+                                { key: 'now', label: 'Now', count: nowEvents.length },
+                                { key: 'projects', label: 'Projects', count: null }]"
               :key="option.key"
               type="button"
               class="h-8 px-3 rounded-md text-xs font-mono uppercase tracking-widest transition-colors"
               :class="tab === option.key
                 ? 'text-fg bg-fg/5'
                 : 'text-muted/90 hover:text-fg'"
-              @click="tab = option.key"
+              @click="selectTab(option.key)"
             >
               {{ option.label }}
-              <span class="ml-1.5 text-muted/90 normal-case tracking-normal">{{ option.count }}</span>
+              <span v-if="option.count != null" class="ml-1.5 text-muted/90 normal-case tracking-normal">{{ option.count }}</span>
             </button>
           </div>
           <div class="ml-auto flex items-center gap-2">
             <button
               type="button"
-              v-if="tab !== 'now'"
+              v-if="tab !== 'now' && tab !== 'projects'"
               class="h-9 px-3 rounded-md border border-fg/10 text-sm text-muted hover:text-fg hover:border-fg/20 transition-colors"
               @click="mediaOpen = true"
             >Media</button>
             <button
               type="button"
+              v-if="tab !== 'projects'"
               class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110 transition-colors"
               @click="tab === 'now' ? newNowEvent() : newPost()"
             >{{ tab === 'now' ? 'New event' : 'New post' }}</button>
           </div>
         </div>
 
-        <template v-if="tab === 'now'">
+        <ProjectManager v-if="tab === 'projects'" @dirty-change="projectDirty = $event" />
+
+        <template v-else-if="tab === 'now'">
           <p v-if="loadingNow" class="text-sm text-muted font-mono">Loading Now events…</p>
           <p v-else-if="!nowEvents.length" class="text-sm text-muted/90 italic py-10">
             No Now events yet.
@@ -853,9 +878,9 @@ function displayDate(iso) {
             >
               <button type="button" class="flex-1 min-w-0 text-left" @click="editNowEvent(event)">
                 <h3 class="text-fg font-semibold text-sm group-hover:text-accent transition-colors truncate">
-                  {{ event.title }}
+                  {{ event.title?.en || event.title }}
                 </h3>
-                <p v-if="event.details" class="text-xs text-muted mt-1 line-clamp-2">{{ event.details }}</p>
+                <p v-if="event.details" class="text-xs text-muted mt-1 line-clamp-2">{{ event.details?.en || event.details }}</p>
                 <p class="text-xs font-mono text-muted/90 mt-1.5">
                   {{ { active: 'Active', recurring: 'Ongoing', paused: 'Paused', finished: 'Finished' }[event.status] || 'Active' }}
                   <template v-if="event.status === 'finished' && event.finishedAt">
@@ -1062,16 +1087,28 @@ function displayDate(iso) {
         </div>
 
         <div class="grid gap-4 mb-5">
-          <label class="flex flex-col gap-1.5">
-            <span class="text-xs font-mono text-muted uppercase tracking-wider">Title</span>
-            <input
-              v-model="form.title"
-              type="text"
-              placeholder="What I am working on"
-              class="h-11 px-3 rounded-md bg-surface border border-fg/10 text-base text-fg
-                     outline-none focus:border-accent/50 placeholder:text-muted/90"
-            />
-          </label>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">English title</span>
+              <input
+                v-model="form.title.en"
+                type="text"
+                placeholder="What I am working on"
+                class="h-11 px-3 rounded-md bg-surface border border-fg/10 text-base text-fg
+                       outline-none focus:border-accent/50 placeholder:text-muted/90"
+              />
+            </label>
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Chinese title</span>
+              <input
+                v-model="form.title.zh"
+                type="text"
+                placeholder="我最近在做什么"
+                class="h-11 px-3 rounded-md bg-surface border border-fg/10 text-base text-fg
+                       outline-none focus:border-accent/50 placeholder:text-muted/90"
+              />
+            </label>
+          </div>
 
           <div class="grid sm:grid-cols-2 gap-4">
             <label class="flex flex-col gap-1.5">
@@ -1114,16 +1151,28 @@ function displayDate(iso) {
             </label>
           </div>
 
-          <label class="flex flex-col gap-1.5">
-            <span class="text-xs font-mono text-muted uppercase tracking-wider">Details</span>
-            <textarea
-              v-model="form.details"
-              rows="5"
-              placeholder="Describe the activity. Markdown links such as [blog](/blog) work here."
-              class="px-3 py-2.5 rounded-md bg-surface border border-fg/10 text-sm text-text resize-y
-                     outline-none focus:border-accent/50 placeholder:text-muted/90"
-            />
-          </label>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">English details</span>
+              <textarea
+                v-model="form.details.en"
+                rows="5"
+                placeholder="Describe the activity. Markdown links such as [blog](/blog) work here."
+                class="px-3 py-2.5 rounded-md bg-surface border border-fg/10 text-sm text-text resize-y
+                       outline-none focus:border-accent/50 placeholder:text-muted/90"
+              />
+            </label>
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-mono text-muted uppercase tracking-wider">Chinese details</span>
+              <textarea
+                v-model="form.details.zh"
+                rows="5"
+                placeholder="描述这项活动。支持 [博客](/blog) 这样的 Markdown 链接。"
+                class="px-3 py-2.5 rounded-md bg-surface border border-fg/10 text-sm text-text resize-y
+                       outline-none focus:border-accent/50 placeholder:text-muted/90"
+              />
+            </label>
+          </div>
         </div>
 
         <div class="flex items-center gap-4 mt-4">

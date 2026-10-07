@@ -1,0 +1,24 @@
+{
+  "statuses": [
+    "probably debugging something right now",
+    "making LLMs argue with each other",
+    "self-hosting things I don't need",
+    "googling how to do basic stuff in Docker",
+    "trying too hard to center a div in css",
+    "writing prompts that are too long",
+    "refactoring code I wrote yesterday",
+    "convincing JavaScript to cooperate",
+    "asking AI obvious questions",
+    "trying to remember what I was doing",
+    "fixing a bug that isn't even there",
+    "spotting planes and taking photos of them",
+    "watching F1 and complaining about the cars"
+  ],
+  "heyIMLeo": "Hey, I'm Leo",
+  "yearOldAiAssistedFullStackDev": "{p0}-year-old AI-assisted full-stack dev from Beijing who loves tinkering with computers and electronics. I make stuff, break stuff, learn stuff (hopefully). This is my little corner of the internet to share what I'm up to and make friends with people who like the same stuff I do! :)",
+  "whatIMUpToMaybe": "What I'm up to (maybe):",
+  "hoverToPauseClickToReroll": "Hover to pause, click to reroll",
+  "projects": "Projects",
+  "blog": "Blog",
+  "about": "About"
+}
