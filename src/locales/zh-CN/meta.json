@@ -1,0 +1,36 @@
+{
+  "defaultDescription": "这里是 Leo 的个人网站，放着项目、博客和最近在折腾的东西。",
+  "home": { "title": null },
+  "about": { "title": "关于我" },
+  "projects": { "title": "项目" },
+  "gallery": { "title": "相册" },
+  "now": { "title": "近况" },
+  "spotting": {
+    "title": "拍机统计",
+    "description": "根据照片 EXIF 汇总的拍机数据，包括器材、焦距、曝光和拍摄时间。"
+  },
+  "changelog": {
+    "title": "更新记录",
+    "description": "leodeng.dev 的更新记录，根据代码仓库里的提交在构建时自动生成。"
+  },
+  "homelab": {
+    "title": "家庭服务器",
+    "description": "家庭服务器的实时状态，包括运行时间、负载、内存和 CPU 温度，每分钟更新。"
+  },
+  "tokens": {
+    "title": "Token 用量",
+    "description": "根据本地会话记录统计，再由服务器推送上来的 LLM token 用量。"
+  },
+  "stack": { "title": "设备与工具" },
+  "feed": { "title": "RSS 订阅" },
+  "blog": { "title": "博客" },
+  "contact": { "title": "联系我" },
+  "pgp": {
+    "title": "OpenPGP 公钥",
+    "description": "Leo Deng 当前使用的 OpenPGP 公钥，可用于验证邮件签名和加密邮件。"
+  },
+  "interests": {
+    "title": "兴趣",
+    "description": "Leo Deng 最近常折腾的兴趣和小坑，按最近想起它们的频率排列。"
+  }
+}

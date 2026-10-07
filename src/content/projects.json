@@ -1,0 +1,85 @@
+{
+  "projects": [
+    {
+      "id": "llmgps",
+      "title": { "en": "llmgps", "zh": "llmgps" },
+      "description": {
+        "en": "Multi-LLM chat workspace. Debate mode makes models argue and synthesize answers. Self-hosted, Docker, Ollama, streaming, auth and more.",
+        "zh": "多模型聊天工作区。辩论模式会让多个模型先互相讨论，再整理出答案。支持自托管、Docker、Ollama、流式输出和登录验证等功能。"
+      },
+      "url": "https://github.com/leodenglovescode/llmgps",
+      "linkLabel": { "en": "github", "zh": "GitHub" },
+      "tags": ["next.js", "typescript", "ollama", "docker"],
+      "images": [{ "url": "/projects_screenshots/llmgps_screenshot.png", "alt": { "en": "llmgps screenshot", "zh": "llmgps 截图" } }]
+    },
+    {
+      "id": "carbonpanel",
+      "title": { "en": "CarbonPanel", "zh": "CarbonPanel" },
+      "description": {
+        "en": "Lightweight self-hosted server monitoring panel. Real-time metrics and 2FA security. Built because I needed something simple to keep an eye on my home server.",
+        "zh": "轻量级的自托管服务器监控面板，提供实时指标和双重身份验证。因为想找个简单的办法看一眼家里的服务器状态，所以干脆自己做了一个。"
+      },
+      "url": "https://github.com/leodenglovescode/CarbonPanel",
+      "linkLabel": { "en": "github", "zh": "GitHub" },
+      "tags": ["python", "self-hosting", "monitoring", "docker"],
+      "images": [{ "url": "/projects_screenshots/carbonpanel_screenshot.png", "alt": { "en": "CarbonPanel screenshot", "zh": "CarbonPanel 截图" } }]
+    },
+    {
+      "id": "leodeng-dev",
+      "title": { "en": "This website", "zh": "这个网站" },
+      "description": { "en": "You're looking at it right now.", "zh": "就是你正在看的这个。" },
+      "url": "https://github.com/leodenglovescode/leodeng.dev",
+      "linkLabel": { "en": "github", "zh": "GitHub" },
+      "tags": ["vue", "vite", "tailwind"],
+      "images": [{ "url": "/projects_screenshots/leodeng_dev_website.png", "alt": { "en": "leodeng.dev screenshot", "zh": "leodeng.dev 截图" } }]
+    },
+    {
+      "id": "pm2-webmanager",
+      "title": { "en": "pm2-webmanager", "zh": "pm2-webmanager" },
+      "description": {
+        "en": "Web UI for managing PM2 processes. Start, stop, restart, and monitor Node.js apps from a browser instead of a terminal.",
+        "zh": "用网页管理 PM2 进程，可以直接启动、停止、重启和监控 Node.js 应用，不用再来回敲终端命令。"
+      },
+      "url": "https://github.com/leodenglovescode/pm2-webmanager",
+      "linkLabel": { "en": "github", "zh": "GitHub" },
+      "tags": ["node.js", "pm2", "self-hosting"],
+      "images": [{ "url": "/projects_screenshots/pm2webmanager_screenshot.png", "alt": { "en": "pm2-webmanager screenshot", "zh": "pm2-webmanager 截图" } }]
+    },
+    {
+      "id": "esp32s3-assist-satellite",
+      "title": { "en": "ESP32-S3 Assist Satellite", "zh": "ESP32-S3 语音卫星" },
+      "description": {
+        "en": "Voice assistant satellite for Home Assistant built on an ESP32-S3 with a microphone. Part of my home automation setup.",
+        "zh": "基于带麦克风的 ESP32-S3 做的 Home Assistant 语音卫星，是家里自动化系统的一部分。"
+      },
+      "url": "https://github.com/leodenglovescode/esp32s3-microphone-satellite",
+      "linkLabel": { "en": "github", "zh": "GitHub" },
+      "tags": ["esp32", "homeassistant", "iot", "c++"],
+      "images": [{ "url": "/projects_screenshots/esp32s3_voice_screenshot.png", "alt": { "en": "ESP32-S3 Assist Satellite screenshot", "zh": "ESP32-S3 语音卫星截图" } }]
+    },
+    {
+      "id": "dragonsea",
+      "title": { "en": "龙海 DragonSea MC", "zh": "龙海 DragonSea MC" },
+      "description": {
+        "en": "DragonSea MC is a Forge-based city-building community. We're building a fully fictional nation and city with room for architects and explorers alike.",
+        "zh": "龙海是一个基于 Forge 的城市建设社区。我们正在一起创造一个完全虚构的国家和城市，不管你喜欢盖房子还是探索，都能找到适合自己的位置。"
+      },
+      "url": "https://dragonsea.shutterwingphotos.cn/",
+      "linkLabel": { "en": "website", "zh": "网站" },
+      "tags": ["minecraft", "forge", "city-building", "community", "self-hosting"],
+      "images": [{ "url": "/projects_screenshots/dragonsea_website.png", "alt": { "en": "DragonSea MC screenshot", "zh": "龙海服务器网站截图" } }]
+    },
+    {
+      "id": "shutterwingphotos",
+      "title": { "en": "ShutterWingPhotos", "zh": "ShutterWingPhotos" },
+      "description": {
+        "en": "Aviation and railway photography platform built with React, Vite, and Node.js. It grew to more than 2,600 registered users and 23,800 photos before the website was discontinued.",
+        "zh": "使用 React、Vite 和 Node.js 构建的航空与铁路摄影平台。网站停止运营前拥有超过 2,600 名注册用户和 23,800 张照片。"
+      },
+      "url": "",
+      "linkLabel": { "en": "discontinued", "zh": "已停止运营" },
+      "tags": ["react", "javascript", "self-hosting", "aviation", "railway", "photography"],
+      "images": [{ "url": "/projects_screenshots/shutterwingphotos_screenshot.png", "alt": { "en": "ShutterWingPhotos screenshot", "zh": "ShutterWingPhotos 截图" } }]
+    }
+  ]
+}

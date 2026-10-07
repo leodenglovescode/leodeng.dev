@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useLocale } from '../utils/i18n.js'
+
+const { isZh, t, localePath } = useLocale('tokens')
 
 // The endpoint is edge-cached for 60s, so polling faster than that just burns
 // requests for the same bytes.
@@ -13,11 +16,11 @@ const loading = ref(true)
 // today's number sit outside this and never move: those are the two figures
 // worth being able to read without touching anything.
 const range = ref('d30')
-const RANGES = [
-  { key: 'd7', label: '7 days', days: 7 },
-  { key: 'd30', label: '30 days', days: 30 },
-  { key: 'all', label: 'All time', days: null },
-]
+const RANGES = computed(() => [
+  { key: 'd7', label: t('7Days'), days: 7 },
+  { key: 'd30', label: t('30Days'), days: 30 },
+  { key: 'all', label: t('allTime'), days: null },
+])
 
 let pollTimer = null
 
@@ -44,7 +47,7 @@ onBeforeUnmount(() => clearInterval(pollTimer))
 const totals = computed(() => data.value?.totals ?? null)
 const today = computed(() => data.value?.today ?? null)
 const active = computed(() => data.value?.ranges?.[range.value] ?? null)
-const activeLabel = computed(() => RANGES.find(r => r.key === range.value)?.label ?? '')
+const activeLabel = computed(() => RANGES.value.find(r => r.key === range.value)?.label ?? '')
 
 // Billions of tokens don't fit in a stat tile, and nobody reads the digits
 // anyway: the exact figure goes in the `title` attribute for whoever wants it.
@@ -65,7 +68,7 @@ const asDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate(
 // clock, so the window matches the one the server priced. Formatted by hand
 // because toISOString() would convert to UTC first and can land a day early.
 const cutoff = computed(() => {
-  const spec = RANGES.find(r => r.key === range.value)
+  const spec = RANGES.value.find(r => r.key === range.value)
   if (!spec?.days || !totals.value) return null
   const from = new Date(`${totals.value.lastDay}T00:00:00`)
   from.setDate(from.getDate() - (spec.days - 1))
@@ -93,9 +96,9 @@ const busiest = computed(() => {
 const todayIsToday = computed(() => today.value?.day === new Date().toLocaleDateString('en-CA'))
 
 const todayLabel = computed(() => {
-  if (!today.value) return 'latest day'
-  if (todayIsToday.value) return 'today'
-  return new Date(`${today.value.day}T00:00:00`).toLocaleDateString(undefined, {
+  if (!today.value) return t('latestDay')
+  if (todayIsToday.value) return t('today')
+  return new Date(`${today.value.day}T00:00:00`).toLocaleDateString(isZh.value ? 'zh-CN' : 'en-US', {
     month: 'short',
     day: 'numeric',
   })
@@ -108,10 +111,10 @@ const composition = computed(() => {
   const a = active.value
   if (!a) return []
   const parts = [
-    { label: 'Cache read', value: a.cacheRead, class: 'bg-accent' },
-    { label: 'Cache write', value: a.cacheWrite5m + a.cacheWrite1h, class: 'bg-accent/55' },
-    { label: 'Output', value: a.output, class: 'bg-highlight' },
-    { label: 'Input', value: a.input, class: 'bg-fg/40' },
+    { label: t('cacheRead'), value: a.cacheRead, class: 'bg-accent' },
+    { label: t('cacheWrite'), value: a.cacheWrite5m + a.cacheWrite1h, class: 'bg-accent/55' },
+    { label: t('output'), value: a.output, class: 'bg-highlight' },
+    { label: t('input'), value: a.input, class: 'bg-fg/40' },
   ]
   const sum = parts.reduce((t, p) => t + p.value, 0) || 1
   return parts.map(p => ({ ...p, pct: (p.value / sum) * 100 }))
@@ -127,7 +130,7 @@ function pctLabel(pct) {
 const modelMax = computed(() => Math.max(...(data.value?.byModel ?? []).map(m => m.tokens), 1))
 
 function dayTitle(d) {
-  return `${d.day}: ${full(d.tokens)} tokens across ${full(d.messages)} responses`
+  return t('dayTitle', { p0: d.day, p1: full(d.tokens), p2: full(d.messages) })
 }
 
 const money = n =>
@@ -138,21 +141,21 @@ const money = n =>
 
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
-    <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Tokens</h2>
+    <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">{{ t('heading') }}</h2>
     <p class="text-xs font-mono text-muted/90 mb-10">
-      LLM token usage, pushed from the
-      <RouterLink to="/homelab" class="text-fg hover:text-accent transition-colors">server</RouterLink>
+      {{ t('llmTokenUsagePushedFromThe') }}
+      <RouterLink :to="localePath('/homelab')" class="text-fg hover:text-accent transition-colors">{{ t('server') }}</RouterLink>{{ t('empty') }}
     </p>
 
-    <p v-if="loading" class="text-sm text-muted font-mono">Counting…</p>
+    <p v-if="loading" class="text-sm text-muted font-mono">{{ t('counting') }}</p>
 
     <p v-else-if="error" class="text-sm text-muted">
-      Couldn't reach the token endpoint
-      <span class="font-mono text-xs text-muted/90">({{ error }})</span>.
+      {{ t('couldnTReachTheTokenEndpoint') }}
+      <span class="font-mono text-xs text-muted/90">({{ error }})</span>{{ t('period') }}
     </p>
 
     <p v-else-if="!data.seen" class="text-sm text-muted">
-      Nothing pushed yet. The agent hasn't reported any usage.
+      {{ t('nothingPushedYetTheAgentHasnT') }}
     </p>
 
     <template v-else>
@@ -162,25 +165,24 @@ const money = n =>
           <div class="text-3xl font-semibold text-fg font-mono" :title="full(totals.tokens)">
             {{ compact(totals.tokens) }}
           </div>
-          <div class="text-xs text-muted mt-1">tokens, all time</div>
+          <div class="text-xs text-muted mt-1">{{ t('tokensAllTime') }}</div>
         </div>
         <div class="bg-bg p-5">
           <div class="text-3xl font-semibold text-fg font-mono" :title="full(today?.tokens ?? 0)">
             {{ compact(today?.tokens ?? 0) }}
           </div>
-          <div class="text-xs text-muted mt-1">tokens {{ todayLabel }}</div>
+          <div class="text-xs text-muted mt-1">{{ t('tokens', { p0: todayLabel }) }}</div>
         </div>
       </div>
 
       <p class="text-xs text-muted mb-12">
-        {{ totals.firstDay }} to {{ totals.lastDay }} · {{ full(totals.days) }} days with usage ·
-        {{ full(totals.messages) }} API responses<template v-if="totals.sessions">
-        · {{ full(totals.sessions) }} sessions</template>. Counted from local session logs,
-        deduplicated per response, and archived so the total survives the logs being pruned.
+        {{ totals.firstDay }} {{ t('to') }} {{ totals.lastDay }} · {{ full(totals.days) }} {{ t('daysWithUsage') }} ·
+        {{ full(totals.messages) }} {{ t('apiResponses') }}<template v-if="totals.sessions">
+        · {{ full(totals.sessions) }} {{ t('sessions') }}</template>{{ t('countedFromLocalSessionLogsDeduplicatedPer') }}
       </p>
 
       <!-- Range switcher -->
-      <div class="flex items-center gap-1 mb-8" role="group" aria-label="Time range">
+      <div class="flex items-center gap-1 mb-8" role="group" :aria-label="t('timeRange')">
         <button
           v-for="r in RANGES"
           :key="r.key"
@@ -202,27 +204,27 @@ const money = n =>
           <div class="text-2xl font-semibold text-fg font-mono" :title="full(active.tokens)">
             {{ compact(active.tokens) }}
           </div>
-          <div class="text-xs text-muted mt-1">tokens</div>
+          <div class="text-xs text-muted mt-1">token</div>
         </div>
         <div class="bg-bg p-4">
           <div class="text-2xl font-semibold text-fg font-mono">{{ full(active.messages) }}</div>
-          <div class="text-xs text-muted mt-1">responses</div>
+          <div class="text-xs text-muted mt-1">{{ t('responses') }}</div>
         </div>
         <div class="bg-bg p-4">
           <div class="text-2xl font-semibold text-fg font-mono">{{ full(active.days) }}</div>
-          <div class="text-xs text-muted mt-1">days with usage</div>
+          <div class="text-xs text-muted mt-1">{{ t('daysWithUsage2') }}</div>
         </div>
         <div class="bg-bg p-4">
           <div class="text-2xl font-semibold text-fg font-mono">{{ money(active.cost) }}</div>
-          <div class="text-xs text-muted mt-1">at list price</div>
+          <div class="text-xs text-muted mt-1">{{ t('atListPrice') }}</div>
         </div>
       </div>
 
       <!-- Per day -->
-      <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">Per day</h3>
+      <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">{{ t('perDay') }}</h3>
       <p class="text-xs text-muted mb-5">
-        {{ activeLabel }}.
-        <template v-if="busiest">Busiest was {{ busiest.day }}, {{ compact(busiest.tokens) }}.</template>
+        {{ activeLabel }}{{ t('period') }}
+        <template v-if="busiest">{{ t('busiestWas', { p0: busiest.day, p1: compact(busiest.tokens) }) }}</template>
       </p>
       <div class="flex items-end gap-[2px] h-32 mb-2">
         <div
@@ -240,10 +242,9 @@ const money = n =>
       </div>
 
       <!-- Where they go -->
-      <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">Where they go</h3>
+      <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">{{ t('whereTheyGo') }}</h3>
       <p class="text-xs text-muted mb-5">
-        Cache reads are almost all of it. That's the point of the cache. Re-sending a
-        long conversation costs a tenth of reading it fresh.
+        {{ t('cacheReadsAreAlmostAllOfIt') }}
       </p>
       <div class="flex h-3 rounded-full overflow-hidden bg-fg/8 mb-3">
         <div
@@ -265,14 +266,14 @@ const money = n =>
       </div>
 
       <!-- Models -->
-      <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">By model</h3>
-      <p class="text-xs text-muted mb-5">All time.</p>
+      <h3 class="text-sm font-mono text-fg uppercase tracking-widest mb-1">{{ t('byModel') }}</h3>
+      <p class="text-xs text-muted mb-5">{{ t('allTime2') }}</p>
       <div class="space-y-4 mb-14">
         <div v-for="m in data.byModel" :key="m.model">
           <div class="flex justify-between items-baseline text-xs font-mono mb-1.5">
             <span class="text-fg">{{ m.label }}</span>
             <span class="text-muted" :title="full(m.tokens)">
-              {{ compact(m.tokens) }} · {{ full(m.messages) }} responses
+              {{ compact(m.tokens) }} · {{ full(m.messages) }} {{ t('responses2') }}
             </span>
           </div>
           <div class="h-2 rounded-full bg-fg/8 overflow-hidden">
@@ -288,27 +289,22 @@ const money = n =>
       <div class="border border-fg/8 rounded-lg p-5">
         <div class="flex items-baseline justify-between gap-4 mb-2">
           <span class="text-xs font-mono text-muted uppercase tracking-widest">
-            List-price equivalent · {{ activeLabel }}
+            {{ t('listPriceEquivalent') }} · {{ activeLabel }}
           </span>
           <span class="text-2xl font-semibold text-fg font-mono">{{ money(active.cost) }}</span>
         </div>
         <p class="text-xs text-muted">
-          What this usage would have cost on the API at list price. Input and output per
-          model, cache reads at a tenth of the input rate, cache writes at 1.25× or 2×
-          depending on how long they live. It is
-          <em class="not-italic text-fg">not a bill</em>: this runs on a subscription, so
-          none of it was charged per token.
+          {{ t('whatThisUsageWouldHaveCostOn') }}
+          <em class="not-italic text-fg">{{ t('notABill') }}</em>{{ t('thisRunsOnASubscriptionSoNone') }}
           <template v-if="active.unpricedTokens > 0">
-            {{ compact(active.unpricedTokens) }} tokens came from models with no rate in the
-            table and are left out of this figure.
+            {{ t('tokensCameFromModelsWithNoRate', { p0: compact(active.unpricedTokens) }) }}
           </template>
-          Copilot VS Code totals are estimates from visible transcript history; its hidden
-          system prompts and tool results are not stored locally.
+          {{ t('copilotVsCodeTotalsAreEstimatesFrom') }}
         </p>
       </div>
 
       <p class="text-xs text-muted/90 font-mono mt-12">
-        Counts only. No prompts, no file paths, no project names.
+        {{ t('countsOnlyNoPromptsNoFilePaths') }}
       </p>
     </template>
   </section>

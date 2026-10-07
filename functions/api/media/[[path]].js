@@ -1,10 +1,9 @@
 // R2-backed media endpoint for the /admin editor.
 //
-// Images stay in the repo (see functions/api/gh/[[path]].js) — they're small,
-// and versioning them alongside the post that references them is worth the
-// space. Video is the opposite trade: git keeps every byte of every revision
-// forever, a single phone export blows past the 25 MiB Pages asset cap, and
-// nobody benefits from a diffable mp4. So video lives in R2 instead.
+// Images and video both live in R2. Git keeps every byte of every revision
+// forever, large phone exports can exceed static asset limits, and media gains
+// nothing from being diffable. Project records and post markdown keep only the
+// public URLs, while this endpoint streams the bytes into the MEDIA binding.
 //
 // Same guardrails as the GitHub proxy: a real session is required, and writes
 // need the X-Admin header, which a cross-site form can't set without a CORS

@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "首页",
+    "about": "关于",
+    "projects": "项目",
+    "gallery": "相册",
+    "stack": "设备",
+    "blog": "博客",
+    "contact": "联系"
+  },
+  "now": "近况",
+  "spotting": "拍机统计",
+  "homelab": "家庭服务器",
+  "tokens": "Token 用量",
+  "changelog": "更新记录",
+  "interests": "兴趣",
+  "switchToLightMode": "切换到浅色模式",
+  "switchToDarkMode": "切换到深色模式",
+  "switchToEnglish": "Switch to English",
+  "switchToChinese": "切换到中文",
+  "toggleMenu": "展开或收起菜单",
+  "leoIsNowPlaying": "Leo 正在听",
+  "songProgress": "播放进度"
+}

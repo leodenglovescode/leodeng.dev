@@ -2,10 +2,12 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Navbar from './components/Navbar.vue'
+import { useLocale } from './utils/i18n.js'
 
 const route = useRoute()
 // /admin opts out of the navbar, footer and reading-width column.
 const chrome = computed(() => route.meta?.chrome !== false)
+const { t, localePath } = useLocale('common')
 
 const socialLinks = [
   {
@@ -50,18 +52,18 @@ const socialLinks = [
     </p>
     <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
       <!-- Deliberately footer-only: side pages worth finding, not worth a nav slot. -->
-      <RouterLink to="/now" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Now</RouterLink>
-      <RouterLink to="/spotting" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Spotting</RouterLink>
-      <RouterLink to="/homelab" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Homelab</RouterLink>
-      <RouterLink to="/tokens" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Tokens</RouterLink>
-      <RouterLink to="/changelog" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Changelog</RouterLink>
-      <RouterLink to="/interests" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">Interests</RouterLink>
-      <RouterLink to="/pgp" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">PGP</RouterLink>
+      <RouterLink :to="localePath('/now')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('now') }}</RouterLink>
+      <RouterLink :to="localePath('/spotting')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('spotting') }}</RouterLink>
+      <RouterLink :to="localePath('/homelab')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('homelab') }}</RouterLink>
+      <RouterLink :to="localePath('/tokens')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('tokens') }}</RouterLink>
+      <RouterLink :to="localePath('/changelog')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('changelog') }}</RouterLink>
+      <RouterLink :to="localePath('/interests')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('interests') }}</RouterLink>
+      <RouterLink :to="localePath('/pgp')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">PGP</RouterLink>
       <div class="flex items-center gap-4">
         <template v-for="link in socialLinks" :key="link.label">
           <RouterLink
             v-if="!link.external"
-            :to="link.url"
+            :to="localePath(link.url)"
             :aria-label="link.label"
             class="text-muted/90 hover:text-accent transition-colors"
           >

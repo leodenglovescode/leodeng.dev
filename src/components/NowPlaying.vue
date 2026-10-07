@@ -1,5 +1,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useLocale } from '../utils/i18n.js'
+
+const { t } = useLocale('common')
 
 const POLL_INTERVAL_MS = 10_000
 const REQUEST_TIMEOUT_MS = 5_000
@@ -128,7 +131,7 @@ onBeforeUnmount(() => {
     <aside
       v-if="nowPlaying"
       class="mx-auto w-full max-w-72 rounded-xl bg-fg/[0.035] p-3 sm:max-w-none"
-      aria-label="Leo is now playing"
+      :aria-label="t('leoIsNowPlaying')"
     >
       <div class="flex min-w-0 items-start gap-3">
         <div
@@ -146,7 +149,7 @@ onBeforeUnmount(() => {
         <div class="min-w-0 flex-1">
           <p class="flex items-center gap-1.5 font-mono text-[11px] text-accent">
             <span class="now-playing-pulse h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
-            Leo is now playing
+            {{ t('leoIsNowPlaying') }}
           </p>
           <p class="mt-1 text-sm font-semibold leading-snug text-fg" :title="nowPlaying.title">
             {{ nowPlaying.title }}
@@ -161,7 +164,7 @@ onBeforeUnmount(() => {
         <div
           class="h-1 overflow-hidden rounded-full bg-fg/10"
           role="progressbar"
-          aria-label="Song progress"
+          :aria-label="t('songProgress')"
           aria-valuemin="0"
           :aria-valuemax="Math.round(nowPlaying.durationMs / 1000)"
           :aria-valuenow="Math.round(positionMs / 1000)"

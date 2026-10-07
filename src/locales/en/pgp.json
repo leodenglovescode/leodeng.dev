@@ -1,0 +1,17 @@
+{
+  "asciiArmoredOpenpgpPublicKey": "ASCII-armored OpenPGP public key",
+  "thisIsMyCurrentPublicOpenpgpKey": "This is my current public OpenPGP key for verifying signed email and encrypting mail to me.",
+  "identity": "Identity",
+  "fingerprint": "Fingerprint",
+  "copyOpenpgpFingerprint": "Copy OpenPGP fingerprint",
+  "copied": "copied ✓",
+  "copy": "copy",
+  "publicKey": "Public key",
+  "copyCompleteAsciiArmoredOpenpgpPublicKey": "Copy complete ASCII-armored OpenPGP public key",
+  "copyPublicKey": "Copy public key",
+  "fingerprintCopied": "Fingerprint copied.",
+  "publicKeyCopied": "Public key copied.",
+  "copyFailedPleaseSelectAndCopyThe": "Copy failed. Please select and copy the text manually.",
+  "downloadPublicKeyAsc": "Download public key (.asc)",
+  "viewOnKeysOpenpgpOrg": "View on keys.openpgp.org"
+}

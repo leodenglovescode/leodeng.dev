@@ -1,6 +1,9 @@
 <script setup>
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { interests, orbitFor } from '../content/interests'
+import { useLocale } from '../utils/i18n.js'
+
+const { isZh, t, localePath } = useLocale('interests')
 
 const InterestVortex3D = defineAsyncComponent(() =>
   import('../components/interests/InterestVortex3D.vue')
@@ -8,13 +11,25 @@ const InterestVortex3D = defineAsyncComponent(() =>
 
 const STORAGE_KEY = 'leodeng-shared-interests'
 
-const interestItems = interests.map((interest, index) => ({
-  ...interest,
-  number: String(index + 1).padStart(2, '0'),
-  orbit: orbitFor(interest.progress),
+const orbitLabel = (orbit) => ({
+  often: t('oftenInMyHead'),
+  waves: t('comesInWaves'),
+  parked: t('parkedForNow'),
+}[orbit.key])
+
+const interestItems = computed(() => interests.map((interest, index) => {
+  const copy = t(`items.${interest.id}`)
+  const orbit = orbitFor(interest.progress)
+  return {
+    ...interest,
+    ...copy,
+    vortexLabel: copy.vortexLabel || copy.label,
+    number: String(index + 1).padStart(2, '0'),
+    orbit: { ...orbit, label: orbitLabel(orbit) },
+  }
 }))
 
-const selectedId = ref(interestItems[0].id)
+const selectedId = ref(interests[0].id)
 const sharedIds = ref([])
 const userPaused = ref(false)
 const prefersReducedMotion = ref(false)
@@ -32,24 +47,24 @@ let compactQuery
 let themeObserver
 
 const selectedInterest = computed(() =>
-  interestItems.find((interest) => interest.id === selectedId.value) ?? interestItems[0]
+  interestItems.value.find((interest) => interest.id === selectedId.value) ?? interestItems.value[0]
 )
 
 const sharedInterests = computed(() =>
-  interestItems.filter((interest) => sharedIds.value.includes(interest.id))
+  interestItems.value.filter((interest) => sharedIds.value.includes(interest.id))
 )
 
 const matchCopy = computed(() => {
   const count = sharedInterests.value.length
-  if (!count) return 'Pick anything you are into too.'
-  if (count === 1) return 'One shared rabbit hole. That is enough to start a conversation.'
+  if (!count) return t('pickAnythingYouAreIntoToo')
+  if (count === 1) return t('oneSharedRabbitHoleThatIsEnough')
   if (count <= 3) {
-    const names = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' })
+    const names = new Intl.ListFormat(isZh.value ? 'zh-CN' : 'en', { style: 'long', type: 'conjunction' })
       .format(sharedInterests.value.map((interest) => interest.label))
-    return `${count} shared interests. We would probably end up talking about ${names}.`
+    return t('sharedInterestsWeWouldProbablyEndUp', { p0: count, p1: names })
   }
-  if (count <= 7) return `${count} things in common. This conversation could take a while.`
-  return `${count} things in common. We may be the same kind of nerd.`
+  if (count <= 7) return t('thingsInCommonThisConversationCouldTake', { p0: count })
+  return t('thingsInCommonWeMayBeThe', { p0: count })
 })
 
 const motionPaused = computed(() => userPaused.value || prefersReducedMotion.value)
@@ -121,7 +136,7 @@ onMounted(() => {
 
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-    const validIds = new Set(interestItems.map((interest) => interest.id))
+    const validIds = new Set(interestItems.value.map((interest) => interest.id))
     if (Array.isArray(saved)) sharedIds.value = saved.filter((id) => validIds.has(id))
   } catch {
     // Start fresh if an old or hand-edited value is not valid JSON.
@@ -141,23 +156,22 @@ onBeforeUnmount(() => {
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
     <header class="mb-8">
-      <h1 class="text-s font-mono text-muted uppercase tracking-widest mb-2">Interests</h1>
+      <h1 class="text-s font-mono text-muted uppercase tracking-widest mb-2">{{ t('interests') }}</h1>
       <p class="text-2xl sm:text-3xl font-semibold text-fg leading-tight mb-4">
-        What keeps pulling me in<span class="text-highlight">.</span>
+        {{ t('whatKeepsPullingMeIn') }}<span class="text-highlight">{{ isZh ? '。' : '.' }}</span>
       </p>
       <p class="max-w-2xl text-[15px] leading-relaxed text-muted">
-        A map of my current rabbit holes. The closer something sits to the center, the more often
-        I come back to it lately. The edge means parked, not abandoned.
+        {{ t('aMapOfMyCurrentRabbitHoles') }}
       </p>
     </header>
 
-    <div class="orbit-key" aria-label="Vortex position key">
-      <span><b>center</b> Often in my head</span>
-      <span><b>middle</b> Comes in waves</span>
-      <span><b>edge</b> Parked for now</span>
+    <div class="orbit-key" :aria-label="t('vortexPositionKey')">
+      <span><b>{{ t('center') }}</b> {{ t('oftenInMyHead') }}</span>
+      <span><b>{{ t('middle') }}</b> {{ t('comesInWaves') }}</span>
+      <span><b>{{ t('edge') }}</b> {{ t('parkedForNow') }}</span>
     </div>
 
-    <div class="vortex-map" aria-label="Interactive 3D interest vortex">
+    <div class="vortex-map" :aria-label="t('interactive3dInterestVortex')">
       <InterestVortex3D
         v-if="sceneReady"
         :interests="interestItems"
@@ -171,11 +185,11 @@ onBeforeUnmount(() => {
 
       <div v-else class="vortex-fallback">
         <p class="font-mono text-xs text-muted">
-          {{ webglAvailable ? 'Preparing 3D vortex…' : '3D is unavailable in this browser.' }}
+          {{ webglAvailable ? t('preparing3dVortex') : t('3dIsUnavailableInThisBrowser') }}
         </p>
       </div>
 
-      <div v-if="sceneReady" class="vortex-hint" aria-hidden="true">drag to tilt</div>
+      <div v-if="sceneReady" class="vortex-hint" aria-hidden="true">{{ t('dragToTilt') }}</div>
 
       <button
         type="button"
@@ -185,7 +199,7 @@ onBeforeUnmount(() => {
         @click="userPaused = !userPaused"
       >
         <span aria-hidden="true">{{ motionPaused ? '▶' : 'Ⅱ' }}</span>
-        {{ prefersReducedMotion ? 'Reduced motion' : motionPaused ? 'Resume drift' : 'Pause drift' }}
+        {{ prefersReducedMotion ? t('reducedMotion') : motionPaused ? t('resumeDrift') : t('pauseDrift') }}
       </button>
     </div>
 
@@ -199,7 +213,7 @@ onBeforeUnmount(() => {
         <div class="flex flex-wrap items-center gap-x-5 gap-y-3 mt-4">
           <RouterLink
             v-if="selectedInterest.link"
-            :to="selectedInterest.link"
+            :to="localePath(selectedInterest.link)"
             class="text-xs font-mono text-fg hover:text-accent transition-colors"
           >
             → {{ selectedInterest.linkLabel }}
@@ -211,7 +225,7 @@ onBeforeUnmount(() => {
             :aria-pressed="sharedIds.includes(selectedInterest.id)"
             @click="toggleShared(selectedInterest)"
           >
-            {{ sharedIds.includes(selectedInterest.id) ? '✓ Shared interest' : '+ I am into this too' }}
+            {{ sharedIds.includes(selectedInterest.id) ? t('sharedInterest') : t('iAmIntoThisToo') }}
           </button>
         </div>
       </div>
@@ -220,8 +234,8 @@ onBeforeUnmount(() => {
     <section class="survey" aria-labelledby="survey-title">
       <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>
-          <h2 id="survey-title" class="font-semibold text-fg mb-1">What pulls you in?</h2>
-          <p class="text-sm text-muted">Pick anything we have in common. Gold interests glow in the vortex.</p>
+          <h2 id="survey-title" class="font-semibold text-fg mb-1">{{ t('whatPullsYouIn') }}</h2>
+          <p class="text-sm text-muted">{{ t('pickAnythingWeHaveInCommonGold') }}</p>
         </div>
         <button
           v-if="sharedIds.length"
@@ -229,7 +243,7 @@ onBeforeUnmount(() => {
           class="text-xs font-mono text-muted hover:text-fg transition-colors"
           @click="clearShared"
         >
-          Clear mine
+          {{ t('clearMine') }}
         </button>
       </div>
 
@@ -248,16 +262,16 @@ onBeforeUnmount(() => {
       </div>
 
       <p class="mt-5 text-sm text-fg" aria-live="polite">{{ matchCopy }}</p>
-      <p class="mt-2 text-xs font-mono text-muted/90">Nothing gets sent anywhere. This stays in your browser.</p>
+      <p class="mt-2 text-xs font-mono text-muted/90">{{ t('nothingGetsSentAnywhereThisStaysIn') }}</p>
     </section>
 
     <div class="mt-16">
       <div class="flex items-end justify-between gap-4 mb-6">
         <div>
-          <h2 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-2">The map, explained</h2>
-          <p class="text-sm text-muted">The same interests, without making you chase the words.</p>
+          <h2 class="text-xs font-mono text-muted/90 uppercase tracking-widest mb-2">{{ t('theMapExplained') }}</h2>
+          <p class="text-sm text-muted">{{ t('theSameInterestsWithoutMakingYouChase') }}</p>
         </div>
-        <span class="hidden sm:block text-xs font-mono text-muted/90">Always shifting</span>
+        <span class="hidden sm:block text-xs font-mono text-muted/90">{{ t('alwaysShifting') }}</span>
       </div>
 
       <ol class="grid grid-cols-1 sm:grid-cols-2 gap-x-10">
@@ -279,7 +293,7 @@ onBeforeUnmount(() => {
     </div>
 
     <p class="mt-12 text-xs font-mono text-muted/90">
-      Position means current attention, not importance. This map will move when I do.
+      {{ t('positionMeansCurrentAttentionNotImportanceThis') }}
     </p>
   </section>
 </template>

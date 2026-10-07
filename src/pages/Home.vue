@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { calcAge } from '../utils/age'
 import NowPlaying from '../components/NowPlaying.vue'
+import { useLocale } from '../utils/i18n.js'
 
 // Fast enough to feel alive. Most phrases need a beat longer than this to
 // actually read, so hovering pauses it.
@@ -10,22 +11,8 @@ const STATUS_INTERVAL = 1000
 const time = ref('')
 const age = calcAge()
 const currentStatus = ref('')
-
-const statuses = [
-  'probably debugging something right now',
-  'making LLMs argue with each other',
-  'self-hosting things I don\'t need',
-  'googling how to do basic stuff in Docker',
-  'trying too hard to center a div in css',
-  'writing prompts that are too long',
-  'refactoring code I wrote yesterday',
-  'convincing JavaScript to cooperate',
-  'asking AI obvious questions',
-  'trying to remember what I was doing',
-  'fixing a bug that isn\'t even there',
-  'spotting planes and taking photos of them',
-  'watching F1 and complaining about the cars',
-]
+const { isZh, t, localePath } = useLocale('home')
+const statuses = computed(() => t('statuses'))
 
 let statusTimer = null
 let clockTimer = null
@@ -35,7 +22,7 @@ function pickStatus() {
   // repeat just reads as the ticker having frozen.
   let next = currentStatus.value
   while (next === currentStatus.value) {
-    next = statuses[Math.floor(Math.random() * statuses.length)]
+    next = statuses.value[Math.floor(Math.random() * statuses.value.length)]
   }
   currentStatus.value = next
 }
@@ -58,7 +45,7 @@ function rerollStatus() {
 }
 
 function updateTime() {
-  time.value = new Date().toLocaleTimeString('en-US', {
+  time.value = new Date().toLocaleTimeString(isZh.value ? 'zh-CN' : 'en-US', {
     hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai'
   })
 }
@@ -72,6 +59,11 @@ onMounted(() => {
   // asks you not to do (WCAG 2.2.2). Those visitors get one status and the
   // click-to-reroll, which is the whole joke anyway.
   if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) startTicker()
+})
+
+watch(isZh, () => {
+  pickStatus()
+  updateTime()
 })
 
 // Both intervals used to outlive the page — this is a route component, so
@@ -88,17 +80,17 @@ onBeforeUnmount(() => {
       <p class="text-muted text-sm font-mono mb-6">{{ time }} CST</p>
 
       <h1 class="text-3xl sm:text-4xl font-bold text-fg leading-tight mb-4">
-        Hey, I'm Leo<span class="text-highlight">.</span>
+        {{ t('heyIMLeo') }}<span class="text-highlight">{{ isZh ? '。' : '.' }}</span>
       </h1>
 
       <p class="text-lg text-muted leading-relaxed mb-3">
-        {{ age }}-year-old full-stack dev & avgeek from Beijing who builds things with code + AI. I make stuff, break stuff, learn stuff (hopefully). This is my place in the world wide web to share what I'm up to and make friends with people who likes the same stuff I do! :)
+        {{ t('yearOldAiAssistedFullStackDev', { p0: age }) }}
       </p>
       <br/>
-      <p class="text-lg text-muted leading-relaxed mb-3">What I'm up to (maybe):</p>
+      <p class="text-lg text-muted leading-relaxed mb-3">{{ t('whatIMUpToMaybe') }}</p>
       <p
         class="text-sm text-muted/90 font-mono cursor-pointer hover:text-accent transition-colors"
-        title="Hover to pause, click to reroll"
+        :title="t('hoverToPauseClickToReroll')"
         @click="rerollStatus"
         @mouseenter="stopTicker"
         @mouseleave="startTicker"
@@ -107,14 +99,14 @@ onBeforeUnmount(() => {
       </p>
 
       <div class="flex gap-8 mt-12">
-        <RouterLink to="/projects" class="text-sm font-mono text-muted hover:text-fg transition-colors">
-          → Projects
+        <RouterLink :to="localePath('/projects')" class="text-sm font-mono text-muted hover:text-fg transition-colors">
+          → {{ t('projects') }}
         </RouterLink>
-        <RouterLink to="/blog" class="text-sm font-mono text-muted hover:text-fg transition-colors">
-          → Blog
+        <RouterLink :to="localePath('/blog')" class="text-sm font-mono text-muted hover:text-fg transition-colors">
+          → {{ t('blog') }}
         </RouterLink>
-        <RouterLink to="/about" class="text-sm font-mono text-muted hover:text-fg transition-colors">
-          → About
+        <RouterLink :to="localePath('/about')" class="text-sm font-mono text-muted hover:text-fg transition-colors">
+          → {{ t('about') }}
         </RouterLink>
       </div>
     </div>

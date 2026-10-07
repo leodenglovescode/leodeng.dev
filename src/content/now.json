@@ -3,57 +3,75 @@
   "events": [
     {
       "id": "planespotting-gallery",
-      "title": "Planespotting Gallery",
+      "title": { "en": "Planespotting Gallery", "zh": "拍机相册" },
       "status": "finished",
       "startedAt": "2026-07-01T00:00:00+08:00",
       "updatedAt": "",
       "finishedAt": "2026-07-01T00:00:00+08:00",
-      "details": "Shipped the planespotting [gallery](/gallery), with build-time photo compression and a [stats page](/spotting) built from its EXIF."
+      "details": {
+        "en": "Shipped the planespotting [gallery](/gallery), with build-time photo compression and a [stats page](/spotting) built from its EXIF.",
+        "zh": "上线了拍机[相册](/gallery)。照片会在构建时压缩，[统计页面](/spotting)则直接读取 EXIF 生成。"
+      }
     },
     {
       "id": "llmgps",
-      "title": "llmgps",
+      "title": { "en": "llmgps", "zh": "llmgps" },
       "status": "active",
       "startedAt": "2026-06-01T00:00:00+08:00",
       "updatedAt": "",
       "finishedAt": "",
-      "details": "Building [llmgps](https://github.com/leodenglovescode/llmgps), a multi-LLM chat workspace with a debate mode."
+      "details": {
+        "en": "Building [llmgps](https://github.com/leodenglovescode/llmgps), a multi-LLM chat workspace with a debate mode.",
+        "zh": "正在做 [llmgps](https://github.com/leodenglovescode/llmgps)，一个带辩论模式的多模型聊天工作区。"
+      }
     },
     {
       "id": "esp32-iot",
-      "title": "ESP32 IoT",
+      "title": { "en": "ESP32 IoT", "zh": "ESP32 IoT" },
       "status": "paused",
       "startedAt": "2026-03-01T00:00:00+08:00",
       "updatedAt": "",
       "finishedAt": "",
-      "details": "Tinkering with ESP32-based IoT for Home Assistant."
+      "details": {
+        "en": "Tinkering with ESP32-based IoT for Home Assistant.",
+        "zh": "正在折腾接入 Home Assistant 的 ESP32 IoT 设备。"
+      }
     },
     {
       "id": "headscale-mesh",
-      "title": "Headscale Mesh",
+      "title": { "en": "Headscale Mesh", "zh": "Headscale 网络" },
       "status": "recurring",
       "startedAt": "2026-02-01T00:00:00+08:00",
       "updatedAt": "",
       "finishedAt": "",
-      "details": "Running a self-hosted Headscale mesh for remote access to my home server (wrote it up on the [blog](/blog))."
+      "details": {
+        "en": "Running a self-hosted Headscale mesh for remote access to my home server (wrote it up on the [blog](/blog)).",
+        "zh": "自托管了一套 Headscale 网络，用来从外面连回家里的服务器。相关折腾也写进了[博客](/blog)。"
+      }
     },
     {
       "id": "planespotting",
-      "title": "Planespotting",
+      "title": { "en": "Planespotting", "zh": "拍飞机" },
       "status": "recurring",
       "startedAt": "",
       "updatedAt": "",
       "finishedAt": "",
-      "details": "Planespotting whenever the weather and the schedule line up."
+      "details": {
+        "en": "Planespotting whenever the weather and the schedule line up.",
+        "zh": "天气和时间都合适时，就出去拍飞机。"
+      }
     },
     {
       "id": "now-mttkvxty-oek8rs",
-      "title": "PiWatch",
+      "title": { "en": "PiWatch", "zh": "PiWatch" },
       "status": "active",
       "startedAt": "2026-09-08T12:08:00+08:00",
       "updatedAt": "",
       "finishedAt": "",
-      "details": "Building a small Raspberry Pi watchdog."
+      "details": {
+        "en": "Building a small Raspberry Pi watchdog.",
+        "zh": "正在做一个小型 Raspberry Pi 看门狗。"
+      }
     }
   ]
 }
