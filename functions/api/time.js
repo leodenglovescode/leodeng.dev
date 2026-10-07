@@ -19,12 +19,15 @@ export async function onRequest({ request, env }) {
     return json({ error: 'Invalid request' }, 400)
   }
   if (!env.CLOCK_ACCESS_CLIENT_ID || !env.CLOCK_ACCESS_CLIENT_SECRET) {
+    console.warn(JSON.stringify({ event: 'clock_unavailable', phase: 'configuration' }))
     return json({ error: 'Clock unavailable' }, 503)
   }
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 2000)
   let reader
+  let phase = 'origin_fetch'
+  let upstreamStatus = null
   try {
     const upstream = await fetch(ORIGIN, {
       method: 'GET', redirect: 'error', signal: controller.signal,
@@ -35,6 +38,8 @@ export async function onRequest({ request, env }) {
         'CF-Access-Client-Secret': env.CLOCK_ACCESS_CLIENT_SECRET,
       },
     })
+    upstreamStatus = upstream.status
+    phase = 'origin_response'
     if (upstream.status === 429) {
       const retry = Number(upstream.headers.get('retry-after'))
       return json({ error: 'Clock busy' }, 429, {
@@ -44,6 +49,7 @@ export async function onRequest({ request, env }) {
     if (!upstream.ok || !upstream.headers.get('content-type')?.startsWith('application/json')
         || !upstream.body) throw new Error('Invalid origin response')
     reader = upstream.body.getReader()
+    phase = 'origin_body'
     const chunks = []
     let length = 0
     while (true) {
@@ -57,6 +63,7 @@ export async function onRequest({ request, env }) {
     let position = 0
     for (const chunk of chunks) { bytes.set(chunk, position); position += chunk.length }
     const body = JSON.parse(new TextDecoder().decode(bytes))
+    phase = 'clock_health'
     if (!validClockSample(body)) throw new Error('Unhealthy clock')
     // Reconstruct the response; never pass through headers, diagnostics or strings.
     return json({
@@ -64,6 +71,9 @@ export async function onRequest({ request, env }) {
       synchronized: true, source: 'gps-pps', stratum: 1,
     }, 200)
   } catch {
+    // Fixed metadata only: never log upstream bodies, headers or exception text.
+    console.warn(JSON.stringify({ event: 'clock_unavailable', phase, upstreamStatus,
+      timedOut: controller.signal.aborted }))
     return json({ error: 'Clock unavailable' }, 503)
   } finally {
     clearTimeout(timeout)
