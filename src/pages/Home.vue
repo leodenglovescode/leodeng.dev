@@ -2,20 +2,19 @@
 import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { calcAge } from '../utils/age'
 import NowPlaying from '../components/NowPlaying.vue'
+import HomeClock from '../components/HomeClock.vue'
 import { useLocale } from '../utils/i18n.js'
 
 // Fast enough to feel alive. Most phrases need a beat longer than this to
 // actually read, so hovering pauses it.
 const STATUS_INTERVAL = 1000
 
-const time = ref('')
 const age = calcAge()
 const currentStatus = ref('')
 const { isZh, t, localePath } = useLocale('home')
 const statuses = computed(() => t('statuses'))
 
 let statusTimer = null
-let clockTimer = null
 
 function pickStatus() {
   // Never land on the line already showing — at a one-second cadence a random
@@ -44,16 +43,8 @@ function rerollStatus() {
   if (statusTimer) startTicker()
 }
 
-function updateTime() {
-  time.value = new Date().toLocaleTimeString(isZh.value ? 'zh-CN' : 'en-US', {
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai'
-  })
-}
-
 onMounted(() => {
   pickStatus()
-  updateTime()
-  clockTimer = setInterval(updateTime, 60000)
 
   // Text that rewrites itself every second is exactly what "reduce motion"
   // asks you not to do (WCAG 2.2.2). Those visitors get one status and the
@@ -63,21 +54,19 @@ onMounted(() => {
 
 watch(isZh, () => {
   pickStatus()
-  updateTime()
 })
 
-// Both intervals used to outlive the page — this is a route component, so
+// The ticker must not outlive the page — this is a route component, so
 // navigating away left them running.
 onBeforeUnmount(() => {
   clearInterval(statusTimer)
-  clearInterval(clockTimer)
 })
 </script>
 
 <template>
   <header class="pt-20 sm:pt-32 pb-20 flex flex-col-reverse sm:flex-row items-center sm:items-start gap-10 sm:gap-12">
     <div class="flex-1">
-      <p class="text-muted text-sm font-mono mb-6">{{ time }} CST</p>
+      <HomeClock />
 
       <h1 class="text-3xl sm:text-4xl font-bold text-fg leading-tight mb-4">
         {{ t('heyIMLeo') }}<span class="text-highlight">{{ isZh ? '。' : '.' }}</span>
