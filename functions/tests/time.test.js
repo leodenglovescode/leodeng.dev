@@ -23,7 +23,7 @@ test('public proxy restricts input and strips origin data and visitor headers', 
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     calls++
     assert.equal(url, 'https://clock-origin.leodeng.dev/time')
-    assert.equal(options.redirect, 'error')
+    assert.equal(options.redirect, 'manual')
     assert.equal(options.headers['CF-Access-Client-Secret'], 'test-secret')
     assert.equal(options.headers.Cookie, undefined)
     assert.equal(options.headers['X-Attacker'], undefined)
@@ -47,6 +47,7 @@ test('unhealthy, oversized, non-JSON, and failing origins all fail closed', asyn
     () => Response.json({ ...sample, synchronized: false }),
     () => Response.json({ ...sample, extra: 'x'.repeat(3000) }),
     () => new Response('<html>login</html>'),
+    () => new Response(null, { status: 302, headers: { Location: 'https://other.example' } }),
     () => { throw new Error('secret origin diagnostic') },
   ]) {
     const mock = t.mock.method(globalThis, 'fetch', async () => origin())
