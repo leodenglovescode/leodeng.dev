@@ -32,5 +32,9 @@
   "interests": {
     "title": "Interests",
     "description": "Leo Deng's current rabbit holes, arranged by how often he comes back to them lately."
+  },
+  "time": {
+    "title": "Time",
+    "description": "Live GPS/PPS time from my Raspberry Pi, shown in your timezone, Beijing time, and UTC."
   }
 }

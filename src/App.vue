@@ -56,6 +56,7 @@ const socialLinks = [
       <RouterLink :to="localePath('/spotting')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('spotting') }}</RouterLink>
       <RouterLink :to="localePath('/homelab')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('homelab') }}</RouterLink>
       <RouterLink :to="localePath('/tokens')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('tokens') }}</RouterLink>
+      <RouterLink :to="localePath('/time')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('time') }}</RouterLink>
       <RouterLink :to="localePath('/changelog')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('changelog') }}</RouterLink>
       <RouterLink :to="localePath('/interests')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('interests') }}</RouterLink>
       <RouterLink :to="localePath('/pgp')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">PGP</RouterLink>

@@ -23,11 +23,12 @@
   "about": "About",
   "clockAccessible": "Current time in your local timezone and in Beijing, UTC+08:00.",
   "clockPiSource": "Source: Raspberry Pi · GPS/PPS · Stratum 1",
-  "clockDeviceSource": "Source: Device clock",
+  "clockDeviceSource": "Source: Your Device Clock (Fallback)",
   "clockDetails": "Clock details",
   "clockRoundTrip": "Round trip: {p0} ms",
   "clockLastSync": "Last synchronization: {p0}",
   "clockPrecision": "Milliseconds show display precision. Network delay limits clock accuracy.",
   "clockYourTime": "Your time",
-  "clockLeoTime": "Leo's time"
+  "clockLeoTime": "Leo's time",
+  "clockPage": "About this clock"
 }
