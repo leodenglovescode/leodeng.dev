@@ -22,10 +22,13 @@
     "@tresjs/cientos": "^5.9.2",
     "@tresjs/core": "^5.9.2",
     "@vue/server-renderer": "^3.5.30",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
     "highlight.js": "^11.11.1",
     "marked": "^18.0.4",
     "mermaid": "^11.16.1",
     "three": "^0.186.1",
+    "v86": "0.5.470",
     "vue": "^3.5.25",
     "vue-router": "^4.6.4"
   },
