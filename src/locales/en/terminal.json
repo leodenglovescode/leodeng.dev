@@ -30,8 +30,7 @@
   "voiceReadme": "Both welcome recordings are downloaded with Linux and saved in your browser.\nPlay a recording by giving its file path:\nplay voice/welcome.mp3\nafplay voice/welcome-chinese.mp3\nFrom this folder, use play welcome.mp3.\nUse stop to stop playback.\n",
   "audioMissing": "Audio file not found. Use a file path, for example play voice/welcome.mp3.",
   "audioFailed": "Audio could not play. Use WAV, MP3, OGG, M4A, or WebM audio under 10 MB.",
-  "audioUseControls": "Use the audio controls to start playback.",
-  "audioStop": "Stop playback",
   "voiceTitle": "A welcome from me",
-  "voiceIntro": "Listen in English or Chinese. Both recordings are included when you download Linux."
+  "voiceIntro": "Listen in English or Chinese. Both recordings are included when you download Linux.",
+  "audioBlocked": "Playback blocked. Allow audio for this site and try again."
 }
