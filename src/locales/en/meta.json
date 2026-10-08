@@ -36,5 +36,9 @@
   "time": {
     "title": "Time",
     "description": "Live GPS/PPS time from my Raspberry Pi, shown in your timezone, Beijing time, and UTC."
+  },
+  "terminal": {
+    "title": "Terminal",
+    "description": "Run a real Linux kernel and shell in your browser, with a small optional download saved for future visits."
   }
 }

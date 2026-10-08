@@ -40,6 +40,7 @@ const publicRoutes = [
   { path: '/homelab', component: Homelab, meta: routeMeta('homelab') },
   { path: '/tokens', component: Tokens, meta: routeMeta('tokens') },
   { path: '/time', component: Time, meta: routeMeta('time') },
+  { path: '/terminal', component: () => import('../pages/Terminal.vue'), meta: routeMeta('terminal') },
   { path: '/changelog', component: Changelog, meta: routeMeta('changelog') },
   { path: '/stack', component: Stack, meta: routeMeta('stack') },
   { path: '/feed', component: Feed, meta: routeMeta('feed') },

@@ -21,5 +21,6 @@
   "toggleMenu": "Toggle menu",
   "leoIsNowPlaying": "Leo is now playing",
   "songProgress": "Song progress",
-  "time": "Time"
+  "time": "Time",
+  "terminal": "Terminal"
 }

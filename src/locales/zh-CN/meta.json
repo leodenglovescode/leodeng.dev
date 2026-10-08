@@ -36,5 +36,9 @@
   "time": {
     "title": "时间",
     "description": "来自树莓派的实时 GPS/PPS 时间，分别以你的时区、北京时间和 UTC 显示。"
+  },
+  "terminal": {
+    "title": "终端",
+    "description": "在浏览器中运行真正的 Linux 内核和 shell，确认下载后保存镜像，供以后访问复用。"
   }
 }

@@ -19,6 +19,7 @@ const staticRoutes = [
   { path: '/homelab', key: 'homelab' },
   { path: '/tokens', key: 'tokens' },
   { path: '/time', key: 'time' },
+  { path: '/terminal', key: 'terminal' },
   { path: '/stack', key: 'stack' },
   { path: '/feed', key: 'feed' },
   { path: '/blog', key: 'blog' },
