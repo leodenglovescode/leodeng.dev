@@ -30,8 +30,7 @@
   "voiceReadme": "两段欢迎录音已随 Linux 一起下载，保存在浏览器里。\n提供文件路径即可播放：\nplay voice/welcome.mp3\nafplay voice/welcome-chinese.mp3\n进入这个文件夹后，可以用 play welcome.mp3。\n用 stop 停止播放。\n",
   "audioMissing": "找不到音频文件。请提供文件路径，例如 play voice/welcome.mp3。",
   "audioFailed": "音频无法播放。请使用不超过 10 MB 的 WAV、MP3、OGG、M4A 或 WebM 音频。",
-  "audioUseControls": "请用音频控件开始播放。",
-  "audioStop": "停止播放",
   "voiceTitle": "来自我的欢迎录音",
-  "voiceIntro": "可以听英文或中文。下载 Linux 时会一起保存两段录音。"
+  "voiceIntro": "可以听英文或中文。下载 Linux 时会一起保存两段录音。",
+  "audioBlocked": "播放被浏览器阻止。请允许这个网站播放音频后重试。"
 }

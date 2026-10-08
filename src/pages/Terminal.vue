@@ -64,7 +64,7 @@ onBeforeUnmount(() => {
         <span class="text-xs font-mono text-[#a0a49d]">Buildroot Linux</span>
         <button type="button" class="terminal-fullscreen text-xs font-mono px-2 py-1 rounded border" :aria-pressed="fullscreen" @click="toggleFullscreen">{{ fullscreen ? t('exitFullscreen') : t('fullscreen') }}</button>
       </div>
-      <LinuxTerminal :files="siteFiles" />
+      <LinuxTerminal :files="siteFiles" :fullscreen="fullscreen" />
     </div>
     <p class="text-xs text-muted leading-relaxed mt-4">{{ t('linuxHint') }}</p>
   </section>
@@ -80,4 +80,9 @@ onBeforeUnmount(() => {
 .terminal-window:fullscreen .terminal-titlebar, .terminal-expanded .terminal-titlebar { flex-shrink: 0; border: 0; background: #0c0e11; }
 .terminal-window:fullscreen .terminal-fullscreen, .terminal-expanded .terminal-fullscreen { border: 0; }
 .terminal-window:fullscreen :deep(.linux-terminal), .terminal-expanded :deep(.linux-terminal) { min-height: 0; }
+.terminal-window:fullscreen .terminal-titlebar, .terminal-expanded .terminal-titlebar { position: absolute; top: 8px; right: 8px; z-index: 1; padding: 0; background: transparent; }
+.terminal-window:fullscreen .terminal-titlebar > span, .terminal-expanded .terminal-titlebar > span { display: none; }
+.terminal-window:fullscreen .terminal-fullscreen, .terminal-expanded .terminal-fullscreen { opacity: .3; }
+.terminal-window:fullscreen .terminal-fullscreen:hover, .terminal-expanded .terminal-fullscreen:hover,
+.terminal-window:fullscreen .terminal-fullscreen:focus-visible, .terminal-expanded .terminal-fullscreen:focus-visible { opacity: 1; }
 </style>

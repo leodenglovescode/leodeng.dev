@@ -8,7 +8,7 @@ import { recordings, recordingDownloads } from '../utils/terminal/recordings.js'
 import linuxData from '../content/linux.json'
 const assetUrls = [wasmUrl, '/linux/seabios.bin', '/linux/vgabios.bin', '/linux/buildroot-bzimage.bin', linuxData.fastfetch.url, ...Object.values(recordingDownloads)]
 
-const props = defineProps({ files: { type: Object, required: true } })
+const props = defineProps({ files: { type: Object, required: true }, fullscreen: Boolean })
 const { t } = useLocale('terminal')
 const host = ref(null)
 const state = ref('idle')
@@ -25,24 +25,22 @@ function saveWelcomePlayers(buffers) {
     welcomeUrls.value[language] = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }))
   }
 }
-const audioUrl = ref(null)
-const audioName = ref('')
-const audioElement = ref(null)
-const audioMessage = ref('')
+let commandAudio, commandAudioUrl
 let vm, terminal, fit, observer, timeout, alive = true, epoch = 0
 let downloads
 const readyMachines = new WeakSet()
 let audioEpoch = 0
 function stopAudio() {
   audioEpoch++
-  audioElement.value?.pause()
-  // Cancel streaming as well as playback when stopped or leaving the page.
-  audioElement.value?.removeAttribute('src')
-  audioElement.value?.load()
-  if (audioUrl.value?.startsWith('blob:')) URL.revokeObjectURL(audioUrl.value)
-  audioUrl.value = null
-  audioName.value = ''
-  audioMessage.value = ''
+  if (commandAudio) {
+    commandAudio.onended = commandAudio.onerror = null
+    commandAudio.pause()
+    commandAudio.removeAttribute('src')
+    commandAudio.load()
+    commandAudio = null
+  }
+  if (commandAudioUrl) URL.revokeObjectURL(commandAudioUrl)
+  commandAudioUrl = null
 }
 async function handleAudio(data, machine, current) {
   if (!data.startsWith('leo-audio;')) return false
@@ -51,6 +49,13 @@ async function handleAudio(data, machine, current) {
   if (!data.startsWith('leo-audio;play;')) return true
   stopAudio()
   const request = audioEpoch
+  let reported = false
+  const reportError = key => {
+    if (!reported && alive && current === epoch && request === audioEpoch) {
+      reported = true
+      terminal?.writeln(`\r\nplay: ${t(key)}`)
+    }
+  }
   try {
     const name = atob(data.slice('leo-audio;play;'.length)).trim().slice(0, 200)
     const bytes = await machine.read_file('.leo-audio')
@@ -59,18 +64,16 @@ async function handleAudio(data, machine, current) {
     const extension = name.split('.').at(-1).toLowerCase()
     const mime = { wav: 'audio/wav', mp3: 'audio/mpeg', ogg: 'audio/ogg', m4a: 'audio/mp4', webm: 'audio/webm' }[extension]
     if (!mime) throw new Error('Unsupported audio')
-    audioName.value = name
-    audioUrl.value = URL.createObjectURL(new Blob([bytes], { type: mime }))
-    await nextTick()
-    if (!alive || current !== epoch || request !== audioEpoch) return true
-    try { await audioElement.value?.play() } catch (error) {
-      if (alive && current === epoch && request === audioEpoch) {
-        audioMessage.value = t(error.name === 'NotAllowedError' ? 'audioUseControls' : 'audioFailed')
-      }
+    commandAudioUrl = URL.createObjectURL(new Blob([bytes], { type: mime }))
+    // Detached audio provides playback without adding any terminal UI.
+    const audio = new Audio(commandAudioUrl)
+    commandAudio = audio
+    audio.onended = () => { if (request === audioEpoch) stopAudio() }
+    audio.onerror = () => reportError('audioFailed')
+    try { await audio.play() } catch (error) {
+      reportError(error.name === 'NotAllowedError' ? 'audioBlocked' : 'audioFailed')
     }
-  } catch {
-    if (alive && current === epoch && request === audioEpoch) audioMessage.value = t('audioFailed')
-  }
+  } catch { reportError('audioFailed') }
   return true
 }
 
@@ -204,8 +207,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="linux-terminal flex flex-col flex-1 min-h-0">
-    <div class="shrink-0 px-4 py-4 border-b border-[#34383d]">
+  <div class="linux-terminal flex flex-col flex-1 min-h-0" :class="{ 'is-fullscreen': fullscreen, 'is-immersive': fullscreen && state === 'running' }">
+    <div class="terminal-welcome shrink-0 px-4 py-4 border-b border-[#34383d]">
       <h2 class="text-sm font-mono mb-2">{{ t('voiceTitle') }}</h2>
       <p class="text-xs text-[#a0a49d] mb-3">{{ t('voiceIntro') }}</p>
       <div class="grid sm:grid-cols-2 gap-4">
@@ -225,21 +228,16 @@ onBeforeUnmount(() => {
       <p class="mt-5 text-xs text-[#a0a49d]">{{ t('linuxSize') }}</p>
     </div>
     <div v-show="state === 'loading' || state === 'running'" class="flex flex-col flex-1 min-h-0">
-      <div class="flex items-center justify-between flex-wrap gap-3 px-4 py-2 font-mono text-xs">
+      <div class="terminal-chrome flex items-center justify-between flex-wrap gap-3 px-4 py-2 font-mono text-xs">
         <span role="status" class="text-[#a0a49d]">{{ paused ? t('linuxPaused') : message }}</span>
         <div class="flex gap-3">
           <button v-if="state === 'running'" type="button" @click="togglePause">{{ paused ? t('linuxResume') : t('linuxPause') }}</button>
           <button type="button" @click="stop">{{ t('linuxStop') }}</button>
         </div>
       </div>
-      <p v-if="cacheWarning" role="status" class="px-4 pb-2 text-xs text-[#e0867f]">{{ t('linuxCacheUnavailable') }}</p>
-      <div v-if="audioUrl || audioMessage" class="px-4 py-2 shrink-0">
-        <p class="text-xs text-[#a0a49d]" role="status">{{ audioMessage || audioName }}</p>
-        <audio v-if="audioUrl" ref="audioElement" :src="audioUrl" preload="none" controls class="w-full h-9 mt-2" @ended="stopAudio" @error="audioMessage = t('audioFailed')" />
-        <button v-if="audioUrl" type="button" class="text-xs mt-1" @click="stopAudio">{{ t('audioStop') }}</button>
-      </div>
+      <p v-if="cacheWarning" role="status" class="terminal-chrome px-4 pb-2 text-xs text-[#e0867f]">{{ t('linuxCacheUnavailable') }}</p>
       <div ref="host" class="linux-console flex-1 min-h-0 px-4 pb-4" :aria-label="t('linuxConsole')" />
-      <div class="flex gap-4 px-4 pb-3 font-mono text-xs">
+      <div class="terminal-chrome flex gap-4 px-4 pb-3 font-mono text-xs">
         <button v-for="[label, key] in [['Tab', '\t'], ['Ctrl+C', '\x03'], ['Esc', '\x1b'], ['↑', '\x1b[A'], ['↓', '\x1b[B']]" :key="label" type="button" :disabled="state !== 'running' || paused" @click="sendKey(key)">{{ label }}</button>
       </div>
     </div>
@@ -249,6 +247,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .linux-terminal { min-height: 420px; background: #0c0e11; color: #d1d5cb; }
 .linux-console { height: 420px; }
+.is-fullscreen .terminal-welcome, .is-immersive .terminal-chrome { display: none; }
+.is-immersive .linux-console { padding-top: 12px; }
 .linux-button { color: #bdd398; background: #263024; border-radius: 3px; }
 button:focus-visible { outline: 2px solid #bdd398; outline-offset: 3px; }
 button:disabled { opacity: .4; }
