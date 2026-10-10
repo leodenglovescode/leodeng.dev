@@ -173,7 +173,7 @@ const hasHistory = computed(() => (data.value?.history?.length ?? 0) >= 2)
         <div class="bg-bg p-4">
           <div class="text-2xl font-semibold text-fg font-mono">{{ current.load1?.toFixed(2) ?? 'N/A' }}</div>
           <div class="text-xs text-muted mt-1">
-            {{ t('load') }}<template v-if="current.cpus"> · {{ current.cpus }} {{ t('cores') }}</template>
+            {{ t('load') }}
           </div>
         </div>
         <div class="bg-bg p-4">
