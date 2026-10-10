@@ -1,7 +1,147 @@
 {
  "repo": "leodenglovescode/leodeng.dev",
- "generatedAt": "2026-09-09",
+ "generatedAt": "2026-10-10",
  "commits": [
+  {
+   "hash": "35f46556be3f3bf64ae301a1c3ef920d8b39f241",
+   "date": "2026-10-08",
+   "type": "fix",
+   "scope": null,
+   "subject": "keep fullscreen terminal clear of audio controls"
+  },
+  {
+   "hash": "320bda31b17fdc97c7b54f0fc42f1adf3851b783",
+   "date": "2026-10-08",
+   "type": "feat",
+   "scope": null,
+   "subject": "add browser Linux terminal with cached welcome recordings"
+  },
+  {
+   "hash": "a77559665b5ed8c8d44541f211be74f35ac65780",
+   "date": "2026-10-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "add dedicated GPS clock page and fallback labels"
+  },
+  {
+   "hash": "6336912788da7dbdf2936410656eb095a597e9e2",
+   "date": "2026-10-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "show visitor local time beside GPS synced Beijing clock"
+  },
+  {
+   "hash": "bc545f78e917b88fd8a606a5f8d0511870aaff68",
+   "date": "2026-10-07",
+   "type": "fix",
+   "scope": null,
+   "subject": "reject clock redirects without hiding upstream status"
+  },
+  {
+   "hash": "1996f9142c046631da12a4b359e62feb4b15c30f",
+   "date": "2026-10-07",
+   "type": "fix",
+   "scope": null,
+   "subject": "log sanitized clock origin failure diagnostics"
+  },
+  {
+   "hash": "d9c6b937a9a771b0aa0cd3d372d911b3413e22c4",
+   "date": "2026-10-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "sync homepage clock with GPS PPS time source"
+  },
+  {
+   "hash": "4a5ca45ab611e90b29fcf432c1791bb24f5bef95",
+   "date": "2026-10-07",
+   "type": "feat",
+   "scope": null,
+   "subject": "add bilingual site and project management"
+  },
+  {
+   "hash": "daaab4d4916d5cf1630dedf824d53b88c9fdbb1d",
+   "date": "2026-10-05",
+   "type": "content",
+   "scope": null,
+   "subject": "make about copy more personal"
+  },
+  {
+   "hash": "5f5baa80ce5d652ae56b40e3fdde5c6d93528a7f",
+   "date": "2026-10-04",
+   "type": "feat",
+   "scope": null,
+   "subject": "redesign now page as activity status"
+  },
+  {
+   "hash": "21aba1e821231c02b636d9edcdba7fb9fced9b38",
+   "date": "2026-10-03",
+   "type": "feat",
+   "scope": null,
+   "subject": "add interactive interests vortex"
+  },
+  {
+   "hash": "c95fdcd2554d16b350de9ec9f434e5bd46f1e2de",
+   "date": "2026-09-28",
+   "type": "feat",
+   "scope": null,
+   "subject": "add homepage now-playing widget"
+  },
+  {
+   "hash": "26f9ef7ca64d7c64caa46b50f8f4799d40348309",
+   "date": "2026-09-28",
+   "type": "feat",
+   "scope": null,
+   "subject": "add now-playing ingestion API"
+  },
+  {
+   "hash": "ab2657d1f3560bf75d0207b5acfa3d5597a79871",
+   "date": "2026-09-28",
+   "type": "feat",
+   "scope": null,
+   "subject": "aggregate Codex usage from remote devices"
+  },
+  {
+   "hash": "94313c0674b787e8bcb9b327fe1f78710249cbc8",
+   "date": "2026-09-23",
+   "type": "content",
+   "scope": null,
+   "subject": "reorder project listings"
+  },
+  {
+   "hash": "ada79b9d48901f0db9ceb6328d19734f9fdac929",
+   "date": "2026-09-23",
+   "type": "content",
+   "scope": null,
+   "subject": "correct ShutterWingPhotos final stats"
+  },
+  {
+   "hash": "c485f6c6ab35a48ed25439f3ca42b3a82ec638cd",
+   "date": "2026-09-23",
+   "type": "content",
+   "scope": null,
+   "subject": "mark ShutterWingPhotos as discontinued"
+  },
+  {
+   "hash": "b3c652c212bd92611ec48c3537d637f9a8dc49f5",
+   "date": "2026-09-15",
+   "type": "feat",
+   "scope": null,
+   "subject": "Added more devices to stack page"
+  },
+  {
+   "hash": "38fbe4edbac4fa7245142643a9237005e8cd831e",
+   "date": "2026-09-09",
+   "type": "feat",
+   "scope": null,
+   "subject": "Added more devices to tech stack"
+  },
+  {
+   "hash": "639d4c3d44c22093fa6fa8ac2132621f27888389",
+   "date": "2026-09-09",
+   "type": "content",
+   "scope": null,
+   "subject": "add now event \"PiWatch\""
+  },
   {
    "hash": "1754ef213b400f5ae7dbe6fc20770f682a7a8741",
    "date": "2026-09-06",

@@ -8,21 +8,18 @@ So I added a few fun additions to my site, most of them are just for fun, but th
 
 ### Changes include:
 - [/time page](/time): gps+pps clock time sent staright from my Raspberry Pi Watchdog (Also added latency correction for the connection lantency, turned out to be pretty accurate ngl)
-<br/><br/>
 - [/ip page](/ip): A connection page for showing you stats of your own connection, really useful for checking ip/asn and your browser's TLS/Cryptography capabillites (this is the QoL update)
-<br/><br/>
 - [/terminal page](/terminal): A terminal for sysadmins/geeks who wants to browse the site in a real 10mb linux vm running in your terminal, made possible by WebAssembly (Browser → v86 JavaScript/WebAssembly emulator → Linux kernel → shell and programs)
-<br/><br/>
 - Cmd+K/Ctrl+K: Opens a command palette. Search pages and blog posts
 
-<br/><br/>
+<br/>
 ## Under the hood
 
 Seeing “You’re using post-quantum encryption” on my own website is actually really fun 😀
-<br/><br/>
+<br/>
 As to how this is possible without a backend API request to my server: It turns out that Cloudflare already provides the connection data for this site (Existing API for Cloudflare Pages site at /cdn-cgi/trace). And after adding my api, I made it visible.
 
-<br/><br/>
+<br/>
 Here is the cloudflare default API response from /cdn-cgi/trace if anybody is interested:
 ```
 fl=redacted        #cf internal ident for load balancer
