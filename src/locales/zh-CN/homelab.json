@@ -15,7 +15,6 @@
   "theBoxStoppedCheckingInEitherIt": "这台服务器一阵子没报到了。可能是它挂了，也可能只是家里的网络又抽风了。站在外面看，两种情况没区别。",
   "uptime": "运行时间",
   "load": "负载",
-  "cores": "核心",
   "memory": "内存",
   "cpuTemp": "CPU 温度",
   "last24Hours": "最近 24 小时",

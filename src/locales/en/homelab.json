@@ -15,7 +15,6 @@
   "theBoxStoppedCheckingInEitherIt": "The box stopped checking in. Either it's down, or my internet is having a moment. From out here those look identical.",
   "uptime": "uptime",
   "load": "load",
-  "cores": "cores",
   "memory": "memory",
   "cpuTemp": "CPU temp",
   "last24Hours": "Last 24 hours",
