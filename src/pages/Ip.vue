@@ -88,7 +88,7 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
       </div>
       <ol class="route-nodes p-5">
         <li v-for="(node, index) in [[t('browser'), null], [t('cloudflareEdge'), visitor?.connection.colo || t('unknown')], [t('website'), 'leodeng.dev']]" :key="index" class="route-node">
-          <p class="data-label mb-3"><span class="text-accent mr-2">0{{ index + 1 }}</span>{{ node[0] }}</p>
+          <p class="data-label" :class="{ 'mb-3': node[1] }"><span class="text-accent mr-2">0{{ index + 1 }}</span>{{ node[0] }}</p>
           <p v-if="node[1]" class="font-mono text-sm break-words">{{ node[1] }}</p>
           <span v-if="index < 2" class="route-arrow text-muted" aria-hidden="true">→</span>
         </li>
@@ -181,7 +181,7 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
   border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
 }
 .route-nodes { display: grid; grid-template-columns: 1fr; gap: 24px; }
-.route-node { position: relative; min-width: 0; padding: 16px; border: 1px solid color-mix(in srgb, var(--color-fg) 8%, transparent); border-radius: 8px; }
+.route-node { position: relative; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 16px; border: 1px solid color-mix(in srgb, var(--color-fg) 8%, transparent); border-radius: 8px; }
 .route-arrow { position: absolute; left: 50%; bottom: -23px; transform: translateX(-50%) rotate(90deg); }
 @media (min-width: 640px) {
   .route-nodes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
