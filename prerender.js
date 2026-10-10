@@ -18,6 +18,7 @@ const staticRoutes = [
   { path: '/changelog', key: 'changelog' },
   { path: '/homelab', key: 'homelab' },
   { path: '/tokens', key: 'tokens' },
+  { path: '/ip', key: 'ip' },
   { path: '/time', key: 'time' },
   { path: '/terminal', key: 'terminal' },
   { path: '/stack', key: 'stack' },

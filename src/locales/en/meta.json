@@ -40,5 +40,9 @@
   "terminal": {
     "title": "Terminal",
     "description": "Run a real Linux kernel and shell in your browser, with a small optional download saved for future visits."
+  },
+  "ip": {
+    "title": "IP & Connection",
+    "description": "A look at the public IP, network, and connection details Cloudflare sees when you visit my site."
   }
 }

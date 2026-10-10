@@ -39,6 +39,7 @@ const publicRoutes = [
   { path: '/spotting', component: Spotting, meta: routeMeta('spotting') },
   { path: '/homelab', component: Homelab, meta: routeMeta('homelab') },
   { path: '/tokens', component: Tokens, meta: routeMeta('tokens') },
+  { path: '/ip', component: () => import('../pages/Ip.vue'), meta: routeMeta('ip') },
   { path: '/time', component: Time, meta: routeMeta('time') },
   { path: '/terminal', component: () => import('../pages/Terminal.vue'), meta: routeMeta('terminal') },
   { path: '/changelog', component: Changelog, meta: routeMeta('changelog') },
