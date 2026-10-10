@@ -27,5 +27,17 @@
   ],
   "accuracyTitle": "Milliseconds, with context",
   "accuracyBody": "The digits show milliseconds, but they do not promise millisecond accuracy. I subtract the Pi's processing time from the round trip and estimate the return journey as half the remaining delay. Unequal travel times still introduce error.",
-  "fallbackBody": "If the request fails, times out, or reports an unhealthy clock, every display immediately uses Your Device Clock (Fallback). Your timezone comes from your browser settings; it does not decide the synchronized time."
+  "fallbackBody": "If the request fails, times out, or reports an unhealthy clock, every display immediately uses Your Device Clock (Fallback). Your timezone comes from your browser settings; it does not decide the synchronized time.",
+  "dashboardTitle": "GPS clock",
+  "meterTitle": "Your device vs. GPS time",
+  "deviceAhead": "Your device clock is ahead",
+  "deviceBehind": "Your device clock is behind",
+  "withinUncertainty": "Within estimated network uncertainty",
+  "uncertainty": "Network uncertainty estimate",
+  "samples": "Samples",
+  "lowestLatency": "lowest latency used",
+  "meterNote": "Device minus GPS time. Shaded band: ± half the network round trip, an estimate rather than guaranteed accuracy.",
+  "syncNow": "Synchronize now",
+  "syncing": "Synchronizing…",
+  "retryIn": "Retry in {seconds}s"
 }

@@ -1,12 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
+import { useTheme } from '../utils/theme.js'
 import { useRoute, useRouter } from 'vue-router'
 import { useLocale } from '../utils/i18n.js'
 
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
-const isDark = ref(true)
+const { isDark, toggleTheme } = useTheme()
 const { isZh, t, localePath, setLocale } = useLocale('common')
 
 const navLinks = [
@@ -31,15 +32,6 @@ function switchLocale() {
   router.push(localePath(route.fullPath))
 }
 
-function toggleTheme() {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-}
-
-onMounted(() => {
-  isDark.value = document.documentElement.classList.contains('dark')
-})
 </script>
 
 <template>

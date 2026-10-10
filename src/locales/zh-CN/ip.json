@@ -30,5 +30,9 @@
   "modern": "现代",
   "weak": "弱",
   "quantumWelcome": "你正在使用后量子加密。",
-  "probeConnection": "探测连接"
+  "probeConnection": "探测连接",
+  "routeTitle": "请求路径",
+  "browser": "你的浏览器",
+  "cloudflareEdge": "Cloudflare 边缘节点",
+  "website": "我的网站"
 }
