@@ -64,21 +64,6 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
       </section>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <section v-for="[heading, rows] in [['networkTitle', networkRows], ['tlsTitle', tlsRows]]" :key="heading" class="ip-card min-w-0">
-        <h2 class="card-title">{{ t(heading) }}</h2>
-        <dl class="px-5">
-          <div v-for="[label, value] in rows" :key="label" class="data-row">
-            <dt class="data-label">{{ t(label) }}</dt>
-            <dd class="text-sm font-mono break-words">
-              <span v-if="label === 'tls'" class="security-badge" :class="`security-${protocolStrength(value)}`">{{ value || t('unknown') }}<template v-if="value"> · {{ t(protocolStrength(value)) }}</template></span>
-              <template v-else>{{ value || t('unknown') }}</template>
-            </dd>
-          </div>
-        </dl>
-      </section>
-    </div>
-
     <section class="ip-card">
       <div class="card-title flex flex-wrap justify-between items-center gap-3">
         <h2>{{ t('probeTitle') }}</h2>
@@ -100,6 +85,21 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
         </div>
       </dl>
     </section>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <section v-for="[heading, rows] in [['networkTitle', networkRows], ['tlsTitle', tlsRows]]" :key="heading" class="ip-card min-w-0">
+        <h2 class="card-title">{{ t(heading) }}</h2>
+        <dl class="px-5">
+          <div v-for="[label, value] in rows" :key="label" class="data-row">
+            <dt class="data-label">{{ t(label) }}</dt>
+            <dd class="text-sm font-mono break-words">
+              <span v-if="label === 'tls'" class="security-badge" :class="`security-${protocolStrength(value)}`">{{ value || t('unknown') }}<template v-if="value"> · {{ t(protocolStrength(value)) }}</template></span>
+              <template v-else>{{ value || t('unknown') }}</template>
+            </dd>
+          </div>
+        </dl>
+      </section>
+    </div>
   </div>
 </template>
 
