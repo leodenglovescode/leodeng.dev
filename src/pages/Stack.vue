@@ -127,7 +127,7 @@ const software = [
       { label: 'Desktop PC', value: 'Windows 11' },
       { label: 'Main Server', value: 'Ubuntu 24.04 LTS' },
       { label: 'Raspberry Pi Watchdog', value: 'Raspberry Pi OS Lite' },
-      { label: 'Cyberdeck', value: 'Debian 13 + KDE' },
+      { label: 'Cyberdeck', value: 'Kali Linux + KDE' },
       { label: 'Home Assistant Server', value: 'Home Assistant OS' },
       { label: 'Mac', value: 'macOS Sequoia (15) via OCLP' },
       { label: 'Phone', value: 'Android 16' },
