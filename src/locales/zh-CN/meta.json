@@ -40,5 +40,9 @@
   "terminal": {
     "title": "终端",
     "description": "在浏览器中运行真正的 Linux 内核和 shell，确认下载后保存镜像，供以后访问复用。"
+  },
+  "ip": {
+    "title": "IP 与连接",
+    "description": "看看你访问我的网站时，Cloudflare 看到的公网 IP、网络和连接信息。"
   }
 }
