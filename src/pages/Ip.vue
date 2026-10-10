@@ -19,18 +19,19 @@ const location = computed(() => {
   return name ? `${name} (${visitor.value.countryCode})` : t('unknown')
 })
 const networkRows = computed(() => [
-  ['country', location.value], ['region', visitor.value?.region], ['city', visitor.value?.city],
-  ['network', visitor.value?.network.organization], ['asn', visitor.value?.network.asn ? `AS${visitor.value.network.asn}` : null],
+  ['country', location.value],
+  ['location', [...new Set([visitor.value?.city, visitor.value?.region].filter(Boolean))].join(', ') || null],
 ])
-const tlsRows = computed(() => [
-  ['tls', visitor.value?.connection.tlsVersion], ['cipher', visitor.value?.connection.cipher],
-  ['http', visitor.value?.connection.httpProtocol], ['edge', visitor.value?.connection.colo],
-])
-const probeRows = computed(() => [
-  ['tls', trace.value?.tlsVersion], ['keyExchange', trace.value?.keyExchange],
-  ['postQuantum', trace.value?.postQuantum === true ? t('hybrid') : trace.value?.postQuantum === false ? t('classical') : t('unknown')],
-  ['http', trace.value?.httpProtocol], ['edge', trace.value?.colo],
-])
+const securityRows = computed(() => {
+  const api = visitor.value?.connection
+  const rows = [
+    ['tls', api?.tlsVersion], ['http', api?.httpProtocol],
+    ['cipher', api?.cipher], ['keyExchange', trace.value?.keyExchange],
+  ]
+  // The probe is a separate request. Only add its TLS version when it differs.
+  if (trace.value?.tlsVersion && trace.value.tlsVersion !== api?.tlsVersion) rows.push(['probeTls', trace.value.tlsVersion])
+  return rows
+})
 function refresh() { void loadVisitor(true); void loadTrace(true) }
 onMounted(() => { void loadVisitor(); void loadTrace() })
 </script>
@@ -51,35 +52,29 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
         <span v-if="visitor?.ipVersion" class="text-xs font-mono text-accent bg-accent/10 rounded px-2 py-1">IPv{{ visitor.ipVersion }}</span>
       </div>
       <p class="font-mono text-3xl sm:text-4xl font-medium tracking-tight break-all">{{ visitor?.ip || t('unknown') }}</p>
-      <p class="text-sm font-mono text-muted mt-4 break-words">{{ visitor?.network.organization || t('unknown') }}</p>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-mono text-muted mt-4">
+        <p class="break-words">{{ visitor?.network.organization || t('unknown') }}</p>
+        <span v-if="visitor?.network.asn" class="text-xs border border-fg/10 rounded px-2 py-1">AS{{ visitor.network.asn }}</span>
+      </div>
     </section>
 
     <p v-if="visitorLoading || visitorError" role="status" class="text-xs text-muted">{{ t(visitorLoading ? 'loading' : 'unavailable') }}</p>
 
-    <div class="grid grid-cols-1 min-[400px]:grid-cols-3 gap-3">
-      <section v-for="[label, value] in [['asn', visitor?.network.asn ? `AS${visitor.network.asn}` : null], ['tls', visitor?.connection.tlsVersion], ['edge', visitor?.connection.colo]]" :key="label" class="ip-card p-4 sm:p-5">
-        <h2 class="data-label mb-3">{{ t(label) }}</h2>
-        <p class="font-mono text-lg sm:text-xl break-all">{{ value || t('unknown') }}</p>
-        <span v-if="label === 'tls'" class="security-badge mt-3" :class="`security-${tlsStrength}`">{{ t('strength') }}: {{ t(tlsStrength) }}</span>
-      </section>
-    </div>
-
     <section class="ip-card">
       <div class="card-title flex flex-wrap justify-between items-center gap-3">
-        <h2>{{ t('probeTitle') }}</h2>
-        <span class="text-xs font-mono text-muted font-normal">/cdn-cgi/trace</span>
+        <h2>{{ t('securityTitle') }}</h2>
+        <span class="text-xs font-mono text-muted font-normal">{{ t('apiAndProbe') }}</span>
       </div>
       <p v-if="traceLoading || traceError" role="status" class="text-xs text-muted px-5 pt-4">{{ t(traceLoading ? 'loading' : 'probeUnavailable') }}</p>
       <div v-if="trace?.postQuantum === true" class="quantum-highlight mx-5 mt-5 rounded-lg p-4" role="status">
         <p class="text-sm font-semibold">✦ {{ t('quantumWelcome') }}</p>
-        <p class="text-xs font-mono mt-2 opacity-80">{{ t('hybrid') }} · {{ trace.keyExchange }} · {{ t('probeConnection') }}</p>
       </div>
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 px-5">
-        <div v-for="[label, value] in probeRows" :key="label" class="data-row">
-          <dt class="data-label">{{ t(label) }}</dt>
+        <div v-for="[label, value] in securityRows" :key="label" class="data-row">
+          <dt class="data-label">{{ t(label) }}<span v-if="label === 'keyExchange'" class="ml-2 text-[10px] font-mono">{{ t('probeConnection') }}</span></dt>
           <dd class="text-sm font-mono break-words">
-            <span v-if="label === 'tls'" class="security-badge" :class="`security-${protocolStrength(value)}`">{{ value || t('unknown') }}<template v-if="value"> · {{ t(protocolStrength(value)) }}</template></span>
-            <span v-else-if="label === 'keyExchange' || label === 'postQuantum'" class="security-badge" :class="`security-${exchangeSecurity}`">{{ value || t('unknown') }}<template v-if="label === 'keyExchange' && value"> · {{ t(exchangeSecurity === 'strong' ? 'hybrid' : exchangeSecurity) }}</template></span>
+            <span v-if="label === 'tls' || label === 'probeTls'" class="security-badge" :class="`security-${protocolStrength(value)}`">{{ value || t('unknown') }}<template v-if="value"> · {{ t(protocolStrength(value)) }}</template></span>
+            <span v-else-if="label === 'keyExchange'" class="security-badge" :class="`security-${exchangeSecurity}`">{{ value || t('unknown') }}<template v-if="value && exchangeSecurity !== 'strong'"> · {{ t(exchangeSecurity) }}</template></span>
             <template v-else>{{ value || t('unknown') }}</template>
           </dd>
         </div>
@@ -91,34 +86,24 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
         <h2 id="connection-route-title">{{ t('routeTitle') }}</h2>
         <span class="text-xs font-mono text-muted font-normal">/api/ip</span>
       </div>
-      <div class="flex flex-wrap gap-2 px-5 pt-4 font-mono">
-        <span class="security-badge" :class="`security-${tlsStrength}`">{{ visitor?.connection.tlsVersion || t('unknown') }}</span>
-        <span class="security-badge">{{ visitor?.connection.httpProtocol || t('unknown') }}</span>
-      </div>
       <ol class="route-nodes p-5">
-        <li v-for="(node, index) in [[t('browser'), visitor?.ip || t('unknown'), visitor?.ipVersion ? `IPv${visitor.ipVersion}` : t('unknown')], [t('cloudflareEdge'), visitor?.connection.colo || t('unknown'), 'Cloudflare'], [t('website'), 'leodeng.dev', 'Pages Function']]" :key="index" class="route-node">
+        <li v-for="(node, index) in [[t('browser'), null], [t('cloudflareEdge'), visitor?.connection.colo || t('unknown')], [t('website'), 'leodeng.dev']]" :key="index" class="route-node">
           <p class="data-label mb-3"><span class="text-accent mr-2">0{{ index + 1 }}</span>{{ node[0] }}</p>
-          <p class="font-mono text-sm break-words">{{ node[1] }}</p>
-          <p class="text-xs text-muted mt-2">{{ node[2] }}</p>
+          <p v-if="node[1]" class="font-mono text-sm break-words">{{ node[1] }}</p>
           <span v-if="index < 2" class="route-arrow text-muted" aria-hidden="true">→</span>
         </li>
       </ol>
     </section>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <section v-for="[heading, rows] in [['networkTitle', networkRows], ['tlsTitle', tlsRows]]" :key="heading" class="ip-card min-w-0">
-        <h2 class="card-title">{{ t(heading) }}</h2>
-        <dl class="px-5">
-          <div v-for="[label, value] in rows" :key="label" class="data-row">
-            <dt class="data-label">{{ t(label) }}</dt>
-            <dd class="text-sm font-mono break-words">
-              <span v-if="label === 'tls'" class="security-badge" :class="`security-${protocolStrength(value)}`">{{ value || t('unknown') }}<template v-if="value"> · {{ t(protocolStrength(value)) }}</template></span>
-              <template v-else>{{ value || t('unknown') }}</template>
-            </dd>
-          </div>
-        </dl>
-      </section>
-    </div>
+    <section class="ip-card">
+      <h2 class="card-title">{{ t('networkTitle') }}</h2>
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 px-5">
+        <div v-for="[label, value] in networkRows" :key="label" class="data-row">
+          <dt class="data-label">{{ t(label) }}</dt>
+          <dd class="text-sm font-mono break-words">{{ value || t('unknown') }}</dd>
+        </div>
+      </dl>
+    </section>
   </div>
 </template>
 

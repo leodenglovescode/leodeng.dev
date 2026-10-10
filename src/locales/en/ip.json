@@ -34,5 +34,9 @@
   "routeTitle": "Request path",
   "browser": "Your browser",
   "cloudflareEdge": "Cloudflare edge",
-  "website": "My site"
+  "website": "My site",
+  "securityTitle": "Connection security",
+  "apiAndProbe": "API + key-exchange probe",
+  "probeTls": "Probe TLS version",
+  "location": "Approximate location"
 }
