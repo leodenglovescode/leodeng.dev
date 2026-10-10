@@ -164,6 +164,12 @@ export function getAllPosts() {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 }
 
+// Original published Markdown for text readers such as the Linux guest.
+// The glob only includes posts/, so drafts are never exposed here.
+export function getPostMarkdown(slug) {
+  return modules[`../posts/${slug}.md`] ?? null
+}
+
 export function getPost(slug) {
   const raw = modules[`../posts/${slug}.md`]
   if (!raw) return null

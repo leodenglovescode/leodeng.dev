@@ -4,7 +4,7 @@
   "back": "普通网站",
   "fullscreen": "全屏 ⛶",
   "exitFullscreen": "退出全屏",
-  "readme": "欢迎来到我的网站。\n\n文件内容来自实际的关于、项目和近况页面。\n博客文件包含摘要，完整文章位于 leodeng.dev/blog。\n\n先试试 cat about.txt。这里是真正的 Linux shell，\n可以创建文件、编写脚本、使用管道或用 vi 编辑。\n",
+  "readme": "欢迎来到我的网站。\n\n文件内容来自实际的关于、项目和近况页面。\n博客 .txt 文件包含摘要，.md 文件包含完整文章。\n试试：cat blog/README.txt\n\n先试试 cat about.txt。这里是真正的 Linux shell，\n可以创建文件、编写脚本、使用管道或用 vi 编辑。\n",
   "galleryFile": "我的摄影作品，包括拍机照片。\n相册地址：https://leodeng.dev/gallery。\n",
   "timeFile": "我的树莓派通过 GPS/PPS 获取时间，并在家里提供 Stratum 1 NTP 服务。\n实时钟表位于 https://leodeng.dev/time。\n",
   "linuxBoot": "启动 Linux",
@@ -32,5 +32,6 @@
   "audioFailed": "音频无法播放。请使用不超过 10 MB 的 WAV、MP3、OGG、M4A 或 WebM 音频。",
   "voiceTitle": "来自我的欢迎录音",
   "voiceIntro": "可以听英文或中文。下载 Linux 时会一起保存两段录音。",
-  "audioBlocked": "播放被浏览器阻止。请允许这个网站播放音频后重试。"
+  "audioBlocked": "播放被浏览器阻止。请允许这个网站播放音频后重试。",
+  "fullPostFile": "完整文章"
 }
