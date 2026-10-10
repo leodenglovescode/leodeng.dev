@@ -1,6 +1,6 @@
 import projectData from '../../content/projects.json'
 import nowData from '../../content/now.json'
-import { getAllPosts } from '../posts.js'
+import { getAllPosts, getPostMarkdown } from '../posts.js'
 import { calcAge } from '../age.js'
 import { HOME } from './guest.js'
 import { recordings } from './recordings.js'
@@ -23,7 +23,11 @@ export function terminalFiles({ t, aboutText, localized }) {
   file('projects/README.txt', projects.map(project => `${localized(project.title)}\n${localized(project.description)}`).join('\n\n'), '/projects')
   for (const project of projects) file(`projects/${project.id}.txt`, `${localized(project.title)}\n\n${localized(project.description)}\n\n${project.url || ''}\n${(project.tags || []).join(', ')}`, '/projects')
   const posts = getAllPosts()
-  file('blog/README.txt', posts.map(post => `${post.displayDate}  ${post.title}\n${post.slug}.txt`).join('\n\n'), '/blog')
-  for (const post of posts) file(`blog/${post.slug}.txt`, `${post.title}\n${post.displayDate}\n\n${post.description || ''}`, `/blog/${post.slug}`)
+  file('blog/README.txt', posts.map(post => `${post.displayDate}  ${post.title}\n${post.slug}.txt  ${post.slug}.md`).join('\n\n'), '/blog')
+  for (const post of posts) {
+    file(`blog/${post.slug}.txt`, `${post.title}\n${post.displayDate}\n\n${post.description || ''}\n\n${t('fullPostFile')}: ${post.slug}.md`, `/blog/${post.slug}`)
+    const markdown = getPostMarkdown(post.slug)
+    if (markdown != null) file(`blog/${post.slug}.md`, markdown, `/blog/${post.slug}`)
+  }
   return files
 }

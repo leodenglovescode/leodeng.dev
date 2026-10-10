@@ -4,7 +4,7 @@
   "back": "Regular site",
   "fullscreen": "Fullscreen ⛶",
   "exitFullscreen": "Exit fullscreen",
-  "readme": "Welcome to my corner of the internet.\n\nThese files come from my actual about, projects, and now pages.\nBlog files contain summaries; read the full posts on leodeng.dev/blog.\n\nStart with cat about.txt. This is a real Linux shell, so you can\ncreate files, write scripts, use pipes, and edit with vi.\n",
+  "readme": "Welcome to my corner of the internet.\n\nThese files come from my actual about, projects, and now pages.\nBlog .txt files contain summaries; .md files contain full posts.\nTry: cat blog/README.txt\n\nStart with cat about.txt. This is a real Linux shell, so you can\ncreate files, write scripts, use pipes, and edit with vi.\n",
   "galleryFile": "My photography, including planespotting.\nBrowse the gallery at https://leodeng.dev/gallery.\n",
   "timeFile": "My Raspberry Pi gets time from GPS/PPS and serves Stratum 1 NTP at home.\nThe live clock is at https://leodeng.dev/time.\n",
   "linuxBoot": "Boot Linux",
@@ -32,5 +32,6 @@
   "audioFailed": "Audio could not play. Use WAV, MP3, OGG, M4A, or WebM audio under 10 MB.",
   "voiceTitle": "A welcome from me",
   "voiceIntro": "Listen in English or Chinese. Both recordings are included when you download Linux.",
-  "audioBlocked": "Playback blocked. Allow audio for this site and try again."
+  "audioBlocked": "Playback blocked. Allow audio for this site and try again.",
+  "fullPostFile": "Full post"
 }
