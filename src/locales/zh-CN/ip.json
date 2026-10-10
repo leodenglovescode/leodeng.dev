@@ -34,5 +34,9 @@
   "routeTitle": "请求路径",
   "browser": "你的浏览器",
   "cloudflareEdge": "Cloudflare 边缘节点",
-  "website": "我的网站"
+  "website": "我的网站",
+  "securityTitle": "连接安全",
+  "apiAndProbe": "API + 密钥交换探测",
+  "probeTls": "探测连接 TLS 版本",
+  "location": "大致位置"
 }
