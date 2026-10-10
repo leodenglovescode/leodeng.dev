@@ -86,6 +86,25 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
       </dl>
     </section>
 
+    <section class="ip-card" aria-labelledby="connection-route-title">
+      <div class="card-title flex flex-wrap items-center justify-between gap-3">
+        <h2 id="connection-route-title">{{ t('routeTitle') }}</h2>
+        <span class="text-xs font-mono text-muted font-normal">/api/ip</span>
+      </div>
+      <div class="flex flex-wrap gap-2 px-5 pt-4 font-mono">
+        <span class="security-badge" :class="`security-${tlsStrength}`">{{ visitor?.connection.tlsVersion || t('unknown') }}</span>
+        <span class="security-badge">{{ visitor?.connection.httpProtocol || t('unknown') }}</span>
+      </div>
+      <ol class="route-nodes p-5">
+        <li v-for="(node, index) in [[t('browser'), visitor?.ip || t('unknown'), visitor?.ipVersion ? `IPv${visitor.ipVersion}` : t('unknown')], [t('cloudflareEdge'), visitor?.connection.colo || t('unknown'), 'Cloudflare'], [t('website'), 'leodeng.dev', 'Pages Function']]" :key="index" class="route-node">
+          <p class="data-label mb-3"><span class="text-accent mr-2">0{{ index + 1 }}</span>{{ node[0] }}</p>
+          <p class="font-mono text-sm break-words">{{ node[1] }}</p>
+          <p class="text-xs text-muted mt-2">{{ node[2] }}</p>
+          <span v-if="index < 2" class="route-arrow text-muted" aria-hidden="true">→</span>
+        </li>
+      </ol>
+    </section>
+
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <section v-for="[heading, rows] in [['networkTitle', networkRows], ['tlsTitle', tlsRows]]" :key="heading" class="ip-card min-w-0">
         <h2 class="card-title">{{ t(heading) }}</h2>
@@ -175,5 +194,12 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
 }
 .quantum-highlight {
   border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+.route-nodes { display: grid; grid-template-columns: 1fr; gap: 24px; }
+.route-node { position: relative; min-width: 0; padding: 16px; border: 1px solid color-mix(in srgb, var(--color-fg) 8%, transparent); border-radius: 8px; }
+.route-arrow { position: absolute; left: 50%; bottom: -23px; transform: translateX(-50%) rotate(90deg); }
+@media (min-width: 640px) {
+  .route-nodes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .route-arrow { left: auto; bottom: auto; right: -20px; top: 50%; transform: translateY(-50%); }
 }
 </style>

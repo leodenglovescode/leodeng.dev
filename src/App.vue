@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Navbar from './components/Navbar.vue'
+import CommandPalette from './components/CommandPalette.vue'
 import VisitorConnection from './components/VisitorConnection.vue'
 import { useLocale } from './utils/i18n.js'
 
@@ -85,6 +86,7 @@ const socialLinks = [
         </template>
       </div>
     </div>
+    <CommandPalette />
     <VisitorConnection />
   </footer>
 </template>

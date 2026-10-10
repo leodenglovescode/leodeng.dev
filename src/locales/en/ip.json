@@ -30,5 +30,9 @@
   "modern": "Modern",
   "weak": "Weak",
   "quantumWelcome": "You’re using post-quantum encryption.",
-  "probeConnection": "Probe connection"
+  "probeConnection": "Probe connection",
+  "routeTitle": "Request path",
+  "browser": "Your browser",
+  "cloudflareEdge": "Cloudflare edge",
+  "website": "My site"
 }
