@@ -13,13 +13,17 @@ So I added a few fun additions to my site, most of them are just for fun, but th
 - Cmd+K/Ctrl+K: Opens a command palette. Search pages and blog posts
 
 <br/>
+
 ## Under the hood
 
 Seeing “You’re using post-quantum encryption” on my own website is actually really fun 😀
+
 <br/>
+
 As to how this is possible without a backend API request to my server: It turns out that Cloudflare already provides the connection data for this site (Existing API for Cloudflare Pages site at /cdn-cgi/trace). And after adding my api, I made it visible.
 
 <br/>
+
 Here is the cloudflare default API response from /cdn-cgi/trace if anybody is interested:
 ```
 fl=redacted        #cf internal ident for load balancer
