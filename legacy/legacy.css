@@ -190,3 +190,9 @@ small, figcaption { color: #59687c; font-size: 11px; }
 .reference-clock small { color: #a5c791; font-size: 10px; }
 .clock-source ol { list-style: decimal-leading-zero; padding-left: 30px; }
 .clock-source li { padding: 7px; background: #eef2f7; border-bottom: 1px dotted #a2b2c8; font-size: 12px; }
+.legacy-diagram { margin: 18px 0 8px; padding: 8px; border: 1px solid #8499b4; background: #fff; }
+.legacy-diagram-canvas { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.legacy-diagram-canvas svg { display: block; max-width: none; }
+.legacy-diagram figcaption { margin-top: 8px; }
+.legacy-diagram-source { margin-bottom: 20px; }
+.legacy-diagram-source summary { cursor: pointer; color: #003f91; font-size: 12px; text-decoration: underline; padding: 6px 0; }

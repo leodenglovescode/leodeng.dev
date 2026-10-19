@@ -5,6 +5,7 @@ import { parse, parseFragment, serialize } from 'parse5'
 import { interests } from '../src/content/interests.js'
 import { compareShelfTitles, shelfLink, shelfStatus } from '../src/utils/shelf.js'
 import { LEGACY_ORIGIN, MODERN_ORIGIN } from '../lib/legacy.js'
+import { renderLegacyDiagrams } from './legacy-diagrams.js'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const output = path.join(root, 'dist/_legacy')
@@ -188,7 +189,7 @@ ${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ? '站内�
     const zh = route.locale === 'zh'
     const base = route.path.replace(/^\/zh(?=\/|$)/, '') || '/'
     const source = path.join(root, 'dist', route.path === '/' ? 'index.html' : `${route.path.slice(1)}.html`)
-    let content = readableContent(await fs.readFile(source, 'utf8'), route.path, media)
+    let content = renderLegacyDiagrams(readableContent(await fs.readFile(source, 'utf8'), route.path, media), zh)
     let extra = ''
     if (base === '/') {
       // The modern clock is interactive. Its content lives on /time here.

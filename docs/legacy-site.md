@@ -46,6 +46,18 @@ style.
   The iPad needs no separate HTTPS connection to R2 during a local HTTP test.
 - Optional live readings use a small ES5 script and XMLHttpRequest. They never
   block reading or styling, and are not needed for navigation.
+- Mermaid flowcharts, state, sequence, class, and ER diagrams are rendered
+  during the build by `beautiful-mermaid`. The classic HTML contains static SVG
+  geometry and text, with literal colors and local fonts. No Mermaid runtime,
+  browser binary, rendering service, R2 credentials, or client JavaScript is
+  needed. This follows Apple's archived guidance on
+  [inline SVG](https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/SafariImageDeliveryBestPractices/SubstitutingRasterImageswithVectorAlternatives/SubstitutingRasterImageswithVectorAlternatives.html).
+  Wide diagrams scroll sideways. Source remains in a disclosure below the
+  diagram; browsers without disclosure support can still read it. Unsupported
+  syntax keeps the source instead of breaking the page. The classic renderer's
+  layout can differ from the modern Mermaid renderer. SVG output is restricted
+  to drawing elements and attributes; external references and active content
+  are removed. No diagram image binaries are committed or uploaded.
 - The admin, GitHub proxy, uploads, and private ingest routes are not available
   through the classic preview. Its API proxy allows public GET/HEAD routes only.
 
