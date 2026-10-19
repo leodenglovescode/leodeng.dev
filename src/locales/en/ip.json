@@ -33,6 +33,7 @@
   "probeConnection": "Probe connection",
   "routeTitle": "Request path",
   "browser": "Your browser",
+  "fullUserAgent": "Full user-agent",
   "cloudflareEdge": "Cloudflare edge",
   "website": "My site",
   "securityTitle": "Connection security",

@@ -33,6 +33,7 @@
   "probeConnection": "探测连接",
   "routeTitle": "请求路径",
   "browser": "你的浏览器",
+  "fullUserAgent": "完整 User-Agent",
   "cloudflareEdge": "Cloudflare 边缘节点",
   "website": "我的网站",
   "securityTitle": "连接安全",

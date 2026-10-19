@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { onRequest } from '../api/ip.js'
 import { parseConnectionTrace, useVisitor } from '../../src/utils/visitor.js'
+import { compactUserAgent } from '../../src/utils/userAgent.js'
 
 const request = (address, cf = {}, options = {}) => {
   const value = new Request('https://leodeng.dev/api/ip', { headers: { 'CF-Connecting-IP': address, Cookie: 'private=secret' }, ...options })
@@ -47,6 +48,29 @@ test('distinguishes a negotiated hybrid key exchange from TLS-only or unknown re
   assert.equal(parseConnectionTrace('tls=TLSv1.3').postQuantum, null)
   assert.equal(parseConnectionTrace('tls=TLSv1.2\nkex=X25519MLKEM768').postQuantum, null)
   assert.throws(() => parseConnectionTrace('<html>Not found</html>'))
+})
+
+test('returns the request user-agent with a bounded size and handles absent headers', async () => {
+  const value = request('203.0.113.9')
+  value.headers.set('User-Agent', 'ExampleBrowser/1.0')
+  assert.equal((await onRequest({ request: value }).json()).userAgent, 'ExampleBrowser/1.0')
+  value.headers.set('User-Agent', 'x'.repeat(3000))
+  assert.equal((await onRequest({ request: value }).json()).userAgent.length, 2048)
+  value.headers.delete('User-Agent')
+  assert.equal((await onRequest({ request: value }).json()).userAgent, null)
+})
+
+test('summarizes browsers without confusing compatibility tokens and mobile platforms', () => {
+  const chrome = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
+  assert.equal(compactUserAgent(chrome), 'Chrome 141 · Windows')
+  assert.equal(compactUserAgent(`${chrome} Edg/141.0.0.0`), 'Edge 141 · Windows')
+  assert.equal(compactUserAgent(`${chrome} OPR/123.0`), 'Opera 123 · Windows')
+  assert.equal(compactUserAgent('Mozilla/5.0 (Linux; Android 10) Chrome/141.0 Safari/537.36 SamsungBrowser/28.0'), 'Samsung Internet 28 · Android')
+  assert.equal(compactUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Version/18.0 Mobile/15E148 Safari/604.1'), 'Safari 18 · iOS')
+  assert.equal(compactUserAgent('Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) CriOS/141.0 Mobile/15E148 Safari/604.1'), 'Chrome 141 · iOS')
+  assert.equal(compactUserAgent('Mozilla/5.0 (X11; Linux x86_64) Gecko/20100101 Firefox/144.0'), 'Firefox 144 · Linux')
+  assert.equal(compactUserAgent('CustomClient/1.0'), null)
+  assert.equal(compactUserAgent(null), null)
 })
 
 test('footer and page share one request, can refresh, and recover after an error', async t => {

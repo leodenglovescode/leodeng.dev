@@ -21,6 +21,7 @@ export function onRequest({ request }) {
   return Response.json({
     ip,
     ipVersion: ip ? (ip.includes(':') ? 6 : 4) : null,
+    userAgent: text(request.headers.get('User-Agent'), 2048),
     countryCode,
     region: text(cf.region),
     city: text(cf.city),

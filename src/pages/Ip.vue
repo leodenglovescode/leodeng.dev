@@ -2,9 +2,11 @@
 import { computed, onMounted } from 'vue'
 import { useLocale } from '../utils/i18n.js'
 import { countryName, useVisitor } from '../utils/visitor.js'
+import { compactUserAgent } from '../utils/userAgent.js'
 
 const { t, locale } = useLocale('ip')
 const { visitor, visitorLoading, visitorError, trace, traceLoading, traceError, loadVisitor, loadTrace } = useVisitor()
+const browserLabel = computed(() => compactUserAgent(visitor.value?.userAgent) || t('unknown'))
 function protocolStrength(version) {
   if (version === 'TLSv1.3') return 'strong'
   if (version === 'TLSv1.2') return 'modern'
@@ -87,12 +89,16 @@ onMounted(() => { void loadVisitor(); void loadTrace() })
         <span class="text-xs font-mono text-muted font-normal">/api/ip</span>
       </div>
       <ol class="route-nodes p-5">
-        <li v-for="(node, index) in [[t('browser'), null], [t('cloudflareEdge'), visitor?.connection.colo || t('unknown')], [t('website'), 'leodeng.dev']]" :key="index" class="route-node">
+        <li v-for="(node, index) in [[t('browser'), browserLabel], [t('cloudflareEdge'), visitor?.connection.colo || t('unknown')], [t('website'), 'leodeng.dev']]" :key="index" class="route-node">
           <p class="data-label" :class="{ 'mb-3': node[1] }"><span class="text-accent mr-2">0{{ index + 1 }}</span>{{ node[0] }}</p>
           <p v-if="node[1]" class="font-mono text-sm break-words">{{ node[1] }}</p>
           <span v-if="index < 2" class="route-arrow text-muted" aria-hidden="true">→</span>
         </li>
       </ol>
+      <details v-if="visitor?.userAgent" class="mx-5 mb-5 rounded-lg border border-fg/10 p-4">
+        <summary class="cursor-pointer text-xs text-muted focus-visible:outline-accent">{{ t('fullUserAgent') }}</summary>
+        <p class="mt-3 font-mono text-xs text-muted [overflow-wrap:anywhere]">{{ visitor.userAgent }}</p>
+      </details>
     </section>
 
     <section class="ip-card">
