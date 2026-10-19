@@ -196,3 +196,97 @@ small, figcaption { color: #59687c; font-size: 11px; }
 .legacy-diagram figcaption { margin-top: 8px; }
 .legacy-diagram-source { margin-bottom: 20px; }
 .legacy-diagram-source summary { cursor: pointer; color: #003f91; font-size: 12px; text-decoration: underline; padding: 6px 0; }
+/* Lightweight live player: three fixed lyric rows and a highlighted center. */
+.player-info { overflow: hidden; }
+.player-progress { clear: both; height: 9px; margin-top: 12px; border: 1px inset #a2b2c8; background: #dce5f0; overflow: hidden; }
+.player-progress > span { display: block; height: 7px; background: #456f9f; border-top: 1px solid #8daed3; }
+.player-times { overflow: hidden; margin-top: 4px; font: 10px/1.5 "Courier New", monospace; color: #59687c; }
+.player-times span:last-child { float: right; }
+.player-lyrics { margin-top: 10px; padding-top: 7px; border-top: 1px dotted #a2b2c8; }
+#now-playing-content .legacy-lyric { display: table; width: 100%; height: 44px; margin: 0; padding: 0 4px; color: #738198; text-align: center; font-size: 12px; line-height: 1.35; table-layout: fixed; }
+.legacy-lyric > .lyric-cell { display: table-cell; vertical-align: middle; height: 44px; word-wrap: break-word; }
+.lyric-cell > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; max-height: 34px; overflow: hidden; }
+#now-playing-content .lyric-active { color: #183d6b; font-weight: bold; background: #fff8d7; border-top: 1px solid #e7dba8; border-bottom: 1px solid #e7dba8; }
+.lyrics-credit { display: block; margin-top: 7px; text-align: right; font: 9px/1.5 "Courier New", monospace; }
+.reference-clock strong { font-size: 32px; letter-spacing: 0; }
+@media screen and (max-width: 399px) { .reference-clock strong { font-size: 25px; } }
+/* Compact 2000s weblog: dated entries, plain links and boxed code. */
+.journal-surface { background: #fff; border-color: #8a96a8; }
+.journal-surface > .panel-bar { background: #e1e4ed; color: #333c5a; border-color: #9ba4b9; }
+.journal-heading { padding: 8px 10px; background: #edf0f7; border: 1px solid #b1bacd; }
+.journal-kicker { margin: 0 0 3px; color: #5a6681; font: 10px/1.5 Verdana, sans-serif; }
+.journal-heading h1 { margin: 0 0 5px; color: #293d66; font: bold 22px/1.3 Arial, sans-serif; }
+.journal-heading > p:not(.journal-kicker) { margin: 3px 0 0; font: 11px/1.5 Verdana, sans-serif; color: #5c6576; }
+.journal-index a, .journal-post a { color: #000099; text-decoration: underline; }
+.journal-index a:visited, .journal-post a:visited { color: #660080; }
+.archive-year { margin: 18px 0 7px; padding: 3px 0; border-bottom: 1px dotted #8c9bb4; color: #5a6681; font: bold 11px/1.5 Verdana, sans-serif; }
+.journal-entry { margin: 0 0 13px; border: 1px solid #a5aec2; background: #fff; }
+.journal-date { margin: 0; padding: 4px 8px; background: #e0e5f1; border-top: 1px solid #fff; border-bottom: 1px solid #a5aec2; color: #34496f; font: bold 10px/1.5 Tahoma, Verdana, sans-serif; }
+.journal-entry-copy { padding: 9px; }
+.journal-entry h3 { margin: 0 0 6px; font: bold 15px/1.4 Arial, sans-serif; }
+.journal-entry-copy > p { margin: 0 0 8px; color: #333; font: 12px/1.6 Verdana, sans-serif; }
+.journal-entry-copy .journal-entry-footer { margin: 8px 0 0; padding-top: 5px; border-top: 1px dotted #c4cad8; font: 10px/1.5 Verdana, sans-serif; color: #69738b; }
+.journal-back { display: inline-block; margin-bottom: 9px; font: 11px/1.5 Verdana, sans-serif; }
+.journal-post-heading { margin: 0 0 16px; padding: 9px; border: 1px solid #a5aec2; background: #edf0f7; }
+.journal-post-heading h1 { margin: 2px 0 8px; color: #24385f; font: bold 21px/1.3 Arial, sans-serif; }
+.journal-byline { margin: 0; padding-top: 5px; border-top: 1px dotted #acb6ca; font: 10px/1.6 Verdana, sans-serif; color: #5e6980; }
+.journal-prose { color: #282828; font: 13px/1.7 Verdana, Arial, sans-serif; word-wrap: break-word; }
+.journal-prose p { margin: 0 0 12px; }
+.journal-prose h1, .journal-prose h2 { color: #293d66; font: bold 17px/1.4 Arial, sans-serif; margin: 22px 0 9px; padding-bottom: 3px; border-bottom: 1px solid #b6c0d3; }
+.journal-prose h3 { color: #34496f; font: bold 15px/1.4 Arial, sans-serif; margin-top: 18px; }
+.journal-prose h4 { color: #34496f; font: bold 13px/1.5 Verdana, sans-serif; }
+.journal-prose ul, .journal-prose ol { padding-left: 23px; margin: 10px 0 15px; }
+.journal-prose li { margin: 4px 0; }
+.journal-prose li > p { margin-bottom: 5px; }
+.journal-prose blockquote { margin: 14px 10px; padding: 9px; border: 1px solid #c0c4ce; background: #f1f2f5; color: #535b6e; font-size: 12px; }
+.journal-prose blockquote p:last-child { margin-bottom: 0; }
+.journal-prose .callout { margin: 15px 0; padding: 9px; border: 1px solid #b9b596; background: #fffde5; color: #575334; font: 12px/1.65 Verdana, sans-serif; }
+.journal-prose .callout-title { margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px dotted #c7c2a2; font: bold 11px/1.5 Tahoma, sans-serif; }
+.journal-prose .callout p:last-child { margin-bottom: 0; }
+.journal-prose .callout-warning, .journal-prose .callout-caution { background: #fff0e8; color: #733a26; border-color: #c6a493; }
+.journal-prose .callout-important { background: #eef2fb; color: #34496f; border-color: #a5b5cd; }
+.journal-prose pre { padding: 9px; margin: 15px 0; border: 2px inset #d6d9df; background: #f5f5f5; color: #252525; font: 12px/1.5 "Courier New", monospace; white-space: pre; word-wrap: normal; overflow-x: auto; max-width: 100%; }
+.journal-prose :not(pre) > code { padding: 1px 3px; background: #eee; border: 1px solid #d4d4d4; font: 12px/1.5 "Courier New", monospace; }
+.journal-prose .hljs-comment, .journal-prose .hljs-quote { color: #567247; }
+.journal-prose .hljs-keyword, .journal-prose .hljs-selector-tag { color: #000099; font-weight: bold; }
+.journal-prose .hljs-string, .journal-prose .hljs-attr { color: #8a2525; }
+.journal-prose .hljs-number, .journal-prose .hljs-literal { color: #79509a; }
+.journal-prose .hljs-title, .journal-prose .hljs-built_in { color: #315c8d; }
+.journal-prose hr { margin: 18px 0; border: 0; border-top: 1px solid #a5aec2; }
+.journal-prose table { display: block; table-layout: auto; overflow-x: auto; font: 12px/1.5 Verdana, sans-serif; }
+.journal-prose th { background: #e0e5f1; }
+.journal-prose td, .journal-prose th { border-color: #a5aec2; }
+.journal-prose img, .journal-prose video { padding: 3px; border: 1px solid #9ca8bd; background: #fff; margin: 16px 0; }
+.journal-pagination { margin-top: 20px; padding: 6px 9px; border: 1px solid #a5aec2; background: #edf0f7; }
+.journal-pagination a { display: block; padding: 5px 0; font: 11px/1.6 Verdana, sans-serif; }
+.journal-direction { margin-right: 6px; font-weight: bold; }
+/* /now follows a small personal-site status register, with real table rows. */
+.daybook-surface { background: #fff; border-color: #90979f; }
+.daybook-surface > .panel-bar { background: #e3e5e8; border-color: #90979f; color: #354354; }
+.daybook-heading h1 { font: bold 22px/1.3 Arial, sans-serif; color: #293d55; margin: 0 0 4px; }
+.daybook-updated { margin: 0 0 10px; color: #68717c; font: 10px/1.5 "Courier New", monospace; }
+.daybook-intro { font: 12px/1.6 Verdana, sans-serif; color: #3d4855; }
+.daybook-intro p { margin: 0 0 12px; }
+.daybook-register { table-layout: fixed; width: 100%; margin: 12px 0; border: 2px solid #949eac; background: #fff; }
+.daybook-register thead th { background: #dce1e8; color: #303d50; border: 1px solid #949eac; font: bold 11px/1.5 Tahoma, sans-serif; padding: 5px 7px; }
+.daybook-status-heading { width: 80px; }
+.daybook-register .daybook-group th { padding: 4px 7px; background: #66778e; color: #fff; font: bold 11px/1.5 Tahoma, sans-serif; border: 1px solid #526278; }
+.daybook-register td { padding: 9px 7px; border: 1px solid #b2bac5; vertical-align: top; }
+.daybook-status { color: #385f2f; background: #edf0f4; font: 10px/1.6 Verdana, sans-serif; }
+.status-lamp { display: block; width: 7px; height: 7px; margin: 3px 0 5px; background: #4b8b3b; border: 1px solid #35642a; }
+.daybook-recurring .daybook-status { color: #32606c; }
+.daybook-recurring .status-lamp { background: #4b8b9e; border-color: #32606c; }
+.daybook-paused .daybook-status { color: #806018; }
+.daybook-paused .status-lamp { background: #c6a24a; border-color: #806018; }
+.daybook-finished .daybook-status { color: #646b73; }
+.daybook-finished .status-lamp { background: #9ba1a9; border-color: #646b73; }
+.daybook-entry:nth-child(odd) .daybook-copy { background: #f6f7f9; }
+.daybook-copy h3 { font: bold 13px/1.5 Tahoma, Verdana, sans-serif; color: #293d55; margin: 0 0 5px; }
+.daybook-copy p { margin: 0 0 5px; color: #333c49; font: 12px/1.6 Verdana, sans-serif; }
+.daybook-copy .daybook-dates { font: 10px/1.6 "Courier New", monospace; color: #6e7783; margin-bottom: 0; }
+.daybook-footnote { border-top: 1px dotted #aab2bd; padding-top: 8px; color: #6e7783; font: 10px/1.6 Verdana, sans-serif; }
+@media screen and (max-width: 399px) {
+  .journal-post-heading h1 { font-size: 19px; }
+  .daybook-status-heading { width: 64px; }
+  .daybook-register td { padding: 7px 5px; }
+}

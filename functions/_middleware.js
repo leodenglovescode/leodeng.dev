@@ -1,7 +1,7 @@
 import { LEGACY_ORIGIN, LEGACY_PREFIX, MODERN_ORIGIN, cleanLegacyPath, isDocumentRequest, isLegacyBrowser, modernLink, prefersModern } from '../lib/legacy.js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
 
-const PUBLIC_APIS = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip'])
+const PUBLIC_APIS = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics'])
 
 function redirect(location) {
   return new Response(null, { status: 302, headers: { Location: location, 'Cache-Control': 'no-store', Vary: 'User-Agent, Cookie' } })

@@ -6,6 +6,7 @@ import { interests } from '../src/content/interests.js'
 import { compareShelfTitles, shelfLink, shelfStatus } from '../src/utils/shelf.js'
 import { LEGACY_ORIGIN, MODERN_ORIGIN } from '../lib/legacy.js'
 import { renderLegacyDiagrams } from './legacy-diagrams.js'
+import { legacyJournalIndex, legacyJournalPost, legacyDaybook } from './legacy-editorial.js'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const output = path.join(root, 'dist/_legacy')
@@ -68,6 +69,9 @@ export function readableContent(html, route, media = { images: {} }) {
       const keep = node.attrs.filter(a => ['href', 'src', 'alt', 'title', 'id', 'lang', 'colspan', 'rowspan', 'datetime', 'controls', 'type', 'download'].includes(a.name))
       node.attrs = keep
       const useful = classes.filter(c => /^(?:prose|callout(?:-\w+)?|mermaid-block|mermaid-source)$/.test(c))
+      if (/^\/(?:zh\/)?blog\//.test(route) && ['code', 'span'].includes(node.tagName)) {
+        useful.push(...classes.filter(c => /^(?:hljs(?:-[\w-]+)?|language-[\w-]+)$/.test(c)))
+      }
       if (/^\/(?:zh\/)?spotting$/.test(route)) {
         if (classes.includes('grid')) useful.push('spotting-metrics')
         if (classes.includes('bg-bg') && classes.includes('p-4')) useful.push('spotting-stat')
@@ -146,11 +150,13 @@ export async function buildLegacySite({ routes, collections }) {
     const common = zh ? zhCommon : enCommon
     const meta = zh ? zhMeta : enMeta
     const base = route.path.replace(/^\/zh(?=\/|$)/, '') || '/'
+    const surface = /^\/blog(?:\/|$)/.test(base) ? ' journal-surface' : base === '/now' ? ' daybook-surface' : ''
     const other = localeRoute(base, zh ? 'en' : 'zh')
     const modern = new URL(base === '/' && zh ? '/zh' : route.path, MODERN_ORIGIN)
     modern.searchParams.set('view', 'modern')
     const label = key => common.nav?.[key] || common[key] || meta[key]?.title || key.toUpperCase()
     const link = to => escape(relativeLink(route.path, to))
+    const playing = `<section id="now-playing" class="sidebar-card" hidden data-live="now-playing"><h2>${zh ? 'Leo 正在听' : 'Leo is now playing'}</h2><div id="now-playing-content"></div></section>`
     const active = key => (key === 'home' ? base === '/' : base === `/${key}` || base.startsWith(`/${key}/`)) ? ' class="active" aria-current="page"' : ''
     const recent = routes.filter(item => item.locale === route.locale && /^\/(?:zh\/)?blog\/[^/]+$/.test(item.path)).slice(0, 3)
     const homeModules = base === '/' ? `<section class="home-section edition-notice"><h2>${zh ? '经典版网站' : 'You are on the classic site'}</h2><p id="edition-reason">${zh ? '这里是为旧设备设计的轻量版网站。' : 'This edition is designed for older devices and browsers.'}</p><p class="agent-label">${zh ? '你的浏览器 User-Agent：' : 'Your browser user agent:'}</p><code id="browser-agent">${zh ? '启用 JavaScript 后显示。' : 'Available when JavaScript is enabled.'}</code><p><a href="${escape(modern.href)}">${zh ? '切换到完整版网站' : 'Switch to the full site'}</a></p></section><section class="home-section"><h2>${zh ? '随便看看' : 'Around here'}</h2><div class="feature-links">${[
@@ -172,9 +178,9 @@ export async function buildLegacySite({ routes, collections }) {
 <div class="top-links"><a href="${link(other)}">${zh ? 'English' : '中文'}</a> &middot; <a href="${escape(modern.href)}">${zh ? '完整版网站' : 'Full site'}</a></div>
 <p class="edition-note">${zh ? '欢迎来到我的个人主页。项目、笔记，还有一些我喜欢的东西。' : 'Welcome to my homepage. Projects, notes, and a few things I like.'}</p></div></header>
 <nav class="main-nav" aria-label="${zh ? '网站导航' : 'Site navigation'}"><div class="nav-inner">${navigation.slice(0, 6).map(key => `<a${active(key)} href="${link(localeRoute(key === 'home' ? '/' : `/${key}`, route.locale))}">${escape(label(key))}</a>`).join(' ')}</div></nav>
-<div class="page"><div class="page-layout"><main id="content" class="content-column"><div class="content-panel"><div class="panel-bar">&raquo; ${escape(base === '/' ? label('home') : route.title || label('home'))}</div>${content}</div>${homeModules}</main>
+<div class="page"><div class="page-layout"><main id="content" class="content-column"><div class="content-panel${surface}"><div class="panel-bar">&raquo; ${escape(base === '/' ? label('home') : route.title || label('home'))}</div>${content}</div>${homeModules}</main>
 <aside class="sidebar" aria-label="${zh ? '关于我和更多页面' : 'About me and more pages'}"><section class="sidebar-card profile-card"><h2 class="sidebar-title">${zh ? '关于站长' : 'About the webmaster'}</h2>${picture('/leo_profilepic.webp', 'Leo Deng', media, 'avatar', route.path)}<p class="profile-name">Leo Deng</p><p class="profile-location">${zh ? '北京，中国' : 'Beijing, China'}</p><a class="profile-link" href="${link(localeRoute('/about', route.locale))}">${zh ? '个人资料' : 'View profile'}</a></section>
-${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ? '站内导航' : 'Site directory'}</h2><nav class="side-nav">${navigation.slice(6).map(key => `<a${active(key)} href="${link(localeRoute(`/${key}`, route.locale))}">${escape(label(key))}</a>`).join('')}</nav></section>
+${playing}${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ? '站内导航' : 'Site directory'}</h2><nav class="side-nav">${navigation.slice(6).map(key => `<a${active(key)} href="${link(localeRoute(`/${key}`, route.locale))}">${escape(label(key))}</a>`).join('')}</nav></section>
 <section class="sidebar-card"><h2 class="sidebar-title">${zh ? '保持联系' : 'Keep in touch'}</h2><ul class="contact-links"><li><a href="mailto:leodeng@leodeng.dev">${zh ? '邮箱' : 'Email'}: leodeng@leodeng.dev</a></li><li><a href="https://x.com/Leodeng14">X (Twitter)</a></li><li><a href="https://github.com/leodenglovescode">GitHub</a></li><li><a href="${MODERN_ORIGIN}/rss.xml">RSS</a></li></ul></section></aside></div>
 <footer class="site-footer"><div class="web-buttons"><a class="web-button" href="${link(localeRoute('/', route.locale))}"><strong>HTML + CSS</strong>CLASSIC WEB</a><a class="web-button web-button-rss" href="${MODERN_ORIGIN}/rss.xml"><strong>RSS FEED</strong>SUBSCRIBE</a><a class="web-button" href="#top"><strong>BACK TO TOP</strong>^ ^ ^</a></div><p>${new Date().getUTCFullYear()} &copy; Leo Deng &middot; <a href="${LEGACY_ORIGIN}${escape(routeDirectory(route.path))}">old.leodeng.dev</a> &middot; <a href="${link(localeRoute('/contact', route.locale))}">${escape(label('contact'))}</a></p></footer></div>
 </body></html>\n`
@@ -190,6 +196,9 @@ ${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ? '站内�
     const base = route.path.replace(/^\/zh(?=\/|$)/, '') || '/'
     const source = path.join(root, 'dist', route.path === '/' ? 'index.html' : `${route.path.slice(1)}.html`)
     let content = renderLegacyDiagrams(readableContent(await fs.readFile(source, 'utf8'), route.path, media), zh)
+    if (base === '/blog') content = legacyJournalIndex(content, zh)
+    else if (base.startsWith('/blog/')) content = legacyJournalPost(content, zh)
+    else if (base === '/now') content = legacyDaybook(content, await readJson(`src/locales/${zh ? 'zh-CN' : 'en'}/now.json`), zh)
     let extra = ''
     if (base === '/') {
       // The modern clock is interactive. Its content lives on /time here.
@@ -203,7 +212,7 @@ ${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ? '站内�
         if (actions) setAttr(actions, 'class', 'home-actions')
         content = `<div class="home-intro">${serialize(intro)}</div>`
       }
-      extra = `<section id="now-playing" class="sidebar-card" hidden data-live="now-playing"><h2>${zh ? 'Leo 正在听' : 'Leo is now playing'}</h2><div id="now-playing-content"></div></section>`
+
     }
     if (base === '/shelf') {
       const copy = zh ? zhShelf : enShelf
@@ -277,7 +286,7 @@ ${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ? '站内�
 <noscript><p>${zh ? '实时数据需要启用 JavaScript。网站其余内容可以直接阅读。' : 'Live readings need JavaScript. The rest of this site can be read without it.'}</p></noscript>`
       if (key === 'time') {
         const time = await readJson(`src/locales/${zh ? 'zh-CN' : 'en'}/time.json`)
-        content += `<section class="clock-source"><h2>${escape(time.sourceTitle)}</h2><p>${escape(time.sourceBody)}</p><ol>${time.steps.map(step => `<li>${escape(step.title)}</li>`).join('')}</ol><p class="note">${zh ? '本页显示载入时的时间快照，刷新页面可更新。网络延迟会影响读数精度。' : 'This page shows a time snapshot at page load. Refresh for a new reading. Network delay limits its accuracy.'}</p></section>`
+        content += `<section class="clock-source"><h2>${escape(time.sourceTitle)}</h2><p>${escape(time.sourceBody)}</p><ol>${time.steps.map(step => `<li>${escape(step.title)}</li>`).join('')}</ol><p class="note">${zh ? '页面可见时每 60 秒同步一次，时钟在两次同步之间继续运行。网络延迟会影响精度。如果同步失败，会使用设备时间并注明。' : 'Synchronizes every 60 seconds while this tab is visible. The clock advances between synchronizations. Network delay limits accuracy. If synchronization fails, the display uses your device clock and labels it as a fallback.'}</p></section>`
       }
     }
     if (base === '/terminal') content = `<h1>${zh ? '终端' : 'Terminal'}</h1><p>${zh ? 'Linux 终端模拟器需要较新的浏览器。这些页面可以在这里阅读：' : 'The Linux terminal emulator needs a newer browser. You can explore these pages here:'}</p><ul>${['about', 'projects', 'stack', 'homelab', 'blog'].map(key => `<li><a href="${escape(relativeLink(route.path, localeRoute(`/${key}`, route.locale)))}">${escape((zh ? zhMeta : enMeta)[key]?.title || key)}</a></li>`).join('')}</ul>`

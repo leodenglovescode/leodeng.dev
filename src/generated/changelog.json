@@ -3,6 +3,34 @@
  "generatedAt": "2026-10-19",
  "commits": [
   {
+   "hash": "a682668b0dc1e617b11d0adfeaf24060b577afa2",
+   "date": "2026-10-19",
+   "type": "fix",
+   "scope": null,
+   "subject": "render classic site diagrams as static SVG"
+  },
+  {
+   "hash": "6628906fd62a4facf5ba9eaf800ba00bf9668291",
+   "date": "2026-10-19",
+   "type": "fix",
+   "scope": null,
+   "subject": "move classic site badge below footer connection"
+  },
+  {
+   "hash": "51517544d3001fc56bbe11beb5d532437306350f",
+   "date": "2026-10-19",
+   "type": "fix",
+   "scope": null,
+   "subject": "keep legacy preview tooling out of production config builds"
+  },
+  {
+   "hash": "132c71d6984d25e38894e42b87af1ba79d8a7734",
+   "date": "2026-10-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "add classic site for older browsers"
+  },
+  {
    "hash": "b43124f7dbfefca7a5fe8579822f555508a2fb7f",
    "date": "2026-10-19",
    "type": "fix",

@@ -30,6 +30,12 @@ and 88 by 31 pixel web buttons.
 The standards above specify the implementation baseline, not a mandated visual
 style.
 
+The weblog uses compact dated entry boxes and small sans-serif article text,
+syntax colors, inset notes, and older/newer entry navigation. `/now` uses a
+bordered status table with grouped rows and small square status lights. These views
+reframe the existing prerendered content rather than maintaining separate posts
+or status entries. They work without JavaScript, including the static diagrams.
+
 ## Loading and rendering
 
 - All reading and navigation work without JavaScript.
@@ -46,6 +52,20 @@ style.
   The iPad needs no separate HTTPS connection to R2 during a local HTTP test.
 - Optional live readings use a small ES5 script and XMLHttpRequest. They never
   block reading or styling, and are not needed for navigation.
+- Every page has the now-playing sidebar. While visible it polls every two
+  seconds during playback and five seconds while idle, advances progress
+  locally, and displays the previous, highlighted current, and next lyric.
+  LRCLIB lookups go through the fixed-origin, read-only `/api/lyrics` endpoint
+  so the old browser needs no external HTTPS connection. The local preview
+  invokes that same lookup handler, so it works before deployment. Lyrics
+  are cached in bounded page memory; late results for another song are ignored.
+- The Time page takes three GPS/PPS samples every 60 seconds while visible,
+  selects the lowest network delay, and advances the corrected clock locally
+  with milliseconds. The display follows browser animation frames, as on the
+  modern site; reduced motion uses one second. Browsers without animation-frame
+  support fall back to a 16 ms timer. Timezone formatting runs once per second.
+  Failed synchronization explicitly switches to the device clock. Retry advice
+  is bounded and respected. Hidden tabs suspend player requests and clock work.
 - Mermaid flowcharts, state, sequence, class, and ER diagrams are rendered
   during the build by `beautiful-mermaid`. The classic HTML contains static SVG
   geometry and text, with literal colors and local fonts. No Mermaid runtime,
@@ -77,6 +97,12 @@ This is an ordinary HTTP server, separate from Vite. CSS edits appear on refresh
 Re-run `npm run build` after editing Vue content so the shared prerendered content
 is refreshed, then restart the classic server. It does an initial full build
 automatically when no existing build is present.
+
+The main Vite server also serves `/_legacy/`. Its preview middleware handles the
+root `/api/lyrics` path before the SPA fallback, using the same lookup handler.
+Restart `npm run dev` after changing that middleware. Lyrics requests appear in
+browser DevTools under `/api/lyrics`; the LRCLIB connection runs on the server.
+Temporary lookup failures show a status and retry after 15 seconds while visible.
 
 ## Verification limits
 

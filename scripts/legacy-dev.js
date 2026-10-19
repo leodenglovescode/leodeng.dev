@@ -1,16 +1,19 @@
 import { EnvHttpProxyAgent, fetch as upstreamFetch } from 'undici'
 import { createLegacyPreview } from './legacy-server.js'
 
-export function legacyPreviewPlugin() {
+export function legacyPreviewPlugin({ fetchUpstream } = {}) {
   return {
     name: 'legacy-preview',
     apply: 'serve',
     configureServer(server) {
-      const dispatcher = new EnvHttpProxyAgent()
-      const respond = createLegacyPreview({ directory: `${server.config.root}/dist/_legacy`, fetchUpstream: (url, options) => upstreamFetch(url, { ...options, dispatcher }) })
-      server.httpServer?.once('close', () => { void dispatcher.close() })
+      const dispatcher = fetchUpstream ? null : new EnvHttpProxyAgent()
+      const respond = createLegacyPreview({ directory: `${server.config.root}/dist/_legacy`, fetchUpstream: fetchUpstream || ((url, options) => upstreamFetch(url, { ...options, dispatcher })) })
+      if (dispatcher) server.httpServer?.once('close', () => { void dispatcher.close() })
       server.middlewares.use(async (request, response, next) => {
-        if (!/^\/_legacy(?:\/|$)/.test(new URL(request.url, 'http://localhost').pathname)) return next()
+        const pathname = new URL(request.url, 'http://localhost').pathname
+        // The classic script uses same-origin API URLs even under /_legacy/.
+        // Handle lyrics here too, before Vite's SPA HTML fallback.
+        if (!/^\/_legacy(?:\/|$)/.test(pathname) && pathname !== '/api/lyrics') return next()
         try {
           const result = await respond(new Request(new URL(request.url, 'http://localhost'), { method: request.method }))
           response.statusCode = result.status
