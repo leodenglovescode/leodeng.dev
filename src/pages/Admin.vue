@@ -206,14 +206,21 @@ function buildMarkdown(d) {
   ].join('\n')
 }
 
+const AUTO_SLUG_LIMIT = 80
+
 function slugify(text) {
   return String(text)
     .toLowerCase()
     .replace(/['']/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 80)
 }
+
+const slugTruncated = computed(() => {
+  if (!form.value || form.value.kind !== 'post') return false
+  const fullSlug = slugify(form.value.title)
+  return fullSlug.length > AUTO_SLUG_LIMIT && form.value.slug === fullSlug.slice(0, AUTO_SLUG_LIMIT)
+})
 
 /* ---------- session ---------- */
 
@@ -466,7 +473,7 @@ function backToList() {
 function onTitleInput() {
   // Auto-slug until the field is edited by hand, then leave it alone —
   // renaming a published post changes its URL.
-  if (!form.value.slugTouched) form.value.slug = slugify(form.value.title)
+  if (!form.value.slugTouched) form.value.slug = slugify(form.value.title).slice(0, AUTO_SLUG_LIMIT)
 }
 
 /**
@@ -1017,11 +1024,15 @@ function displayDate(iso) {
               <input
                 v-model="form.slug"
                 type="text"
+                :aria-describedby="slugTruncated ? 'slug-preview slug-truncation-warning' : 'slug-preview'"
                 class="h-10 px-3 rounded-md bg-surface border border-fg/10 font-mono text-sm text-fg
                        outline-none focus:border-accent/50"
                 @input="form.slugTouched = true"
               />
-              <span class="text-xs font-mono text-muted/90">/blog/{{ form.slug || '…' }}</span>
+              <span id="slug-preview" class="text-xs font-mono text-muted/90">/blog/{{ form.slug || '…' }}</span>
+              <span v-if="slugTruncated" id="slug-truncation-warning" role="status" class="text-xs text-highlight">
+                The generated slug was cut to {{ AUTO_SLUG_LIMIT }} characters. You can edit it above to use a shorter, complete phrase.
+              </span>
             </label>
 
             <label class="flex flex-col gap-1.5">

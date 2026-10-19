@@ -1,6 +1,20 @@
 {
   "items": [
     {
+      "id": "ac9c50b8-fdee-4329-a65f-6c57960a4686",
+      "type": "album",
+      "title": {
+        "en": "The Colour and the Shape",
+        "zh": ""
+      },
+      "year": "1997",
+      "artworkMode": "original",
+      "customArtworkUrl": "",
+      "artist": "Foo Fighters",
+      "musicBrainzId": "7822977a-984d-358d-823f-426139c0eaba",
+      "musicBrainzKind": "release-group"
+    },
+    {
       "id": "26efb78a-095f-4219-aacd-84aa7823a159",
       "type": "tv",
       "title": {
