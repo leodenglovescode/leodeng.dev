@@ -65,7 +65,6 @@ const socialLinks = [
       <RouterLink :to="localePath('/changelog')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('changelog') }}</RouterLink>
       <RouterLink :to="localePath('/interests')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('interests') }}</RouterLink>
       <RouterLink :to="localePath('/pgp')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">PGP</RouterLink>
-      <a :href="simpleSiteUrl" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('simpleSite') }}</a>
       <div class="flex items-center gap-4">
         <template v-for="link in socialLinks" :key="link.label">
           <RouterLink
@@ -91,5 +90,28 @@ const socialLinks = [
     </div>
     <CommandPalette />
     <VisitorConnection />
+    <div class="w-full">
+      <a :href="simpleSiteUrl" class="classic-web-button" :title="t('classicSiteTitle')">
+        <strong>WEB 1.0</strong><span>{{ t('takeMeBack') }}</span>
+      </a>
+    </div>
   </footer>
 </template>
+
+<style scoped>
+.classic-web-button {
+  display: inline-block;
+  width: 88px;
+  padding: 3px;
+  border: 2px outset #c9d5e4;
+  background: #dce5f0;
+  color: #183d6b;
+  text-align: center;
+  text-decoration: none;
+  font: bold 9px/1.3 'Courier New', monospace;
+}
+.classic-web-button strong { display: block; background: #31537e; color: #fff; font-size: 11px; }
+.classic-web-button:hover { background: #fff4b9; }
+.classic-web-button:active { border-style: inset; }
+.classic-web-button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+</style>
