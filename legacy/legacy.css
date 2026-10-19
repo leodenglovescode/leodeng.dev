@@ -78,6 +78,24 @@ small, figcaption { color: #59687c; font-size: 11px; }
 #now-playing-content p { margin: 3px 0; font-size: 11px; }
 #now-playing h2 { font-size: 12px; margin-top: 0; }
 .live-caption { font-size: 11px; color: #59687c; }
+.dashboard .connection-report { padding: 12px; background: #e5e8ec; }
+.connection-tools { text-align: right; font: 11px Verdana, sans-serif; }
+.connection-tools button { margin-right: 12px; padding: 4px 9px; color: #183d6b; background: #dce5f0; border: 2px outset #e1e8f2; font: 12px Tahoma, sans-serif; cursor: pointer; }
+.connection-tools button:disabled { color: #687589; cursor: default; }
+.connection-address { margin: 12px 0 18px; padding: 14px; background: #fffce6; border: 3px double #9f925e; }
+.connection-address h2 { margin: 0 0 10px; font: bold 12px Tahoma, sans-serif; color: #65562c; }
+.connection-ip { display: block; font: bold 25px/1.4 "Courier New", monospace; word-wrap: break-word; }
+.connection-address p { margin-bottom: 0; font: 11px "Courier New", monospace; color: #65562c; }
+.connection-section { margin: 14px 0; border: 1px solid #8995a5; background: #fff; }
+.connection-section h2 { margin: 0; padding: 6px 9px; border-bottom: 1px solid #8995a5; background: #ccd6e3; font: bold 12px/1.5 Tahoma, sans-serif; }
+.connection-section > div { padding: 8px; }
+.connection-section table { margin: 0; }
+.connection-report th { width: 37%; font: bold 11px/1.6 Verdana, sans-serif; }
+.connection-report td { font: 12px/1.6 "Courier New", monospace; }
+.connection-section > p { margin: 8px; font: 11px/1.6 Verdana, sans-serif; }
+.connection-section .connection-result { padding: 7px 9px; border: 1px dashed #a59c77; background: #faf7e9; color: #62562e; }
+.connection-section .connection-confirmed { border: 1px solid #819d70; background: #edf5e7; color: #375b27; }
+.connection-route th { border-left: 4px solid #7189a8; }
 .home-intro p { line-height: 1.8; }
 .home-intro br { display: none; }
 .home-actions a { display: inline-block; padding: 6px 10px; margin: 0 6px 5px 0; background: #dce5f0; border: 2px outset #e1e8f2; color: #183d6b; font-size: 12px; }

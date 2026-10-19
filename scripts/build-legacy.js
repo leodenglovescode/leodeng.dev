@@ -282,7 +282,7 @@ ${playing}${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ?
       const copy = zh ? zhMeta : enMeta
       const key = base.slice(1)
       content = `<h1>${escape(copy[key]?.title || key)}</h1><p>${escape(copy[key]?.description || '')}</p>
-<div class="dashboard"><h2 class="dashboard-heading">${escape(key === 'tokens' ? (zh ? '用量统计' : 'Usage statistics') : key === 'homelab' ? (zh ? '服务器监控' : 'Server monitor') : (zh ? '实时读数' : 'Live readings'))}</h2><div class="live-panel" data-live="${key}"><p>${zh ? '正在连接，等待最新读数...' : 'Connecting, waiting for the latest reading...'}</p></div></div>
+<div class="dashboard"><h2 class="dashboard-heading">${escape(key === 'tokens' ? (zh ? '用量统计' : 'Usage statistics') : key === 'homelab' ? (zh ? '服务器监控' : 'Server monitor') : key === 'ip' ? (zh ? '连接诊断工具' : 'Connection diagnostics') : (zh ? '实时读数' : 'Live readings'))}</h2><div class="live-panel" data-live="${key}"><p>${zh ? '正在连接，等待最新读数...' : 'Connecting, waiting for the latest reading...'}</p></div></div>
 <noscript><p>${zh ? '实时数据需要启用 JavaScript。网站其余内容可以直接阅读。' : 'Live readings need JavaScript. The rest of this site can be read without it.'}</p></noscript>`
       if (key === 'time') {
         const time = await readJson(`src/locales/${zh ? 'zh-CN' : 'en'}/time.json`)

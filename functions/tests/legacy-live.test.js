@@ -216,3 +216,34 @@ test('clock renders intermediate milliseconds each frame and stops rendering whi
   quiet.advance(900)
   assert.notEqual(quiet.find('reference-clock')[0].children[1].textContent, before)
 })
+
+test('classic connection report includes encryption details and only confirms a negotiated hybrid exchange', () => {
+  const app = harness('ip')
+  app.pending('/api/ip').respond({ ip: '2001:db8::42', ipVersion: 6, countryCode: 'TW', city: 'Taipei', userAgent: 'Old Safari',
+    network: { asn: 64500, organization: 'Example network' }, connection: { tlsVersion: 'TLSv1.2', cipher: 'ECDHE-RSA-AES128-GCM-SHA256', httpProtocol: 'HTTP/1.1', colo: 'TPE' } })
+  assert.match(app.panel.textContent, /ECDHE-RSA-AES128-GCM-SHA256/)
+  assert.match(app.panel.textContent, /AS64500/)
+  assert.equal(app.find('connection-confirmed').length, 0)
+  const probe = app.pending('/cdn-cgi/trace')
+  probe.status = 200; probe.responseText = 'tls=TLSv1.3\nkex=X25519MLKEM768\n'; probe.onload()
+  assert.equal(app.find('connection-confirmed').length, 1)
+  assert.match(app.panel.textContent, /Probe TLS version/)
+  assert.match(app.panel.textContent, /separate same-site connection/)
+  assert.equal(app.find('connection-section').length, 3)
+})
+
+test('classic connection report preserves API details when the probe fails, and can refresh', () => {
+  const app = harness('ip')
+  const metadata = { ip: '203.0.113.9', network: {}, connection: { tlsVersion: 'TLSv1.3', cipher: 'AEAD-AES128-GCM-SHA256' } }
+  app.pending('/api/ip').respond(metadata)
+  app.pending('/cdn-cgi/trace').respond(null, { status: 503 })
+  assert.match(app.panel.textContent, /Post-quantum status is unknown/)
+  assert.match(app.panel.textContent, /AEAD-AES128-GCM-SHA256/)
+  assert.equal(app.find('connection-confirmed').length, 0)
+  app.find('connection-tools')[0].children[0].onclick()
+  app.pending('/api/ip').respond(metadata)
+  const probe = app.pending('/cdn-cgi/trace')
+  probe.status = 200; probe.responseText = 'tls=TLSv1.3\nkex=X25519\n'; probe.onload()
+  assert.match(app.panel.textContent, /classical key exchange/)
+  assert.equal(app.find('connection-confirmed').length, 0)
+})

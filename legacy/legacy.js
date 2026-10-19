@@ -37,7 +37,7 @@
     }
     element.appendChild(box);
   }
-  function table(element, rows) {
+  function table(element, rows, showCaption) {
     clear(element);
     var result = document.createElement('table');
     var body = document.createElement('tbody');
@@ -45,15 +45,16 @@
       var row = document.createElement('tr'); row.appendChild(node('th', rows[i][0])); row.appendChild(node('td', rows[i][1])); body.appendChild(row);
     }
     result.appendChild(body); element.appendChild(result);
+    if (showCaption === false) return;
     var caption = node('p', zh ? '载入时的最新读数。刷新页面可更新。' : 'Latest reading at page load. Refresh this page to update.');
     caption.className = 'live-caption'; element.appendChild(caption);
   }
-  function get(endpoint, done, timeout) {
+  function get(endpoint, done, timeout, plain) {
     var request = new XMLHttpRequest();
     request.open('GET', endpoint, true); request.timeout = timeout || 8000;
     request.onload = function () {
       var payload = null;
-      if (request.status === 200) { try { payload = JSON.parse(request.responseText); } catch (_) {} }
+      if (request.status === 200) { try { payload = plain ? request.responseText : JSON.parse(request.responseText); } catch (_) {} }
       done(payload, request);
     };
     request.onerror = request.ontimeout = function () { done(null, request); };
@@ -96,12 +97,79 @@
         dailyBars.push([daily[d].day, daily[d].tokens, number(daily[d].tokens)]); maxDay = Math.max(maxDay, daily[d].tokens);
       }
       if (dailyBars.length) bars(element, zh ? '最近 14 个记录日' : 'Last 14 recorded days', dailyBars, maxDay);
-    } else if (kind === 'ip') {
-      var connection = data.connection || {};
-      var network = data.network || {};
-      table(element, [['IP', data.ip], [zh ? '国家或地区' : 'Country or region', data.countryCode], [zh ? '城市' : 'City', data.city],
-        [zh ? '网络' : 'Network', network.organization], ['TLS', connection.tlsVersion], ['HTTP', connection.httpProtocol]]);
+
     }
+  }
+  function setupConnection(element) {
+    var data = null, probe = null, pending = 0, requests = [], version = 0;
+    function section(title, rows) {
+      var box = node('section', ''); box.className = 'connection-section';
+      box.appendChild(node('h2', title));
+      var body = node('div', ''); table(body, rows, false); box.appendChild(body); element.appendChild(box);
+      return box;
+    }
+    function render() {
+      clear(element); element.className = 'live-panel connection-report';
+      var tools = node('p', ''); tools.className = 'connection-tools';
+      var refresh = node('button', zh ? '重新检测' : 'Check again'); refresh.type = 'button'; refresh.disabled = pending > 0; refresh.onclick = load;
+      tools.appendChild(refresh);
+      var json = node('a', zh ? '查看 JSON' : 'View JSON'); json.href = '/api/ip'; tools.appendChild(json); element.appendChild(tools);
+      var address = node('section', ''); address.className = 'connection-address';
+      address.appendChild(node('h2', zh ? '你的公网地址' : 'Your public address'));
+      var ip = node('strong', data && data.ip); ip.className = 'connection-ip'; address.appendChild(ip);
+      address.appendChild(node('p', data && data.ipVersion ? 'IPv' + data.ipVersion : (zh ? '地址类型未知' : 'Address type unknown'))); element.appendChild(address);
+      var connection = data && data.connection || {}, network = data && data.network || {};
+      var tls = connection.tlsVersion;
+      var strength = tls === 'TLSv1.3' ? (zh ? '强' : 'Strong') : tls === 'TLSv1.2' ? (zh ? '现代' : 'Modern')
+        : /^(TLSv1(?:\.0|\.1)?|SSLv[23])$/.test(tls || '') ? (zh ? '较弱' : 'Weak') : null;
+      var rows = [[zh ? 'TLS 版本' : 'TLS version', tls], [zh ? '协议强度' : 'Protocol strength', strength],
+        [zh ? '加密套件' : 'Cipher suite', connection.cipher], [zh ? 'HTTP 协议' : 'HTTP protocol', connection.httpProtocol],
+        [zh ? '密钥交换（独立探测）' : 'Key exchange (separate probe)', probe && probe.kex]];
+      if (probe && probe.tls !== tls) rows.push([zh ? '探测连接 TLS' : 'Probe TLS version', probe.tls]);
+      var security = section(zh ? '01. 连接加密报告' : '01. Connection security', rows);
+      var hybrid = probe && probe.tls === 'TLSv1.3' && probe.kex === 'X25519MLKEM768';
+      var classical = probe && /^(X25519|P-256|P-384|P-521)$/.test(probe.kex || '');
+      var report = node('p', hybrid ? (zh ? '已确认混合后量子密钥交换。' : 'Hybrid post-quantum key exchange confirmed.')
+        : classical ? (zh ? '探测连接使用经典密钥交换。' : 'The probe uses classical key exchange.')
+        : pending ? (zh ? '正在检测连接...' : 'Checking your connection...')
+        : (zh ? '密钥交换探测不可用，无法确认后量子状态。' : 'Key-exchange probe unavailable. Post-quantum status is unknown.'));
+      report.className = hybrid ? 'connection-result connection-confirmed' : 'connection-result'; security.appendChild(report);
+      security.appendChild(node('p', zh ? '加密套件来自 API 请求。密钥交换由同站点的独立连接探测，结果可能不同。' : 'The cipher suite describes the API request. Key exchange is checked with a separate same-site connection and may differ.'));
+      var route = section(zh ? '02. 请求路径' : '02. Request path', [
+        [zh ? '你的浏览器' : 'Your browser', data && data.userAgent || navigator.userAgent],
+        [zh ? 'Cloudflare 边缘节点' : 'Cloudflare edge', connection.colo],
+        [zh ? '网站' : 'Website', 'old.leodeng.dev']]); route.className += ' connection-route';
+      section(zh ? '03. 网络资料' : '03. Network information', [
+        [zh ? '网络运营商' : 'Network organization', network.organization], ['ASN', network.asn ? 'AS' + network.asn : null],
+        [zh ? '国家或地区' : 'Country or region', data && data.countryCode], [zh ? '区域' : 'Region', data && data.region],
+        [zh ? '大致城市' : 'Approximate city', data && data.city]]);
+      var note = node('p', pending ? (zh ? '正在获取最新读数...' : 'Retrieving current readings...')
+        : !data ? (zh ? '无法获取网络资料。请重新检测。' : 'Network details are unavailable. Try checking again.')
+        : (zh ? '以上为检测时的连接信息。位置为近似值。' : 'Connection details at the time of this check. Location is approximate.'));
+      note.className = 'live-caption'; note.setAttribute('role', 'status'); element.appendChild(note);
+    }
+    function load() {
+      var current = ++version;
+      for (var i = 0; i < requests.length; i++) requests[i].abort();
+      requests = []; data = null; probe = null; pending = 2; render();
+      requests.push(get('/api/ip', function (value) {
+        if (version !== current) return;
+        data = value; pending--; render();
+      }));
+      requests.push(get('/cdn-cgi/trace', function (value) {
+        if (version !== current) return;
+        if (typeof value === 'string' && value.length <= 8192) {
+          var lines = value.split(/\r?\n/), fields = {};
+          for (var l = 0; l < lines.length; l++) {
+            var match = /^(tls|kex)=(.{1,200})$/.exec(lines[l]);
+            if (match) fields[match[1]] = match[2].replace(/^\s+|\s+$/g, '');
+          }
+          if (fields.tls || fields.kex) probe = fields;
+        }
+        pending--; render();
+      }, 8000, true));
+    }
+    load();
   }
   function monotonic() { return window.performance && window.performance.now ? window.performance.now() : Date.now(); }
   function finite(value) { return typeof value === 'number' && isFinite(value); }
@@ -357,6 +425,7 @@
       var kind = element.getAttribute('data-live');
       if (kind === 'now-playing') { setupPlayer(element); return; }
       if (kind === 'time') { setupClock(element); return; }
+      if (kind === 'ip') { setupConnection(element); return; }
       get('/api/' + kind, function (data) { reading(kind, element, data); });
     })(panels[i]);
   }
