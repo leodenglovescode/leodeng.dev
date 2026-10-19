@@ -7,7 +7,7 @@ test('Vite handles the classic player root lyrics API before the SPA fallback', 
   const plugin = legacyPreviewPlugin({ fetchUpstream: async (url, options) => {
     calls++
     assert.equal(url, 'https://lrclib.net/api/get?track_name=Everlong&artist_name=Foo+Fighters&duration=250')
-    assert.equal(options.redirect, 'error')
+    assert.equal(options.redirect, 'manual')
     return Response.json({ duration: 251, syncedLyrics: '[00:01]Example' })
   } })
   plugin.configureServer({ config: { root: process.cwd() }, middlewares: { use: handler => { middleware = handler } } })

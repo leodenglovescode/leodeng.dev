@@ -10,7 +10,7 @@ const request = (search = query, method = 'GET') => new Request(`https://old.leo
 test('public lyrics lookup is fixed-origin, strips credentials and returns only matching synced lyrics', async () => {
   const response = await lookupLyrics(request(), async (url, options) => {
     assert.equal(url, `https://lrclib.net/api/get${query}`)
-    assert.equal(options.redirect, 'error')
+    assert.equal(options.redirect, 'manual')
     assert.equal(options.headers.cookie, undefined)
     assert.equal(options.headers.authorization, undefined)
     return Response.json({ syncedLyrics: '[00:01]Hello', duration: 180, instrumental: false, plainLyrics: 'not needed', extra: 'not needed' })
@@ -42,4 +42,17 @@ test('local classic preview supports lyrics before deploying, preserving query p
   } })
   const response = await preview(request())
   assert.equal((await response.json()).syncedLyrics, '[00:01]Hello')
+})
+
+test('lyrics lookup refuses upstream redirects without following their location', async () => {
+  let calls = 0
+  const response = await lookupLyrics(request(), async (url, options) => {
+    calls++
+    assert.equal(options.redirect, 'manual')
+    assert.ok(url.startsWith('https://lrclib.net/api/get?'))
+    return new Response(null, { status: 302, headers: { Location: 'https://other.example/private' } })
+  })
+  assert.equal(calls, 1)
+  assert.equal(response.status, 503)
+  assert.deepEqual(await response.json(), { error: 'Lyrics unavailable' })
 })
