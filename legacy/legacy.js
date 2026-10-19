@@ -167,13 +167,19 @@
       }
       var query = 'track_name=' + encodeURIComponent(track.title) + '&artist_name=' + encodeURIComponent(track.artist) + '&duration=' + encodeURIComponent(track.durationMs / 1000);
       if (track.album) query += '&album_name=' + encodeURIComponent(track.album);
-      var duration = track.durationMs;
-      lyricRequest = get('/api/lyrics?' + query, function (data) {
+      var duration = track.durationMs, edgeResponse = null;
+      function received(data, response) {
         if (generation !== version || key !== signature || document.hidden) return;
         lyricRequest = null;
         if (!data) {
           status(zh ? '歌词暂时不可用，稍后重试。' : 'Lyrics unavailable. Retrying shortly.');
-          lyricRetry = window.setTimeout(function () { if (key === signature && !document.hidden) loadLyrics(signature); }, 15000);
+          var delay = 30000, responses = [edgeResponse, response];
+          for (var r = 0; r < responses.length; r++) {
+            var retry = responses[r] && responses[r].getResponseHeader('Retry-After');
+            var wait = retry ? (/^\d+$/.test(retry) ? Number(retry) * 1000 : Date.parse(retry) - Date.now()) : 0;
+            if (isFinite(wait)) delay = Math.max(delay, wait);
+          }
+          lyricRetry = window.setTimeout(function () { if (key === signature && !document.hidden) loadLyrics(signature); }, Math.min(2147483647, delay));
           return;
         }
         lines = !data.instrumental && finite(data.duration) && Math.abs(data.duration * 1000 - duration) <= 2000 ? parseLyrics(data.syncedLyrics) : [];
@@ -185,6 +191,18 @@
         if (lines.length) lyrics.removeAttribute('hidden');
         status(lines.length ? '' : (zh ? '此版本暂无同步歌词。' : 'No synced lyrics for this recording.'));
         lastLine = -999; tick();
+      }
+      lyricRequest = get('/api/lyrics?' + query, function (data, response) {
+        if (generation !== version || key !== signature || document.hidden) return;
+        if (data) { received(data, response); return; }
+        edgeResponse = response;
+        // LRCLIB permits browser CORS requests. Shared edge IPs can be rate
+        // limited even when a visitor's own connection works, as on the main
+        // site. Keep the proxy first for devices with older TLS support.
+        lyricRequest = get('https://lrclib.net/api/get?' + query, function (direct, directResponse) {
+          if (directResponse.status === 404) direct = { syncedLyrics: null };
+          received(direct, directResponse);
+        });
       });
     }
     function build() {

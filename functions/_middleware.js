@@ -92,7 +92,7 @@ export async function onRequest(context) {
     'X-Content-Type-Options': 'nosniff',
     'X-Legacy-Site': 'true',
     // Inline, build-owned CSS also works on Safari 9's CSP implementation.
-    'Content-Security-Policy': "default-src 'none'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; media-src https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    'Content-Security-Policy': "default-src 'none'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://lrclib.net; media-src https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   })
   return new Response(request.method === 'HEAD' ? null : body, { status, headers })
 }

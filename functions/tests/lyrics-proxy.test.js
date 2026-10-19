@@ -56,3 +56,32 @@ test('lyrics lookup refuses upstream redirects without following their location'
   assert.equal(response.status, 503)
   assert.deepEqual(await response.json(), { error: 'Lyrics unavailable' })
 })
+
+test('edge cache shares sanitized responses and backs off after rate limiting', async () => {
+  const originalFetch = globalThis.fetch, originalCaches = globalThis.caches
+  const store = new Map(), tasks = []
+  let calls = 0
+  globalThis.caches = { default: {
+    match: async key => store.get(key.url)?.clone(),
+    put: async (key, response) => { assert.equal(key.headers.get('cookie'), null); store.set(key.url, response.clone()) },
+  } }
+  const context = { request: request(), waitUntil: task => tasks.push(task) }
+  try {
+    globalThis.fetch = async () => { calls++; return Response.json({ duration: 180, syncedLyrics: '[00:00]Cached' }) }
+    assert.equal((await onRequest(context)).status, 200)
+    await Promise.all(tasks)
+    assert.equal((await (await onRequest(context)).json()).syncedLyrics, '[00:00]Cached')
+    assert.equal(calls, 1)
+    store.clear()
+    globalThis.fetch = async () => { calls++; return new Response(null, { status: 429, headers: { 'Retry-After': '120' } }) }
+    const limited = await onRequest(context)
+    assert.equal(limited.status, 503)
+    assert.equal(limited.headers.get('Retry-After'), '120')
+    await Promise.all(tasks)
+    assert.match(store.get(context.request.url).headers.get('cache-control'), /max-age=120/)
+    const cached = await onRequest(context)
+    assert.equal(cached.status, 503)
+    assert.equal(cached.headers.get('Cache-Control'), 'no-store')
+    assert.equal(calls, 2)
+  } finally { globalThis.fetch = originalFetch; globalThis.caches = originalCaches }
+})

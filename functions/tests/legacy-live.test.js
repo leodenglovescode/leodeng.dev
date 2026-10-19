@@ -130,11 +130,35 @@ test('temporary lyric failures retry the same song and show the recovered lyrics
   const app = harness('now-playing')
   app.pending('/api/now-playing').respond(track(app.now()))
   app.pending('/api/lyrics').respond(null, { status: 503 })
+  app.pending('https://lrclib.net/api/get').respond(null, { status: 429, headers: { 'retry-after': '60' } })
   assert.match(app.find('player-lyric-status')[0].textContent, /Retrying/)
-  app.advance(15000)
+  // Keep playback alive while observing the upstream retry delay.
+  for (let i = 0; i < 29; i++) {
+    app.advance(2000)
+    app.pending('/api/now-playing').respond(track(app.now()))
+  }
+  assert.equal(app.pending('/api/lyrics'), undefined)
+  app.advance(2000)
   app.pending('/api/lyrics').respond({ duration: 180, syncedLyrics: '[00:00]Recovered lyric' })
   assert.equal(app.find('lyric-active')[0].textContent, 'Recovered lyric')
   assert.equal(app.find('player-lyric-status')[0].getAttribute('hidden'), 'hidden')
+})
+
+test('classic player falls back to browser CORS when the edge is rate limited, and cancels stale requests', () => {
+  const app = harness('now-playing')
+  app.pending('/api/now-playing').respond(track(app.now()))
+  app.pending('/api/lyrics').respond(null, { status: 503 })
+  app.pending('https://lrclib.net/api/get').respond({ duration: 180, syncedLyrics: '[00:00]Browser lyric' })
+  assert.equal(app.find('lyric-active')[0].textContent, 'Browser lyric')
+  app.advance(2000)
+  app.pending('/api/now-playing').respond(track(app.now(), { title: 'Next' }))
+  app.pending('/api/lyrics').respond(null, { status: 503 })
+  const late = app.pending('https://lrclib.net/api/get')
+  app.advance(2000)
+  app.pending('/api/now-playing').respond(track(app.now(), { title: 'Third' }))
+  assert.equal(late.aborted, true)
+  late.respond({ duration: 180, syncedLyrics: '[00:00]Wrong track' })
+  assert.equal(app.find('player-lyrics')[0].getAttribute('hidden'), 'hidden')
 })
 
 test('classic clock takes three samples each minute, ticks milliseconds and falls back on failed synchronization', () => {
