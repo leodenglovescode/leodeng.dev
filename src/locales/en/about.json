@@ -29,5 +29,12 @@
   "1stLanguage": "1st language",
   "english": "English",
   "2ndLanguage": "2nd language",
-  "shelfLink": "Movies, TV shows and albums on my shelf"
+  "shelfLink": "Movies, TV shows and albums on my shelf",
+  "musicPlayerNotice": "This player is provided by Apple. Loading it lets Apple receive connection and usage information and use cookies or local storage. It stays off until you choose to load it.",
+  "loadMusicPlayer": "Load Apple Music player",
+  "unloadMusicPlayer": "Unload player",
+  "openMusicPlaylist": "Open playlist on Apple Music",
+  "applePlayerPrivacy": "Apple’s player privacy notice",
+  "sitePrivacy": "Site privacy",
+  "musicPlayerTitle": "My favorite rock playlist on Apple Music"
 }

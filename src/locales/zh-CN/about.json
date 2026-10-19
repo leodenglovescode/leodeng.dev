@@ -29,5 +29,12 @@
   "1stLanguage": "母语",
   "english": "英语",
   "2ndLanguage": "第二语言",
-  "shelfLink": "看过的电影、剧集和喜欢的专辑"
+  "shelfLink": "看过的电影、剧集和喜欢的专辑",
+  "musicPlayerNotice": "此播放器由 Apple 提供。加载后，Apple 会接收连接和使用信息，并可能使用 Cookie 或本地存储。在你选择加载前，播放器不会连接 Apple。",
+  "loadMusicPlayer": "加载 Apple Music 播放器",
+  "unloadMusicPlayer": "卸载播放器",
+  "openMusicPlaylist": "在 Apple Music 打开歌单",
+  "applePlayerPrivacy": "Apple 播放器隐私说明",
+  "sitePrivacy": "本站隐私说明",
+  "musicPlayerTitle": "我最喜欢的摇滚歌单（Apple Music）"
 }

@@ -12,6 +12,9 @@ const { isZh, t, localePath } = useLocale('about')
 // Starts true to match index.html's default class="dark"; `document` isn't
 // available during SSR, so the real value is only read once mounted.
 const isDark = ref(true)
+// Permission lasts only for this mounted page. No iframe, preconnect, or
+// remembered opt-in contacts Apple before the visitor chooses to load it.
+const musicPlayerEnabled = ref(false)
 let themeObserver
 
 onMounted(() => {
@@ -315,9 +318,10 @@ onMounted(() => {
         </div>
       </div>
 
-      <Teleport to="body">
+      <!-- Only mount this client-side tooltip when it is visible. An empty
+           SSR teleport into body can hydrate against the page's own root. -->
+      <Teleport v-if="tooltip.visible" to="body">
         <div
-          v-if="tooltip.visible"
           class="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-full px-2.5 py-1.5 rounded-md bg-surface border border-fg/10 shadow-lg text-xs font-mono whitespace-nowrap"
           :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
         >
@@ -329,7 +333,13 @@ onMounted(() => {
 
     <section>
       <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-6">{{ t('myFavoriteRockPlaylist') }}</h2>
+      <div v-if="!musicPlayerEnabled" data-legacy-hide="true" class="border border-fg/10 rounded-lg p-5 space-y-4">
+        <p id="apple-music-notice" class="text-sm text-muted leading-relaxed">{{ t('musicPlayerNotice') }}</p>
+        <button type="button" aria-describedby="apple-music-notice" class="px-4 py-2 rounded-md bg-accent-strong text-white text-sm font-medium" @click="musicPlayerEnabled = true">{{ t('loadMusicPlayer') }}</button>
+      </div>
       <iframe
+        v-else
+        :title="t('musicPlayerTitle')"
         allow="autoplay *; encrypted-media *;"
         frameborder="0"
         height="450"
@@ -337,6 +347,12 @@ onMounted(() => {
         sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
         :src="`https://embed.music.apple.com/cn/playlist/rock-essentials/pl.u-XkD0vBBs2bRAkr6?l=${isZh ? 'zh-CN' : 'en'}&theme=${isDark ? 'dark' : 'light'}`"
       ></iframe>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-muted">
+        <button v-if="musicPlayerEnabled" type="button" class="underline hover:text-accent" @click="musicPlayerEnabled = false">{{ t('unloadMusicPlayer') }}</button>
+        <a href="https://music.apple.com/cn/playlist/rock-essentials/pl.u-XkD0vBBs2bRAkr6" target="_blank" rel="noopener noreferrer" class="underline hover:text-accent">{{ t('openMusicPlaylist') }}</a>
+        <a data-legacy-hide="true" href="https://www.apple.com/legal/privacy/data/en/apple-music-web/" target="_blank" rel="noopener noreferrer" class="underline hover:text-accent">{{ t('applePlayerPrivacy') }}</a>
+        <RouterLink data-legacy-hide="true" :to="localePath('/privacy')" class="underline hover:text-accent">{{ t('sitePrivacy') }}</RouterLink>
+      </div>
     </section>
 
     <section>

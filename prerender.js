@@ -28,6 +28,7 @@ const staticRoutes = [
   { path: '/blog', key: 'blog' },
   { path: '/contact', key: 'contact' },
   { path: '/pgp', key: 'pgp' },
+  { path: '/privacy', key: 'privacy' },
   { path: '/interests', key: 'interests' },
 ]
 

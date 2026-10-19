@@ -1,0 +1,69 @@
+{
+  "title": "Privacy & browser storage",
+  "updated": "Last updated: October 20, 2026",
+  "intro": "This is Leo Deng’s personal website. This notice covers leodeng.dev and its classic edition at old.leodeng.dev.",
+  "sections": [
+    {
+      "id": "preferences",
+      "title": "Your preferences",
+      "paragraphs": [
+        "Your browser can remember your theme, language, and the interests you select on the Interests page using local storage. These settings stay in that browser until you clear them.",
+        "Choosing the full site on an older device sets a site_view cookie for 30 days so you are not redirected back to the classic site. The classic site also uses session storage to remember why you were redirected during that tab’s session."
+      ]
+    },
+    {
+      "id": "hosting",
+      "title": "Hosting & connection information",
+      "paragraphs": [
+        "Cloudflare delivers and protects this site and its media. It processes connection information such as IP addresses and request headers, and may use security cookies depending on the protection features in use. The IP & connection page displays information about your own request.",
+        "Cloudflare handles information under its own policies. I do not set a separate retention period for Cloudflare’s operational records."
+      ],
+      "links": [
+        {
+          "href": "https://www.cloudflare.com/privacypolicy/",
+          "label": "Cloudflare privacy policy"
+        },
+        {
+          "href": "https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/",
+          "label": "Cloudflare security cookies"
+        }
+      ]
+    },
+    {
+      "id": "apple",
+      "title": "The optional Apple Music player",
+      "paragraphs": [
+        "The About page leaves Apple’s player unloaded until you choose “Load Apple Music player.” Loading it allows Apple to receive connection and player-usage information and use cookies or similar local storage. Apple describes collection even when you are not signed in.",
+        "The choice is not saved between visits. You can unload the player on the page; that does not erase data Apple has already stored. You can also open the playlist directly on Apple Music. The classic edition provides links instead of embedding the player."
+      ],
+      "links": [
+        {
+          "href": "https://www.apple.com/legal/privacy/data/en/apple-music-web/",
+          "label": "Apple Music web player & privacy"
+        }
+      ]
+    },
+    {
+      "id": "external",
+      "title": "Other external services",
+      "paragraphs": [
+        "Depending on the page, your browser may request Google Fonts, public data from GitHub, lyrics from LRCLIB, or cover art from external providers such as Cover Art Archive. Those providers receive connection information when your browser contacts them. Links to other websites take you to services with their own privacy practices.",
+        "The site’s own browser storage supports the features described above. I have not added advertising trackers to the site’s application code."
+      ]
+    },
+    {
+      "id": "choices",
+      "title": "Your choices & contact",
+      "paragraphs": [
+        "You can leave the Apple Music player unloaded and read the site normally. Browser settings let you inspect, block, or clear cookies and local storage. Clearing saved preferences resets them.",
+        "For questions about this site’s privacy practices, email me."
+      ],
+      "links": [
+        {
+          "href": "mailto:leodeng@leodeng.dev",
+          "label": "leodeng@leodeng.dev"
+        }
+      ]
+    }
+  ]
+}

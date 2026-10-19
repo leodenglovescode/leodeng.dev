@@ -1,4 +1,5 @@
 {
+  "privacy": {"title": "Privacy", "description": "How this site uses browser storage, Cloudflare, and external services."},
   "defaultDescription": "Leo's corner of the internet. Projects, blog posts, and whatever I'm building lately.",
   "home": { "title": null },
   "about": { "title": "About" },

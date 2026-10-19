@@ -65,6 +65,7 @@ const socialLinks = [
       <RouterLink :to="localePath('/changelog')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('changelog') }}</RouterLink>
       <RouterLink :to="localePath('/interests')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('interests') }}</RouterLink>
       <RouterLink :to="localePath('/pgp')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">PGP</RouterLink>
+      <RouterLink :to="localePath('/privacy')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('privacy') }}</RouterLink>
       <div class="flex items-center gap-4">
         <template v-for="link in socialLinks" :key="link.label">
           <RouterLink

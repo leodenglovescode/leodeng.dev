@@ -1,0 +1,69 @@
+{
+  "title": "隐私与浏览器存储",
+  "updated": "最后更新：2026 年 10 月 20 日",
+  "intro": "这里是 Leo Deng 的个人网站。本说明适用于 leodeng.dev 及其经典版 old.leodeng.dev。",
+  "sections": [
+    {
+      "id": "preferences",
+      "title": "你的偏好设置",
+      "paragraphs": [
+        "浏览器可以通过本地存储记住主题、语言，以及你在兴趣页面选择的兴趣。这些设置保留在当前浏览器中，直到你将其清除。",
+        "在旧设备上选择完整版网站后，site_view Cookie 会保存 30 天，避免你再次被自动跳转到经典版。经典版也会通过会话存储，在当前标签页的会话期间记住跳转原因。"
+      ]
+    },
+    {
+      "id": "hosting",
+      "title": "托管与连接信息",
+      "paragraphs": [
+        "Cloudflare 为本站及媒体文件提供分发和安全防护。它会处理 IP 地址、请求头等连接信息，并可能根据启用的防护功能使用安全 Cookie。“IP 与连接”页面显示的是你自己的请求信息。",
+        "Cloudflare 按其自身政策处理信息。我没有为其运行记录另行设定保留期限。"
+      ],
+      "links": [
+        {
+          "href": "https://www.cloudflare.com/privacypolicy/",
+          "label": "Cloudflare 隐私政策"
+        },
+        {
+          "href": "https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/",
+          "label": "Cloudflare 安全 Cookie 说明"
+        }
+      ]
+    },
+    {
+      "id": "apple",
+      "title": "可选的 Apple Music 播放器",
+      "paragraphs": [
+        "关于页面不会加载 Apple 播放器，直到你选择“加载 Apple Music 播放器”。加载后，Apple 会接收连接和播放器使用信息，并可能使用 Cookie 或类似本地存储。Apple 的说明也涵盖未登录用户的信息收集。",
+        "这一选择不会在下次访问时自动恢复。你可以在页面上卸载播放器，但这不会清除 Apple 已经存储的数据。你也可以直接在 Apple Music 打开歌单。经典版仅提供链接，不嵌入播放器。"
+      ],
+      "links": [
+        {
+          "href": "https://www.apple.com.cn/legal/privacy/data/zh-cn/apple-music-web/",
+          "label": "Apple Music 网页播放器与隐私"
+        }
+      ]
+    },
+    {
+      "id": "external",
+      "title": "其他外部服务",
+      "paragraphs": [
+        "根据访问的页面，浏览器可能请求 Google Fonts、GitHub 公开数据、LRCLIB 歌词，或 Cover Art Archive 等外部服务提供的封面。这些服务会在浏览器连接时收到连接信息。访问外部链接后，相应网站适用其自身的隐私规则。",
+        "本站自身的浏览器存储用于上述功能。我没有在本站应用代码中添加广告追踪器。"
+      ]
+    },
+    {
+      "id": "choices",
+      "title": "你的选择与联系方式",
+      "paragraphs": [
+        "你可以保持 Apple Music 播放器未加载，正常阅读网站。浏览器设置允许你查看、阻止或清除 Cookie 和本地存储。清除已保存的偏好数据会重置设置。",
+        "如果对本站的隐私做法有疑问，可以给我发邮件。"
+      ],
+      "links": [
+        {
+          "href": "mailto:leodeng@leodeng.dev",
+          "label": "leodeng@leodeng.dev"
+        }
+      ]
+    }
+  ]
+}
