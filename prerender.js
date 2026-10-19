@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { localePath } from './src/utils/localePath.js'
+import { buildLegacySite } from './scripts/build-legacy.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -167,6 +168,8 @@ async function prerender() {
 
   fs.writeFileSync(path.join(__dirname, 'dist/rss.xml'), rss)
   console.log('✓ Generated rss.xml')
+  fs.writeFileSync(path.join(__dirname, 'dist/_site-routes.json'), JSON.stringify(routes))
+  await buildLegacySite({ routes, collections })
 }
 
 prerender().catch(err => {

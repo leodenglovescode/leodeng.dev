@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/assets/*",
+    "/_legacy/*",
+    "/linux/*",
+    "/projects_screenshots/*",
+    "/favicon*",
+    "/apple-touch-icon.png",
+    "/leo_profilepic.webp",
+    "/rss.xml",
+    "/sitemap.xml",
+    "/robots.txt"
+  ]
+}

@@ -3,6 +3,27 @@
  "generatedAt": "2026-10-19",
  "commits": [
   {
+   "hash": "b43124f7dbfefca7a5fe8579822f555508a2fb7f",
+   "date": "2026-10-19",
+   "type": "fix",
+   "scope": null,
+   "subject": "speed up now-playing updates with adaptive polling"
+  },
+  {
+   "hash": "3e35ecb9b43fdeb79f789efb936af8f45bed271d",
+   "date": "2026-10-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "show browser and user-agent on IP page"
+  },
+  {
+   "hash": "328b8558f24b50bf3e51d88985a9bd7aeb29add5",
+   "date": "2026-10-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "add synced lyrics and refine now-playing card"
+  },
+  {
    "hash": "74c6e6edcf5e830755dc9f75e3a579258030e94c",
    "date": "2026-10-19",
    "type": "feat",

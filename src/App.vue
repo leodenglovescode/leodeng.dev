@@ -10,6 +10,7 @@ const route = useRoute()
 // /admin opts out of the navbar, footer and reading-width column.
 const chrome = computed(() => route.meta?.chrome !== false)
 const { t, localePath } = useLocale('common')
+const simpleSiteUrl = computed(() => `${import.meta.env.DEV ? '/_legacy' : 'https://old.leodeng.dev'}${route.meta?.locale === 'zh' ? '/zh/' : '/'}`)
 
 const socialLinks = [
   {
@@ -64,6 +65,7 @@ const socialLinks = [
       <RouterLink :to="localePath('/changelog')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('changelog') }}</RouterLink>
       <RouterLink :to="localePath('/interests')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('interests') }}</RouterLink>
       <RouterLink :to="localePath('/pgp')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">PGP</RouterLink>
+      <a :href="simpleSiteUrl" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('simpleSite') }}</a>
       <div class="flex items-center gap-4">
         <template v-for="link in socialLinks" :key="link.label">
           <RouterLink

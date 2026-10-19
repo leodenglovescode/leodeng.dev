@@ -13,6 +13,7 @@ const age = calcAge()
 const currentStatus = ref('')
 const { isZh, t, localePath } = useLocale('home')
 const statuses = computed(() => t('statuses'))
+const classicSiteUrl = computed(() => `${import.meta.env.DEV ? '/_legacy' : 'https://old.leodeng.dev'}${isZh.value ? '/zh/' : '/'}`)
 
 let statusTimer = null
 
@@ -66,7 +67,7 @@ onBeforeUnmount(() => {
 <template>
   <header class="pt-20 sm:pt-32 pb-20 flex flex-col-reverse sm:flex-row items-center sm:items-start gap-10 sm:gap-12">
     <div class="flex-1">
-      <HomeClock />
+      <HomeClock data-legacy-hide="true" />
 
       <h1 class="text-3xl sm:text-4xl font-bold text-fg leading-tight mb-4">
         {{ t('heyIMLeo') }}<span class="text-highlight">{{ isZh ? '。' : '.' }}</span>
@@ -98,6 +99,9 @@ onBeforeUnmount(() => {
           → {{ t('about') }}
         </RouterLink>
       </div>
+      <a :href="classicSiteUrl" class="classic-web-button" data-legacy-hide="true" :title="t('classicSiteTitle')">
+        <strong>WEB 1.0</strong><span>{{ t('takeMeBack') }}</span>
+      </a>
     </div>
 
     <div class="flex w-full shrink-0 flex-col items-center gap-4 sm:w-64">
@@ -110,3 +114,22 @@ onBeforeUnmount(() => {
     </div>
   </header>
 </template>
+
+<style scoped>
+.classic-web-button {
+  display: inline-block;
+  width: 88px;
+  margin-top: 24px;
+  padding: 3px;
+  border: 2px outset #c9d5e4;
+  background: #dce5f0;
+  color: #183d6b;
+  text-align: center;
+  text-decoration: none;
+  font: bold 9px/1.3 'Courier New', monospace;
+}
+.classic-web-button strong { display: block; background: #31537e; color: #fff; font-size: 11px; }
+.classic-web-button:hover { background: #fff4b9; }
+.classic-web-button:active { border-style: inset; }
+.classic-web-button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+</style>
