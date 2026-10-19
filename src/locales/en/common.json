@@ -21,6 +21,8 @@
   "toggleMenu": "Toggle menu",
   "leoIsNowPlaying": "Leo is now playing",
   "songProgress": "Song progress",
+  "syncedLyrics": "Synced lyrics",
+  "lyricsViaLrclib": "Lyrics via LRCLIB",
   "time": "Time",
   "terminal": "Terminal",
   "shelf": "Shelf"

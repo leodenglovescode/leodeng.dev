@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLocale } from '../utils/i18n.js'
+import SyncedLyrics from './SyncedLyrics.vue'
 
 const { t } = useLocale('common')
 
@@ -10,6 +11,14 @@ const STALE_AFTER_MS = 35_000
 
 const nowPlaying = ref(null)
 const progressClock = ref(0)
+const artworkFailed = ref(false)
+const artworkUrl = computed(() => {
+  try {
+    const url = new URL(nowPlaying.value?.artworkUrl || '')
+    return url.protocol === 'https:' && !url.username && !url.password ? url.href : ''
+  } catch { return '' }
+})
+watch(artworkUrl, () => { artworkFailed.value = false })
 
 let pollTimer = null
 let progressTimer = null
@@ -28,12 +37,6 @@ const progressPercent = computed(() => {
   const duration = nowPlaying.value?.durationMs ?? 0
   if (duration <= 0) return 0
   return Math.min(100, (positionMs.value / duration) * 100)
-})
-
-const byline = computed(() => {
-  const track = nowPlaying.value
-  if (!track) return ''
-  return track.album ? `${track.artist} · ${track.album}` : track.artist
 })
 
 function formatTime(milliseconds) {
@@ -92,6 +95,7 @@ async function refreshNowPlaying() {
       title: payload.title,
       artist: payload.artist,
       album: typeof payload.album === 'string' ? payload.album : '',
+      artworkUrl: typeof payload.artworkUrl === 'string' ? payload.artworkUrl : '',
       durationMs: payload.durationMs,
       syncedPositionMs: Math.min(payload.durationMs, Math.max(0, payload.positionMs + ageAtResponse)),
       syncedAt,
@@ -133,12 +137,27 @@ onBeforeUnmount(() => {
       class="mx-auto w-full max-w-72 rounded-xl bg-fg/[0.035] p-3 sm:max-w-none"
       :aria-label="t('leoIsNowPlaying')"
     >
+      <p class="mb-2 flex items-center gap-1.5 font-mono text-[11px] text-accent">
+        <span class="now-playing-pulse h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+        {{ t('leoIsNowPlaying') }}
+      </p>
       <div class="flex min-w-0 items-start gap-3">
         <div
-          class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-2xl text-accent"
+          class="now-playing-artwork relative flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-accent-soft text-2xl text-accent"
           aria-hidden="true"
         >
-          <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <img
+            v-if="artworkUrl && !artworkFailed"
+            :key="artworkUrl"
+            :src="artworkUrl"
+            alt=""
+            width="72"
+            height="72"
+            decoding="async"
+            referrerpolicy="no-referrer"
+            @error="artworkFailed = true"
+          />
+          <svg v-else class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 18V5l11-2v13" />
             <path d="m9 9 11-2" />
             <circle cx="6" cy="18" r="3" />
@@ -147,15 +166,14 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="min-w-0 flex-1">
-          <p class="flex items-center gap-1.5 font-mono text-[11px] text-accent">
-            <span class="now-playing-pulse h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
-            {{ t('leoIsNowPlaying') }}
-          </p>
-          <p class="mt-1 text-sm font-semibold leading-snug text-fg" :title="nowPlaying.title">
+          <p class="text-sm font-semibold leading-snug text-fg" :title="nowPlaying.title">
             {{ nowPlaying.title }}
           </p>
-          <p class="mt-0.5 text-xs leading-snug text-muted" :title="byline">
-            {{ byline }}
+          <p class="mt-0.5 text-xs leading-snug text-muted" :title="nowPlaying.artist">
+            {{ nowPlaying.artist }}
+          </p>
+          <p v-if="nowPlaying.album" class="mt-0.5 text-[12px] leading-snug text-muted/80" :title="nowPlaying.album">
+            {{ nowPlaying.album }}
           </p>
         </div>
       </div>
@@ -179,11 +197,24 @@ onBeforeUnmount(() => {
           <span>{{ formatTime(nowPlaying.durationMs) }}</span>
         </div>
       </div>
+      <SyncedLyrics :track="nowPlaying" :position-ms="positionMs" />
     </aside>
   </Transition>
 </template>
 
 <style scoped>
+.now-playing-artwork img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  object-fit: cover;
+}
+
 .now-playing-enter-active,
 .now-playing-leave-active {
   transition: opacity 180ms ease, transform 180ms ease;

@@ -1,7 +1,84 @@
 {
  "repo": "leodenglovescode/leodeng.dev",
- "generatedAt": "2026-10-10",
+ "generatedAt": "2026-10-19",
  "commits": [
+  {
+   "hash": "74c6e6edcf5e830755dc9f75e3a579258030e94c",
+   "date": "2026-10-19",
+   "type": "feat",
+   "scope": null,
+   "subject": "add interactive media shelf and local admin editing"
+  },
+  {
+   "hash": "7e389224132cf9905040a575fbd08b4add2dea64",
+   "date": "2026-10-11",
+   "type": "content",
+   "scope": null,
+   "subject": "revised blog md syntax issues"
+  },
+  {
+   "hash": "eecc85101eb513f959df4ed45338e4920e53fccb",
+   "date": "2026-10-10",
+   "type": "fix",
+   "scope": null,
+   "subject": "tidy request path card spacing"
+  },
+  {
+   "hash": "d03a1bee450d5cae07585eadad3b10273aa39488",
+   "date": "2026-10-10",
+   "type": "content",
+   "scope": null,
+   "subject": "update stack info"
+  },
+  {
+   "hash": "fbc16be9a35c700f07af4e2d6feab701856452c0",
+   "date": "2026-10-10",
+   "type": "chore",
+   "scope": null,
+   "subject": "update site presentation"
+  },
+  {
+   "hash": "ba4c18f592a18b0fa5d515f20e7a6b14930664da",
+   "date": "2026-10-10",
+   "type": "content",
+   "scope": null,
+   "subject": "update new blog to include less <br/>'s"
+  },
+  {
+   "hash": "ab5b0510f38a8200decff357fe05035a957eac94",
+   "date": "2026-10-10",
+   "type": "chore",
+   "scope": null,
+   "subject": "simplify IP dashboard and remove repeated connection details"
+  },
+  {
+   "hash": "9146847d8e425c117590244d21bcbd0909a6de0e",
+   "date": "2026-10-10",
+   "type": "feat",
+   "scope": null,
+   "subject": "add full terminal articles and publish website updates"
+  },
+  {
+   "hash": "515e21cc657d12329add85de0324e6b772820478",
+   "date": "2026-10-10",
+   "type": "feat",
+   "scope": null,
+   "subject": "add clock offset meter, command palette and connection route"
+  },
+  {
+   "hash": "dfaa56e8a27cc304c9378db7340600cb8277f998",
+   "date": "2026-10-10",
+   "type": "chore",
+   "scope": null,
+   "subject": "move TLS key exchange above network details"
+  },
+  {
+   "hash": "2cbbef3e0c9fb558eb1a062af7f2b15d11fedc4b",
+   "date": "2026-10-10",
+   "type": "feat",
+   "scope": null,
+   "subject": "add visitor IP dashboard and TLS security indicators"
+  },
   {
    "hash": "35f46556be3f3bf64ae301a1c3ef920d8b39f241",
    "date": "2026-10-08",
