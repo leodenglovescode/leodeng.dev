@@ -86,10 +86,11 @@ returns:
 }
 ```
 
-The response is cached at Cloudflare for five seconds. A future widget should
-advance the progress bar locally from `positionMs` using the difference between
-the browser clock and `serverNow`, capped at `durationMs`. This gives smooth
-progress without polling every second.
+The response is cached for one second. The homepage polls every five seconds
+while idle and every two seconds while playing, with no overlapping requests.
+It advances the progress bar and timed lyrics locally between updates.
+The Mac agent uses the same adaptive checking intervals, publishes playback
+changes immediately when detected, and sends routine heartbeats every five seconds.
 
 ### Private metadata ingest
 
@@ -110,9 +111,9 @@ content type. The body shape is:
 ```
 
 `album` and `artworkKey` may be `null`. The JSON body is capped at 8 KB.
-Accepted metadata writes are limited globally to one every three seconds using
+Accepted metadata writes are limited globally to one per second using
 an atomic conditional D1 upsert. A rejected write returns `429` with
-`Retry-After: 3`.
+`Retry-After: 1`.
 
 `DELETE /api/internal/now-playing` uses the same bearer token and clears the
 current row immediately. The Mac agent calls it when playback

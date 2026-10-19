@@ -146,7 +146,7 @@ test('authenticated metadata is stored and returned by the public endpoint', asy
       { database },
     ))
     assert.equal(read.status, 200)
-    assert.equal(read.headers.get('cache-control'), 'public, max-age=5')
+    assert.equal(read.headers.get('cache-control'), 'public, max-age=1')
     assert.deepEqual(await read.json(), {
       playing: true,
       title: 'Dreams',
@@ -178,15 +178,16 @@ test('metadata writes require the secret and are globally rate limited', async (
 
     assert.equal((await ingestEndpoint(context(metadataRequest(track), { database }))).status, 200)
 
-    now += 1_000
     const limited = await ingestEndpoint(context(
       metadataRequest({ ...track, trackKey: 'a-different-track' }),
       { database },
     ))
     assert.equal(limited.status, 429)
-    assert.equal(limited.headers.get('retry-after'), '3')
+    assert.equal(limited.headers.get('retry-after'), '1')
 
     now += 2_000
+    assert.equal((await ingestEndpoint(context(metadataRequest(track), { database }))).status, 200)
+    now += 1_000
     assert.equal((await ingestEndpoint(context(metadataRequest(track), { database }))).status, 200)
   } finally {
     Date.now = originalNow

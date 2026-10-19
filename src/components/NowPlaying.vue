@@ -5,7 +5,8 @@ import SyncedLyrics from './SyncedLyrics.vue'
 
 const { t } = useLocale('common')
 
-const POLL_INTERVAL_MS = 10_000
+const IDLE_POLL_INTERVAL_MS = 5_000
+const PLAYING_POLL_INTERVAL_MS = 2_000
 const REQUEST_TIMEOUT_MS = 5_000
 const STALE_AFTER_MS = 35_000
 
@@ -24,6 +25,7 @@ let pollTimer = null
 let progressTimer = null
 let activeRequest = null
 let lastSuccessfulFetchAt = 0
+let stopped = false
 
 const positionMs = computed(() => {
   const track = nowPlaying.value
@@ -58,10 +60,13 @@ function validPayload(payload) {
 }
 
 async function refreshNowPlaying() {
+  if (stopped) return
+  window.clearTimeout(pollTimer)
   activeRequest?.abort()
   const controller = new AbortController()
   activeRequest = controller
   const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const startedAt = performance.now()
 
   try {
     const response = await fetch('/api/now-playing', {
@@ -109,7 +114,13 @@ async function refreshNowPlaying() {
     }
   } finally {
     window.clearTimeout(timeout)
-    if (activeRequest === controller) activeRequest = null
+    if (activeRequest === controller) {
+      activeRequest = null
+      if (!stopped) {
+        const interval = nowPlaying.value ? PLAYING_POLL_INTERVAL_MS : IDLE_POLL_INTERVAL_MS
+        pollTimer = window.setTimeout(refreshNowPlaying, Math.max(0, interval - (performance.now() - startedAt)))
+      }
+    }
   }
 }
 
@@ -117,15 +128,15 @@ onMounted(() => {
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   progressClock.value = performance.now()
   void refreshNowPlaying()
-  pollTimer = window.setInterval(refreshNowPlaying, POLL_INTERVAL_MS)
   progressTimer = window.setInterval(() => {
     progressClock.value = performance.now()
   }, reduceMotion ? 1000 : 250)
 })
 
 onBeforeUnmount(() => {
+  stopped = true
   activeRequest?.abort()
-  window.clearInterval(pollTimer)
+  window.clearTimeout(pollTimer)
   window.clearInterval(progressTimer)
 })
 </script>

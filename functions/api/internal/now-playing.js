@@ -65,7 +65,7 @@ export async function onRequest(context) {
 
     if (!result.meta.changes) {
       return json(
-        { error: 'Updates are limited to one every three seconds.' },
+        { error: 'Updates are limited to one per second.' },
         429,
         { 'retry-after': String(NOW_PLAYING_MIN_UPDATE_SECONDS) },
       )
