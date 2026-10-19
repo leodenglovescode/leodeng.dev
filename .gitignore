@@ -54,3 +54,6 @@ token-agent/.cache/
 
 # Local macOS Apple Music publisher, including its binary and setup material.
 now-playing-agent/
+
+# Legacy uploads from the former local-only media mode. Never commit.
+.local-admin/

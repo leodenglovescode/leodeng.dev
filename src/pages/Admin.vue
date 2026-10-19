@@ -4,7 +4,8 @@ import { onBeforeRouteLeave } from 'vue-router'
 import MarkdownEditor from '../components/admin/MarkdownEditor.vue'
 import MediaManager from '../components/admin/MediaManager.vue'
 import ProjectManager from '../components/admin/ProjectManager.vue'
-import { deleteFile, getFile, getSession, listDir, logout, putFile, encodeBase64 } from '../utils/adminApi.js'
+import ShelfManager from '../components/admin/ShelfManager.vue'
+import { localAdmin, deleteFile, getFile, getSession, listDir, logout, putFile, encodeBase64 } from '../utils/adminApi.js'
 import { parseFrontmatter } from '../utils/posts.js'
 
 const POSTS_DIR = 'src/posts'
@@ -31,6 +32,7 @@ const saving = ref(false)
 const mediaOpen = ref(false)
 const editor = ref(null)
 const projectDirty = ref(false)
+const shelfDirty = ref(false)
 
 const form = ref(null)
 const pristine = ref('')
@@ -356,11 +358,12 @@ function snapshot(d) {
   return JSON.stringify([d.slug, d.title, d.description, d.date, d.body])
 }
 
-const isDirty = computed(() => projectDirty.value || (!!form.value && snapshot(form.value) !== pristine.value))
+const isDirty = computed(() => projectDirty.value || shelfDirty.value || (!!form.value && snapshot(form.value) !== pristine.value))
 
 function selectTab(nextTab) {
   if (nextTab === tab.value) return
   if (projectDirty.value && !confirm('Discard unsaved project changes?')) return
+  if (shelfDirty.value && !confirm('Leave unsaved shelf changes? They stay on this device and can be restored from the Shelf tab.')) return
   tab.value = nextTab
 }
 
@@ -558,7 +561,7 @@ async function saveTo(targetDir) {
     pristine.value = snapshot(d)
     notice.value = targetDir === DRAFTS_DIR
       ? 'Draft saved. It stays out of the build until you publish it.'
-      : 'Published. Cloudflare Pages will rebuild in a minute or two.'
+      : localAdmin.value ? 'Saved to src/posts locally. Commit and push to publish online.' : 'Published. Cloudflare Pages will rebuild in a minute or two.'
     await loadPosts()
     return true
   } catch (err) {
@@ -636,7 +639,7 @@ async function saveNowEvent() {
     d.finishedAt = event.finishedAt ? toLocalInput(event.finishedAt) : ''
     d.details = { ...event.details }
     pristine.value = snapshot(d)
-    notice.value = 'Now event saved. Cloudflare Pages will rebuild in a minute or two.'
+    notice.value = localAdmin.value ? 'Now event saved to the local file.' : 'Now event saved. Cloudflare Pages will rebuild in a minute or two.'
     return true
   } catch (err) {
     if (err.status === 409 || err.status === 422) {
@@ -652,7 +655,7 @@ async function saveNowEvent() {
 
 /** Publishes straight from the list, reusing the editor's validation. */
 async function publishDraft(item) {
-  if (!confirm(`Publish "${item.title}"? This commits it to main and rebuilds the site.`)) return
+  if (!confirm(`Publish "${item.title}"? ${localAdmin.value ? 'This moves it into src/posts locally.' : 'This commits it to main and rebuilds the site.'}`)) return
   editPost(item)
   if (await saveTo(POSTS_DIR)) {
     form.value = null
@@ -665,7 +668,7 @@ async function publishDraft(item) {
 async function removePost(post) {
   if (!post) return false
   const noun = post.dir === DRAFTS_DIR ? 'draft' : 'post'
-  if (!confirm(`Delete "${post.title}"? This commits the deletion to main.`)) return false
+  if (!confirm(`Delete "${post.title}"? ${localAdmin.value ? 'This deletes the local file.' : 'This commits the deletion to main.'}`)) return false
   error.value = ''
   try {
     await deleteFile({
@@ -697,7 +700,7 @@ async function deleteCurrent() {
 async function removeNowEvent(event) {
   if (!event || saving.value) return false
   const title = event.title?.en || event.title || event.id
-  if (!confirm(`Delete "${title}"? This commits the change to main and rebuilds the site.`)) return false
+  if (!confirm(`Delete "${title}"? ${localAdmin.value ? 'This updates the local file.' : 'This commits the change to main and rebuilds the site.'}`)) return false
 
   saving.value = true
   error.value = ''
@@ -756,7 +759,7 @@ function displayDate(iso) {
         <span class="text-muted/90">/</span>
         <h1 class="text-sm font-mono text-fg">admin</h1>
 
-        <div v-if="session" class="ml-auto flex items-center gap-3">
+        <div v-if="session && !localAdmin" class="ml-auto flex items-center gap-3">
           <img v-if="session.avatar" :src="session.avatar" alt="" class="w-6 h-6 rounded-full" />
           <span class="text-xs font-mono text-muted hidden sm:inline">@{{ session.login }}</span>
           <button
@@ -767,6 +770,10 @@ function displayDate(iso) {
         </div>
       </header>
 
+      <p v-if="localAdmin" class="mb-5 rounded-lg border border-accent/25 bg-accent/5 px-4 py-3 text-sm text-fg">
+        Local editor. Content saves update files on this computer. Media uploads go to the live R2 bucket.
+        Commit and push your content changes when you want to publish them.
+      </p>
       <p v-if="error" class="mb-5 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
         {{ error }}
       </p>
@@ -827,13 +834,14 @@ function displayDate(iso) {
           </div>
         </div>
 
-        <div class="flex items-center gap-3 mb-6">
-          <div class="flex items-center gap-1">
+        <div class="flex flex-wrap items-center gap-3 mb-6">
+          <div class="flex flex-wrap items-center gap-1">
             <button
               v-for="option in [{ key: 'posts', label: 'Posts', count: posts.length },
                                 { key: 'drafts', label: 'Drafts', count: drafts.length },
                                 { key: 'now', label: 'Now', count: nowEvents.length },
-                                { key: 'projects', label: 'Projects', count: null }]"
+                                { key: 'projects', label: 'Projects', count: null },
+                                { key: 'shelf', label: 'Shelf', count: null }]"
               :key="option.key"
               type="button"
               class="h-8 px-3 rounded-md text-xs font-mono uppercase tracking-widest transition-colors"
@@ -849,20 +857,21 @@ function displayDate(iso) {
           <div class="ml-auto flex items-center gap-2">
             <button
               type="button"
-              v-if="tab !== 'now' && tab !== 'projects'"
+              v-if="!['now', 'projects', 'shelf'].includes(tab)"
               class="h-9 px-3 rounded-md border border-fg/10 text-sm text-muted hover:text-fg hover:border-fg/20 transition-colors"
               @click="mediaOpen = true"
             >Media</button>
             <button
               type="button"
-              v-if="tab !== 'projects'"
+              v-if="!['projects', 'shelf'].includes(tab)"
               class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110 transition-colors"
               @click="tab === 'now' ? newNowEvent() : newPost()"
             >{{ tab === 'now' ? 'New event' : 'New post' }}</button>
           </div>
         </div>
 
-        <ProjectManager v-if="tab === 'projects'" @dirty-change="projectDirty = $event" />
+        <ShelfManager v-if="tab === 'shelf'" @dirty-change="shelfDirty = $event" />
+        <ProjectManager v-else-if="tab === 'projects'" @dirty-change="projectDirty = $event" />
 
         <template v-else-if="tab === 'now'">
           <p v-if="loadingNow" class="text-sm text-muted font-mono">Loading Now events…</p>
@@ -981,7 +990,7 @@ function displayDate(iso) {
             <button
               type="button"
               :disabled="saving || !!validation"
-              :title="validation || 'Commit to main (ctrl+S)'"
+              :title="validation || (localAdmin ? 'Save locally (ctrl+S)' : 'Commit to main (ctrl+S)')"
               class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110
                      disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               @click="publish"
@@ -1047,7 +1056,11 @@ function displayDate(iso) {
         />
 
         <div class="flex items-center gap-4 mt-4">
-          <p class="text-xs text-muted/90">
+          <p v-if="localAdmin" class="text-xs text-muted/90">
+            Saves write to <code class="font-mono">{{ isPublished ? POSTS_DIR : DRAFTS_DIR }}/{{ form.slug || 'slug' }}.md</code>
+            on this computer. Publishing a draft moves it into <code class="font-mono">{{ POSTS_DIR }}</code> locally.
+          </p>
+          <p v-else class="text-xs text-muted/90">
             Publishing commits <code class="font-mono">{{ POSTS_DIR }}/{{ form.slug || 'slug' }}.md</code> to
             <code class="font-mono">main</code>.
             <template v-if="!isPublished">
@@ -1078,7 +1091,7 @@ function displayDate(iso) {
             <button
               type="button"
               :disabled="saving || !!nowValidation"
-              :title="nowValidation || 'Commit to main'"
+              :title="nowValidation || (localAdmin ? 'Save locally' : 'Commit to main')"
               class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110
                      disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               @click="saveNowEvent"
@@ -1176,7 +1189,8 @@ function displayDate(iso) {
         </div>
 
         <div class="flex items-center gap-4 mt-4">
-          <p class="text-xs text-muted/90">
+          <p v-if="localAdmin" class="text-xs text-muted/90">Saving updates <code class="font-mono">{{ NOW_PATH }}</code> locally.</p>
+          <p v-else class="text-xs text-muted/90">
             Saving commits <code class="font-mono">{{ NOW_PATH }}</code> to
             <code class="font-mono">main</code>, records the update time, and rebuilds <code class="font-mono">/now</code>.
           </p>

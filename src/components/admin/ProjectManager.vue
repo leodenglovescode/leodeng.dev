@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { deleteMedia, encodeBase64, getFile, putFile, putMedia } from '../../utils/adminApi.js'
+import UploadProgress from './UploadProgress.vue'
+import { useUploadProgress } from '../../utils/uploadProgress.js'
+import { localAdmin, deleteMedia, encodeBase64, getFile, putFile, putMedia } from '../../utils/adminApi.js'
 
 const PROJECTS_PATH = 'src/content/projects.json'
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024
@@ -12,6 +14,7 @@ const loading = ref(true)
 const saving = ref(false)
 const uploading = ref(false)
 const error = ref('')
+const uploadState = useUploadProgress()
 const notice = ref('')
 const form = ref(null)
 const pristine = ref('')
@@ -19,7 +22,7 @@ const pendingDeletes = ref([])
 const fileInput = ref(null)
 
 const snapshot = (value) => JSON.stringify(value)
-const isDirty = computed(() => !!form.value && snapshot(form.value) !== pristine.value)
+const isDirty = computed(() => uploading.value || !!form.value && snapshot(form.value) !== pristine.value)
 watch(isDirty, (dirty) => emit('dirty-change', dirty), { immediate: true })
 
 function warnIfDirty(event) {
@@ -78,7 +81,9 @@ function slugify(value) {
 }
 
 function newProject() {
+  if (uploading.value) return
   if (isDirty.value && !confirm('Discard unsaved project changes?')) return
+  uploadState.clear()
   form.value = blankProject()
   pristine.value = snapshot(form.value)
   pendingDeletes.value = []
@@ -87,7 +92,9 @@ function newProject() {
 }
 
 function editProject(project) {
+  if (uploading.value) return
   if (isDirty.value && !confirm('Discard unsaved project changes?')) return
+  uploadState.clear()
   form.value = {
     id: project.id,
     title: { en: project.title?.en || '', zh: project.title?.zh || '' },
@@ -113,6 +120,7 @@ function editProject(project) {
 }
 
 function closeEditor() {
+  if (uploading.value) return
   if (isDirty.value && !confirm('Discard unsaved project changes?')) return
   form.value = null
   pendingDeletes.value = []
@@ -172,7 +180,7 @@ async function commitProjects(nextProjects, message) {
 }
 
 async function saveProject() {
-  if (saving.value) return
+  if (saving.value || uploading.value) return
   const problem = validate(form.value)
   if (problem) {
     error.value = problem
@@ -209,7 +217,7 @@ async function saveProject() {
     editProject(project)
     notice.value = failedDeletes.length
       ? `Project saved, but ${failedDeletes.length} unused R2 image${failedDeletes.length === 1 ? '' : 's'} could not be deleted.`
-      : 'Project saved. Cloudflare Pages will rebuild in a minute or two.'
+      : localAdmin.value ? 'Project saved to the local projects file.' : 'Project saved. Cloudflare Pages will rebuild in a minute or two.'
   } catch (err) {
     error.value = err.status === 409 || err.status === 422
       ? 'The projects file changed in the repo. Reload and reapply your edit.'
@@ -270,15 +278,16 @@ function safeImageName(file) {
 
 async function uploadImages(fileList) {
   const files = Array.from(fileList || [])
-  if (!files.length) return
+  if (uploading.value || saving.value || !files.length) return
   uploading.value = true
   error.value = ''
   try {
-    for (const file of files) {
+    for (const [index, file] of files.entries()) {
+      uploadState.prepare(file, index + 1, files.length)
       if (!file.type.startsWith('image/')) throw new Error(`${file.name} is not an image.`)
       if (file.size > MAX_IMAGE_BYTES) throw new Error(`${file.name} is larger than the 15 MB image limit.`)
       const name = safeImageName(file)
-      const uploaded = await putMedia(name, file)
+      const uploaded = await putMedia(name, file, { onProgress: uploadState.update })
       form.value.images.push({
         url: uploaded.url,
         objectName: uploaded.name,
@@ -289,7 +298,9 @@ async function uploadImages(fileList) {
         isNew: true,
       })
     }
+    uploadState.complete()
   } catch (err) {
+    uploadState.fail()
     error.value = err.message
   } finally {
     uploading.value = false
@@ -298,14 +309,14 @@ async function uploadImages(fileList) {
 }
 
 async function removeImage(image, index) {
-  const destroysObject = !!image.objectName
+  const destroysObject = !!image.objectName && (!localAdmin.value || image.isNew)
   const message = destroysObject
     ? 'Remove this image from the project and delete it from R2 when you save? This cannot be undone after saving.'
-    : 'Remove this image from the project? The legacy file itself will be kept.'
+    : 'Remove this image from the project? The remote file itself will be kept.'
   if (!confirm(message)) return
 
   form.value.images.splice(index, 1)
-  if (!image.objectName) return
+  if (!destroysObject) return
 
   if (image.isNew) {
     try {
@@ -423,6 +434,7 @@ async function removeImage(image, index) {
             </button>
           </div>
 
+          <UploadProgress :progress="uploadState.progress" class="mb-4" />
           <div v-if="form.images.length" class="grid sm:grid-cols-2 gap-4">
             <div v-for="(image, index) in form.images" :key="`${image.url}-${index}`" class="rounded-lg border border-fg/10 overflow-hidden bg-surface">
               <img :src="image.url" :alt="image.alt.en" class="w-full aspect-video object-cover bg-fg/5" />
@@ -430,7 +442,7 @@ async function removeImage(image, index) {
                 <input v-model="image.alt.en" type="text" placeholder="English alt text" class="h-9 px-2 rounded bg-bg border border-fg/10 text-sm text-fg outline-none focus:border-accent/50" />
                 <input v-model="image.alt.zh" type="text" placeholder="中文替代文字" class="h-9 px-2 rounded bg-bg border border-fg/10 text-sm text-fg outline-none focus:border-accent/50" />
                 <button type="button" class="justify-self-end text-xs text-muted hover:text-red-400" @click="removeImage(image, index)">
-                  {{ image.objectName ? 'Delete photo' : 'Remove from project' }}
+                  {{ image.objectName && (!localAdmin || image.isNew) ? 'Delete photo' : 'Remove from project' }}
                 </button>
               </div>
             </div>

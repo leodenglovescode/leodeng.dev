@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import UploadProgress from './UploadProgress.vue'
+import { useUploadProgress } from '../../utils/uploadProgress.js'
 import { deleteMedia, listMedia, putMedia } from '../../utils/adminApi.js'
 
 // A Worker request body tops out at 100 MB on the free plan, and the whole
@@ -21,7 +23,7 @@ const mediaBase = ref('')
 const loading = ref(false)
 const busy = ref(false)
 const error = ref('')
-const progress = ref('')
+const uploadState = useUploadProgress()
 const dragging = ref(false)
 const query = ref('')
 const fileInput = ref(null)
@@ -114,12 +116,13 @@ function browserCanDecode(file) {
 
 async function upload(list) {
   const chosen = Array.from(list || [])
-  if (!chosen.length) return
+  if (busy.value || !chosen.length) return
 
   busy.value = true
   error.value = ''
   try {
     for (const [index, file] of chosen.entries()) {
+      uploadState.prepare(file, index + 1, chosen.length)
       if (file.size > MAX_BYTES) {
         const mb = (n) => `${(n / 1024 / 1024).toFixed(1)} MB`
         throw new Error(`${file.name} is ${mb(file.size)}. The limit is ${mb(MAX_BYTES)}.`)
@@ -133,16 +136,16 @@ async function upload(list) {
       }
 
       const name = safeName(file.name)
-      progress.value = `Uploading ${name} (${index + 1}/${chosen.length})…`
-      await putMedia(name, file)
+      await putMedia(name, file, { onProgress: uploadState.update })
       // Reflect it immediately so the next filename check sees it.
       await load()
     }
+    uploadState.complete()
   } catch (err) {
+    uploadState.fail()
     error.value = err.message
   } finally {
     busy.value = false
-    progress.value = ''
     if (fileInput.value) fileInput.value.value = ''
   }
 }
@@ -230,13 +233,13 @@ function humanSize(bytes) {
           class="h-9 px-3 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110
                  disabled:opacity-50 transition-colors shrink-0"
           @click="fileInput?.click()"
-        >Upload</button>
+        >{{ ['preparing', 'uploading', 'saving'].includes(uploadState.progress.phase) ? 'Uploading…' : 'Upload' }}</button>
       </div>
 
       <p v-if="error" class="mx-5 mt-3 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
         {{ error }}
       </p>
-      <p v-if="progress" class="mx-5 mt-3 text-xs font-mono text-muted">{{ progress }}</p>
+      <UploadProgress :progress="uploadState.progress" class="mx-5 mt-3" />
 
       <div class="flex-1 overflow-y-auto p-5" :class="dragging && 'ring-2 ring-inset ring-accent/50'">
         <p v-if="loading" class="text-sm text-muted">Loading…</p>
@@ -298,7 +301,7 @@ function humanSize(bytes) {
 
       <footer class="px-5 py-3 border-t border-fg/10 text-xs text-muted/90">
         {{ insertable ? 'Click a thumbnail to insert it.' : 'Click a thumbnail to copy its URL.' }}
-        Uploads go straight to R2. There is no commit, and deletes cannot be undone.
+        Uploads go straight to the live R2 bucket. There is no commit, and deletes cannot be undone.
       </footer>
     </div>
   </div>

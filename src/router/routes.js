@@ -36,6 +36,7 @@ const publicRoutes = [
   { path: '/gallery', component: Gallery, meta: routeMeta('gallery') },
   { path: '/gallery/:slug', component: GalleryCollection, meta: routeMeta('gallery') },
   { path: '/now', component: Now, meta: routeMeta('now') },
+  { path: '/shelf', component: () => import('../pages/Shelf.vue'), meta: routeMeta('shelf') },
   { path: '/spotting', component: Spotting, meta: routeMeta('spotting') },
   { path: '/homelab', component: Homelab, meta: routeMeta('homelab') },
   { path: '/tokens', component: Tokens, meta: routeMeta('tokens') },

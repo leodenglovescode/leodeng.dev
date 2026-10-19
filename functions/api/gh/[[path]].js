@@ -17,7 +17,7 @@ const WRITABLE_PREFIXES = ['src/posts/', 'src/drafts/']
 const READABLE_PREFIXES = ['src/posts', 'src/drafts']
 // Structured site content is build-time JSON, so grant exact files rather
 // than the whole directory.
-const CONTENT_FILES = new Set(['src/content/now.json', 'src/content/projects.json'])
+const CONTENT_FILES = new Set(['src/content/now.json', 'src/content/projects.json', 'src/content/shelf.json'])
 
 function decodePath(params) {
   const parts = Array.isArray(params.path) ? params.path : [params.path]

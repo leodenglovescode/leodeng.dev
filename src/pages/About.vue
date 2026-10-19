@@ -259,6 +259,9 @@ onMounted(() => {
         <p>
           {{ t('iMostlyUseVueAndReactFor') }}
         </p>
+        <p>
+          <RouterLink :to="localePath('/shelf')" class="text-fg hover:text-accent transition-colors">{{ t('shelfLink') }} ↗</RouterLink>
+        </p>
       </div>
     </section>
 

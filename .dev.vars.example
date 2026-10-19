@@ -29,10 +29,9 @@ CLOCK_ACCESS_CLIENT_SECRET=your_clock_access_client_secret
 # GITHUB_ALLOWED_USER=leodenglovescode
 # GITHUB_REPO=leodenglovescode/leodeng.dev
 
-# R2 credentials for scripts/optimize-photos.js, which uploads gallery
-# derivatives straight to the bucket over the S3 API. Not used by the site or
-# by Functions — /api/media reaches the bucket through its MEDIA binding, with
-# no keys involved.
+# R2 credentials for the local Vite admin media manager and photo optimizer.
+# Both upload to the live media bucket over the S3 API and keep keys server-side.
+# Production Functions use their MEDIA binding instead, with no S3 keys.
 #
 # Dashboard > R2 > Manage API tokens > Create API token, permission
 # "Object Read & Write", scoped to the leodeng-media bucket.

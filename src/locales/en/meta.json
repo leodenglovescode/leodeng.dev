@@ -44,5 +44,6 @@
   "ip": {
     "title": "IP & Connection",
     "description": "A look at the public IP, network, and connection details Cloudflare sees when you visit my site."
-  }
+  },
+  "shelf": {"title": "Shelf", "description": "Movies and TV shows I've watched, and albums I like."}
 }

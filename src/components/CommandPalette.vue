@@ -15,7 +15,7 @@ const selected = ref(0)
 const opened = ref(false)
 const shortcut = ref('Ctrl K')
 let previousFocus, previousOverflow
-const paths = ['/', '/about', '/projects', '/gallery', '/stack', '/blog', '/contact', '/now', '/spotting', '/homelab', '/tokens', '/time', '/ip', '/terminal', '/changelog', '/interests', '/pgp', '/feed']
+const paths = ['/', '/about', '/projects', '/gallery', '/stack', '/blog', '/contact', '/now', '/shelf', '/spotting', '/homelab', '/tokens', '/time', '/ip', '/terminal', '/changelog', '/interests', '/pgp', '/feed']
 const posts = getAllPosts()
 const entries = computed(() => [
   ...paths.map(path => ({ id: path, label: t(`pages.${path === '/' ? 'home' : path.slice(1)}`), kind: t('page'), hint: path, search: path, path })),

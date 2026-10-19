@@ -22,5 +22,6 @@
   "leoIsNowPlaying": "Leo is now playing",
   "songProgress": "Song progress",
   "time": "Time",
-  "terminal": "Terminal"
+  "terminal": "Terminal",
+  "shelf": "Shelf"
 }

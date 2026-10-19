@@ -1,4 +1,4 @@
-// Minimal SigV4-signed PUT against R2's S3-compatible API.
+// Minimal SigV4-signed requests against R2's S3-compatible API.
 //
 // Why not `wrangler r2 object put`: it costs ~20 seconds per object, almost
 // all of it spawning node and re-authenticating. That's fine for one file and
@@ -6,8 +6,8 @@
 // A signed PUT is one HTTPS request, so the same set finishes in well under a
 // minute and scales with bandwidth instead of process startup.
 //
-// No SDK: @aws-sdk/client-s3 is a large dependency for one verb, and the
-// signing algorithm is short enough to read.
+// No SDK: share the small signer between photo uploads and local admin media.
+// The signing algorithm is short enough to read.
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
@@ -63,52 +63,75 @@ function signingKey(secret, dateStamp) {
   return key
 }
 
-/**
- * PUTs one object. `key` may contain slashes — they're path separators in the
- * URL and must stay unencoded in the canonical URI, unlike the rest.
- */
-export async function putObject({ accountId, accessKeyId, secretAccessKey }, bucket, key, body, {
-  contentType = 'application/octet-stream',
-  cacheControl = 'public, max-age=31536000, immutable',
-} = {}) {
+const awsEncode = value => encodeURIComponent(value).replace(/[!'()*]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)
+
+async function r2Request({ accountId, accessKeyId, secretAccessKey }, bucket, {
+  method, key = '', body, query = {}, headers: extraHeaders = {},
+}) {
   const host = `${accountId}.r2.cloudflarestorage.com`
-  const canonicalUri = `/${bucket}/${key}`.split('/').map(encodeURIComponent).join('/').replace(/%2F/g, '/')
-
-  const now = new Date()
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '')
+  const canonicalUri = `/${bucket}/${key}`.split('/').map(awsEncode).join('/')
+  const canonicalQuery = Object.entries(query).map(([key, value]) => [awsEncode(key), awsEncode(value)])
+    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, value]) => `${key}=${value}`).join('&')
+  const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '')
   const dateStamp = amzDate.slice(0, 8)
-  const payloadHash = sha256Hex(body)
-
-  // Must be sorted by header name, and the signed set has to match exactly.
-  const headers = {
-    'cache-control': cacheControl,
-    'content-type': contentType,
-    host,
-    'x-amz-content-sha256': payloadHash,
-    'x-amz-date': amzDate,
-  }
+  const payloadHash = sha256Hex(body || '')
+  const headers = { ...extraHeaders, host, 'x-amz-content-sha256': payloadHash, 'x-amz-date': amzDate }
   const signedHeaders = Object.keys(headers).sort().join(';')
-  const canonicalHeaders = Object.keys(headers).sort().map((h) => `${h}:${headers[h]}\n`).join('')
-
-  const canonicalRequest = ['PUT', canonicalUri, '', canonicalHeaders, signedHeaders, payloadHash].join('\n')
+  const canonicalHeaders = Object.keys(headers).sort().map(h => `${h}:${headers[h]}\n`).join('')
+  const canonicalRequest = [method, canonicalUri, canonicalQuery, canonicalHeaders, signedHeaders, payloadHash].join('\n')
   const scope = `${dateStamp}/${REGION}/${SERVICE}/aws4_request`
   const stringToSign = ['AWS4-HMAC-SHA256', amzDate, scope, sha256Hex(canonicalRequest)].join('\n')
-  const signature = crypto.createHmac('sha256', signingKey(secretAccessKey, dateStamp))
-    .update(stringToSign).digest('hex')
-
-  const res = await fetch(`https://${host}${canonicalUri}`, {
-    method: 'PUT',
-    headers: {
-      ...headers,
-      authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
-    },
+  const signature = crypto.createHmac('sha256', signingKey(secretAccessKey, dateStamp)).update(stringToSign).digest('hex')
+  const res = await fetch(`https://${host}${canonicalUri}${canonicalQuery ? `?${canonicalQuery}` : ''}`, {
+    method,
+    headers: { ...headers, authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}` },
     body,
+    signal: AbortSignal.timeout(120_000),
   })
-
   if (!res.ok) {
-    // R2 returns an XML error body; the code is the useful part.
     const text = await res.text().catch(() => '')
-    const code = text.match(/<Code>([^<]+)<\/Code>/)?.[1] ?? `HTTP ${res.status}`
-    throw new Error(`${code} uploading ${key}`)
+    // Never expose the full S3 response, signed headers, or credentials.
+    const code = text.match(/<Code>([A-Za-z0-9]+)<\/Code>/)?.[1] || `HTTP ${res.status}`
+    throw Object.assign(new Error(`${code} during R2 ${method}.`), { status: res.status === 412 ? 409 : 502 })
   }
+  return res
+}
+
+/** Existing photo uploads overwrite derivatives; admin uploads can opt out. */
+export async function putObject(creds, bucket, key, body, {
+  contentType = 'application/octet-stream',
+  cacheControl = 'public, max-age=31536000, immutable',
+  preventOverwrite = false,
+} = {}) {
+  const response = await r2Request(creds, bucket, { method: 'PUT', key, body, headers: {
+    'cache-control': cacheControl,
+    'content-type': contentType,
+    ...(preventOverwrite ? { 'if-none-match': '*' } : {}),
+  } })
+  await response.arrayBuffer()
+}
+
+export async function deleteObject(creds, bucket, key) {
+  const response = await r2Request(creds, bucket, { method: 'DELETE', key })
+  await response.arrayBuffer()
+}
+
+const xmlValue = (xml, tag) => xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`))?.[1] || ''
+const unescapeXml = text => text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (entity, value) => {
+  const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
+  if (value[0] !== '#') return named[value] || entity
+  const code = value[1].toLowerCase() === 'x' ? parseInt(value.slice(2), 16) : Number(value.slice(1))
+  return code <= 0x10ffff ? String.fromCodePoint(code) : entity
+})
+
+/** List the flat media namespace; gallery collections are nested separately. */
+export async function listObjects(creds, bucket) {
+  const response = await r2Request(creds, bucket, { method: 'GET', query: { 'list-type': '2', 'max-keys': '500', delimiter: '/' } })
+  const xml = await response.text()
+  if (!xml.includes('<ListBucketResult')) throw new Error('Invalid R2 listing response.')
+  return [...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)].map(([, entry]) => ({
+    key: unescapeXml(xmlValue(entry, 'Key')),
+    size: Number(xmlValue(entry, 'Size')),
+    uploaded: xmlValue(entry, 'LastModified'),
+  }))
 }

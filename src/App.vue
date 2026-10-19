@@ -55,6 +55,7 @@ const socialLinks = [
     <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
       <!-- Deliberately footer-only: side pages worth finding, not worth a nav slot. -->
       <RouterLink :to="localePath('/now')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('now') }}</RouterLink>
+      <RouterLink :to="localePath('/shelf')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('shelf') }}</RouterLink>
       <RouterLink :to="localePath('/spotting')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('spotting') }}</RouterLink>
       <RouterLink :to="localePath('/homelab')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('homelab') }}</RouterLink>
       <RouterLink :to="localePath('/tokens')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('tokens') }}</RouterLink>

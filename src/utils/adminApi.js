@@ -5,7 +5,20 @@
 // if these requests come back 401, the session is gone and the UI shows the
 // login screen again.
 
+import { ref } from 'vue'
+
+export const localAdmin = ref(false)
 let repo = null
+
+// randomUUID requires a secure context; getRandomValues also works over LAN HTTP.
+export function newContentId() {
+  if (globalThis.crypto.randomUUID) return globalThis.crypto.randomUUID()
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 15) | 64
+  bytes[8] = (bytes[8] & 63) | 128
+  const hex = [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
 
 class ApiError extends Error {
   constructor(message, status) {
@@ -57,15 +70,14 @@ function contentsUrl(path) {
 
 export async function getSession() {
   repo = null
+  localAdmin.value = false
   const res = await fetch('/api/me', { headers: { 'X-Admin': '1' } })
   if (!res.ok) return null
 
-  // `npm run dev` has no Functions runtime, so /api/me falls through to the SPA
-  // and answers 200 with HTML. Treat anything unparseable as signed out rather
-  // than throwing — use `npx wrangler pages dev dist` to exercise the real flow.
   const session = await res.json().catch(() => null)
   if (!session?.authenticated) return null
 
+  localAdmin.value = import.meta.env.DEV && session.local === true
   repo = session.repo
   return session
 }
@@ -73,6 +85,7 @@ export async function getSession() {
 export async function logout() {
   await fetch('/api/logout', { method: 'POST', headers: { 'X-Admin': '1' } })
   repo = null
+  localAdmin.value = false
 }
 
 /** Directory listing. A directory that doesn't exist yet reads as empty. */
@@ -127,17 +140,27 @@ export function listMedia() {
  * Uploads one File. Sent as a raw stream rather than base64 — R2 takes the
  * bytes as-is, so there's no reason to inflate them by a third first.
  */
-export async function putMedia(name, file) {
-  const res = await fetch(`/api/media/${encodeURIComponent(name)}`, {
-    method: 'PUT',
-    headers: { 'X-Admin': '1', 'content-type': file.type || 'application/octet-stream' },
-    body: file,
+export function putMedia(name, file, { onProgress = () => {} } = {}) {
+  // Fetch does not expose upload byte progress. XHR keeps the same authenticated
+  // endpoint and raw File body while reporting the actual bytes sent.
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('PUT', `/api/media/${encodeURIComponent(name)}`)
+    xhr.responseType = 'json'
+    xhr.setRequestHeader('X-Admin', '1')
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+    xhr.upload.onprogress = event => onProgress({ phase: 'uploading', loaded: event.loaded, total: event.lengthComputable ? event.total : file.size })
+    // Sending all bytes to our server isn't completion: R2 must confirm storage.
+    xhr.upload.onload = () => onProgress({ phase: 'saving', loaded: file.size, total: file.size })
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response)
+      else reject(new ApiError(xhr.response?.error || `Upload failed (${xhr.status})`, xhr.status))
+    }
+    xhr.onerror = () => reject(new ApiError('Upload failed. Check your connection and try again.', 0))
+    xhr.onabort = () => reject(new ApiError('Upload canceled.', 0))
+    onProgress({ phase: 'uploading', loaded: 0, total: file.size })
+    xhr.send(file)
   })
-  const payload = await res.json().catch(() => null)
-  if (!res.ok) {
-    throw new ApiError(payload?.error || `Upload failed (${res.status})`, res.status)
-  }
-  return payload
 }
 
 export async function deleteMedia(name) {
@@ -153,3 +176,7 @@ export async function deleteMedia(name) {
 }
 
 export { ApiError }
+
+export function searchShelf({ type, query, artist = '' }) {
+  return request(`/api/shelf-search?${new URLSearchParams({ type, q: query, artist })}`)
+}

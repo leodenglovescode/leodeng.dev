@@ -30,6 +30,7 @@
     "changelog": "更新记录",
     "interests": "兴趣",
     "pgp": "PGP 密钥",
-    "feed": "RSS 订阅"
+    "feed": "RSS 订阅",
+    "shelf": "收藏架"
   }
 }

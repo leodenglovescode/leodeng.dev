@@ -44,5 +44,6 @@
   "ip": {
     "title": "IP 与连接",
     "description": "看看你访问我的网站时，Cloudflare 看到的公网 IP、网络和连接信息。"
-  }
+  },
+  "shelf": {"title": "收藏架", "description": "我看过的电影和剧集，还有喜欢的专辑。"}
 }
