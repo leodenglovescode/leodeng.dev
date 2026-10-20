@@ -128,9 +128,14 @@
       if (!data) { failure(monkey); return; }
       clear(monkey);
       if (data.profile) {
+        var best10Words = null, saved = data.history && data.history.results || [];
+        for (var test = 0; test < saved.length; test++) {
+          if (saved[test].mode === 'words' && saved[test].mode2 === '10' && (best10Words === null || saved[test].wpm > best10Words)) best10Words = saved[test].wpm;
+        }
         var profile = node('div', ''); monkey.appendChild(profile);
         table(profile, [[zh ? '完成测试' : 'Completed tests', data.profile.completedTests],
-          [zh ? '打字时间' : 'Typing time', data.profile.timeTyping == null ? null : Math.round(data.profile.timeTyping / 3600 * 10) / 10 + ' h']], false);
+          [zh ? '打字时间' : 'Typing time', data.profile.timeTyping == null ? null : Math.round(data.profile.timeTyping / 3600 * 10) / 10 + ' h'],
+          [zh ? '10 词测试最佳成绩' : 'Best 10-word test', best10Words === null ? null : Math.round(best10Words * 10) / 10 + ' WPM']], false);
         monkey.appendChild(node('p', zh ? '最佳成绩：英语、普通难度，不含标点和数字。' : 'Personal bests: English, normal difficulty, without punctuation or numbers.'));
         var bests = [], bestBox = node('div', '');
         for (var b = 0; b < data.profile.bests.length; b++) bests.push([data.profile.bests[b].seconds + 's', data.profile.bests[b].wpm + ' WPM']);

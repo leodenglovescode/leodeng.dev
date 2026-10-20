@@ -11,7 +11,10 @@ let mounted = true
 onBeforeUnmount(() => { mounted = false })
 const history = computed(() => (monkey.value?.history?.results || []).filter(r => mode.value === 'all' || `${r.mode}:${r.mode2}` === mode.value))
 const recent = computed(() => history.value.slice(-12).reverse())
-const best60 = computed(() => monkey.value?.profile?.bests.find(b => b.seconds === 60)?.wpm)
+const best10Words = computed(() => {
+  const tests = (monkey.value?.history?.results || []).filter(r => r.mode === 'words' && r.mode2 === '10')
+  return tests.length ? Math.max(...tests.map(r => r.wpm)) : null
+})
 const format = value => typeof value === 'number' && Number.isFinite(value) ? new Intl.NumberFormat(isZh.value ? 'zh-CN' : 'en', { maximumFractionDigits: 1 }).format(value) : '…'
 const date = value => new Date(value).toLocaleDateString(isZh.value ? 'zh-CN' : 'en', { year: 'numeric', month: 'short', day: 'numeric' })
 const chart = computed(() => {
@@ -86,7 +89,7 @@ onMounted(() => {
         <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
           <div class="stats-metric"><dt>{{ t('completed') }}</dt><dd>{{ format(monkey.profile.completedTests) }}</dd></div>
           <div class="stats-metric"><dt>{{ t('typingTime') }}</dt><dd>{{ format(monkey.profile.timeTyping == null ? null : monkey.profile.timeTyping / 3600) }} h</dd></div>
-          <div class="stats-metric"><dt>{{ t('best60') }}</dt><dd>{{ format(best60) }} <small>WPM</small></dd></div>
+          <div class="stats-metric"><dt>{{ t('best10Words') }}</dt><dd>{{ format(best10Words) }} <small>WPM</small></dd></div>
         </dl>
         <h3 class="text-sm font-semibold mb-2">{{ t('bests') }}</h3>
         <p class="text-xs text-muted mb-4">{{ t('bestNote') }}</p>

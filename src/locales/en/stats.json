@@ -13,7 +13,7 @@
   "unavailable": "These stats are temporarily unavailable. Try again later or visit the profile.",
   "completed": "Completed tests",
   "typingTime": "Time spent typing",
-  "best60": "Best 60-second test",
+  "best10Words": "Best 10-word test",
   "bests": "Personal bests",
   "bestNote": "English, normal difficulty, without punctuation or numbers. Different test lengths are kept separate.",
   "noBests": "No matching personal bests are public yet.",
