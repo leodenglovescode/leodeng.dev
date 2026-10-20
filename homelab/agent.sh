@@ -146,3 +146,18 @@ push_tokens() {
 }
 
 push_tokens
+
+# --- Monkeytype snapshot -----------------------------------------------------
+# The minute timer invokes this, but the collector reserves one API attempt per
+# hour in its locked state file. Failures never interrupt the other collectors.
+push_monkeytype() {
+  local script state_dir
+  script="${HOMELAB_MONKEYTYPE_SCRIPT:-/usr/local/bin/homelab-monkeytype.py}"
+  [ -n "${MONKEYTYPE_API_KEY:-}" ] && [ -r "$script" ] || return 0
+  command -v python3 >/dev/null 2>&1 || return 0
+  state_dir="${STATE_DIRECTORY:-${XDG_STATE_HOME:-${HOME:-/tmp}/.local/state}/homelab-status}"
+  if ! python3 "$script" --state-file "$state_dir/monkeytype.json"; then
+    echo 'Monkeytype collector failed; heartbeat and token collection are unaffected' >&2
+  fi
+}
+push_monkeytype

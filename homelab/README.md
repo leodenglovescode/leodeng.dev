@@ -305,3 +305,62 @@ Pushing the full history instead would cross the daily limit inside a year.
 Workers KV was the obvious first choice for "store one live value", but its
 free tier caps writes at 1,000/day — a one-minute interval blows straight
 through that, whereas D1 with a full day of history sits at 2.9%.
+
+## Monkeytype stats
+
+`monkeytype.py` fetches the public profile and up to 1,000 saved results for
+`leodeng`, verifies that every result belongs to that profile, strips private
+fields, and pushes a sanitized snapshot to D1. Both the modern and classic
+Stats pages read it. This avoids Monkeytype's shared-IP rate limit on
+Cloudflare Worker requests.
+
+On the **home server**, from an updated checkout of this repository:
+
+```bash
+git pull --ff-only
+sudo install -m 755 homelab/agent.sh /usr/local/bin/homelab-agent.sh
+sudo install -m 755 homelab/monkeytype.py /usr/local/bin/homelab-monkeytype.py
+sudoedit /etc/homelab-status.env
+```
+
+Keep the existing `HOMELAB_TOKEN` line. Add a separate line with your actual
+Monkeytype ApeKey, with results read permission, without the `ApeKey ` prefix:
+
+```ini
+MONKEYTYPE_API_KEY=your_actual_ape_key
+```
+
+The environment file must remain root-owned and mode 600. The key is read by
+systemd and passed to the collector without appearing in command arguments.
+Do not commit it, paste it into a post, or put it in a `VITE_` variable.
+
+```bash
+sudo chown root:root /etc/homelab-status.env
+sudo chmod 600 /etc/homelab-status.env
+sudo systemctl start homelab-status.service
+journalctl -u homelab-status.service -n 30 --no-pager
+curl -s https://leodeng.dev/api/stats/monkeytype | python3 -m json.tool
+```
+
+The first run should log `Monkeytype snapshot pushed`, and the endpoint should
+return a non-null `profile` and history `state: "ready"`. It is valid for the
+results array to be empty if there are no saved tests. No new timer, packages,
+D1 migration command, or service-file changes are needed. The existing unit
+already provides the writable `STATE_DIRECTORY` and environment file.
+
+The minute timer invokes the collector, but a lock and persistent state file
+allow at most one Monkeytype fetch attempt per hour, including failures. Do
+not delete `/var/lib/homelab-status/monkeytype.json` to force refreshes: that
+resets the quota guard. A pending failed upload is retried on later timer runs
+without re-fetching Monkeytype. With no key or collector installed, the
+optional collector is skipped. Errors leave the last published snapshot intact
+and do not fail the heartbeat or token collector. Data older than two hours is
+marked stale on the Stats page.
+
+If the first run logs HTTP 401/403, check the ApeKey and results-read permission.
+HTTP 429/479 means an upstream rate limit; wait for the next hourly attempt.
+HTTP errors are logged without response bodies, account IDs, or secrets.
+
+In Cloudflare Pages, keep `HOMELAB_TOKEN` and `HOMELAB_DB` configured on the main
+project. The old `MONKEYTYPE_API_KEY` Pages secret is no longer used and can be
+removed. The classic site continues to read the main site's public endpoint.

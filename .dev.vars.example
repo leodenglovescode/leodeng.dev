@@ -42,6 +42,5 @@ R2_ACCOUNT_ID=your_cloudflare_account_id
 R2_ACCESS_KEY_ID=your_r2_access_key_id
 R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
 
-# Optional personal stats: Monkeytype ApeKey with results read permission.
-# Production: set this as a Cloudflare Pages secret, never a VITE_ variable.
-# MONKEYTYPE_API_KEY=your_monkeytype_ape_key
+# Monkeytype API keys belong only in /etc/homelab-status.env on the home server.
+# Pages uses the existing HOMELAB_TOKEN and HOMELAB_DB for snapshot ingest/read.
