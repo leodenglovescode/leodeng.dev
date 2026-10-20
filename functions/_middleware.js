@@ -1,7 +1,7 @@
 import { LEGACY_ORIGIN, LEGACY_PREFIX, MODERN_ORIGIN, cleanLegacyPath, isDocumentRequest, isLegacyBrowser, modernLink, prefersModern } from '../lib/legacy.js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
 
-const PUBLIC_APIS = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics'])
+const PUBLIC_APIS = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype'])
 
 function redirect(location) {
   return new Response(null, { status: 302, headers: { Location: location, 'Cache-Control': 'no-store', Vary: 'User-Agent, Cookie' } })
@@ -92,7 +92,7 @@ export async function onRequest(context) {
     'X-Content-Type-Options': 'nosniff',
     'X-Legacy-Site': 'true',
     // Inline, build-owned CSS also works on Safari 9's CSP implementation.
-    'Content-Security-Policy': "default-src 'none'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://lrclib.net; media-src https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    'Content-Security-Policy': "default-src 'none'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://lrclib.net https://api.github.com; media-src https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   })
   return new Response(request.method === 'HEAD' ? null : body, { status, headers })
 }

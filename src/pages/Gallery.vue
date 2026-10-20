@@ -11,8 +11,7 @@ const collectionDescription = (collection) => collection.slug === 'planespotting
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-10">{{ t('gallery') }}</h2>
 
     <p class="text-sm text-muted leading-relaxed mb-10">
-      {{ t('photoCollectionsPickOneToBrowseOr') }}
-      <RouterLink :to="localePath('/spotting')" class="text-fg hover:text-accent transition-colors">{{ t('exifSaysAboutHowTheyWereShot') }}</RouterLink>{{ t('period') }}
+      {{ t('intro') }}
     </p>
 
     <div v-if="collections.length" class="grid grid-cols-1 sm:grid-cols-2 gap-4">

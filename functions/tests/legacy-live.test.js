@@ -247,3 +247,15 @@ test('classic connection report preserves API details when the probe fails, and 
   assert.match(app.panel.textContent, /classical key exchange/)
   assert.equal(app.find('connection-confirmed').length, 0)
 })
+
+test('classic personal stats render live profiles and saved history without a modern chart runtime', () => {
+  const app = harness('stats')
+  app.pending('https://api.github.com/users/leodenglovescode').respond({ public_repos: 12, followers: 34 })
+  app.pending('https://api.github.com/search/commits').respond({ items: [{ html_url: 'https://github.com/leodenglovescode/site/commit/' + 'a'.repeat(40), commit: { message: 'A public commit\nMore detail' } }] })
+  app.pending('/api/stats/monkeytype').respond({ profile: { completedTests: 393, timeTyping: 7200, bests: [{ seconds: 60, wpm: 100 }] },
+    history: { state: 'ready', stale: false, results: [{ timestamp: 1800000000000, wpm: 95, accuracy: 99, mode: 'time', mode2: '60', language: 'english' }] } })
+  assert.match(app.panel.textContent, /393/)
+  assert.match(app.panel.textContent, /100 WPM/)
+  assert.match(app.panel.textContent, /95 WPM \/ 99%/)
+  assert.match(app.panel.textContent, /A public commit/)
+})

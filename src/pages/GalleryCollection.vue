@@ -86,6 +86,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       <h2 class="text-s font-mono text-muted uppercase tracking-widest mt-4 mb-2">{{ collectionTitle }}</h2>
       <p class="text-sm text-muted leading-relaxed mb-10">{{ collectionDescription }}</p>
 
+      <RouterLink v-if="collection.slug === 'planespotting'" :to="localePath('/spotting')" class="inline-block mb-8 px-4 py-2 border border-fg/15 rounded-md text-sm font-mono text-accent hover:border-accent">{{ t('viewStats') }} ↗</RouterLink>
+
       <div v-if="pagePhotos.length" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <button
           v-for="(photo, i) in pagePhotos"

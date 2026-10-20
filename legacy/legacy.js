@@ -100,6 +100,55 @@
 
     }
   }
+  function setupStats(element) {
+    clear(element);
+    function box(title) {
+      var section = node('section', ''); section.className = 'connection-section';
+      section.appendChild(node('h2', title));
+      var body = node('div', zh ? '正在加载...' : 'Loading...'); section.appendChild(body); element.appendChild(section); return body;
+    }
+    var github = box('GitHub'), commits = box(zh ? '最近的公开提交' : 'Recent public commits'), monkey = box('Monkeytype');
+    get('https://api.github.com/users/leodenglovescode', function (data) {
+      if (!data || typeof data.public_repos !== 'number') { failure(github); return; }
+      table(github, [[zh ? '公开仓库' : 'Public repositories', data.public_repos], [zh ? '关注者' : 'Followers', data.followers]], false);
+    });
+    get('https://api.github.com/search/commits?q=author%3Aleodenglovescode&sort=committer-date&order=desc&per_page=3', function (data) {
+      if (!data || !Array.isArray(data.items)) { failure(commits); return; }
+      clear(commits);
+      commits.appendChild(node('p', zh ? 'GitHub 索引的公开提交，并非终身提交总数。' : 'Public commits indexed by GitHub, rather than a lifetime total.'));
+      var list = node('ul', '');
+      for (var i = 0; i < Math.min(3, data.items.length); i++) {
+        var item = data.items[i];
+        if (typeof item.html_url !== 'string' || !/^https:\/\/github\.com\/[^/]+\/[^/]+\/commit\/[a-f0-9]{40}$/.test(item.html_url)) continue;
+        var row = node('li', ''), link = node('a', item.commit.message.split('\n')[0]); link.href = item.html_url; row.appendChild(link); list.appendChild(row);
+      }
+      commits.appendChild(list);
+    });
+    get('/api/stats/monkeytype', function (data) {
+      if (!data) { failure(monkey); return; }
+      clear(monkey);
+      if (data.profile) {
+        var profile = node('div', ''); monkey.appendChild(profile);
+        table(profile, [[zh ? '完成测试' : 'Completed tests', data.profile.completedTests],
+          [zh ? '打字时间' : 'Typing time', data.profile.timeTyping == null ? null : Math.round(data.profile.timeTyping / 3600 * 10) / 10 + ' h']], false);
+        monkey.appendChild(node('p', zh ? '最佳成绩：英语、普通难度，不含标点和数字。' : 'Personal bests: English, normal difficulty, without punctuation or numbers.'));
+        var bests = [], bestBox = node('div', '');
+        for (var b = 0; b < data.profile.bests.length; b++) bests.push([data.profile.bests[b].seconds + 's', data.profile.bests[b].wpm + ' WPM']);
+        if (bests.length) { table(bestBox, bests, false); monkey.appendChild(bestBox); }
+      } else monkey.appendChild(node('p', zh ? '公开统计暂时不可用。' : 'Public stats are temporarily unavailable.'));
+      monkey.appendChild(node('h3', zh ? '已保存测试记录' : 'Saved test history'));
+      if (data.history && data.history.state === 'ready') {
+        var results = data.history.results.slice(-12).reverse(), rows = [], historyBox = node('div', '');
+        monkey.appendChild(node('p', zh ? '最近 12 条已保存测试，约每小时更新一次。' : 'Latest 12 saved tests, refreshed about once an hour.'));
+        if (data.history.stale) monkey.appendChild(node('p', zh ? '当前显示上次成功更新的数据。' : 'Showing the last successful update.'));
+        for (var r = 0; r < results.length; r++) rows.push([new Date(results[r].timestamp).toLocaleDateString() + ' / ' + results[r].mode + ' ' + results[r].mode2 + ' / ' + results[r].language, results[r].wpm + ' WPM / ' + results[r].accuracy + '%']);
+        if (rows.length) { table(historyBox, rows, false); monkey.appendChild(historyBox); }
+        else monkey.appendChild(node('p', zh ? '暂无已保存测试。' : 'No saved tests yet.'));
+      } else monkey.appendChild(node('p', data.history && data.history.state === 'not-connected'
+        ? (zh ? '这里暂未分享我的测试记录。' : 'My saved test history is not shared here yet.')
+        : (zh ? '测试记录暂时不可用。' : 'Test history is temporarily unavailable.')));
+    });
+  }
   function setupConnection(element) {
     var data = null, probe = null, pending = 0, requests = [], version = 0;
     function section(title, rows) {
@@ -426,6 +475,7 @@
       if (kind === 'now-playing') { setupPlayer(element); return; }
       if (kind === 'time') { setupClock(element); return; }
       if (kind === 'ip') { setupConnection(element); return; }
+      if (kind === 'stats') { setupStats(element); return; }
       get('/api/' + kind, function (data) { reading(kind, element, data); });
     })(panels[i]);
   }

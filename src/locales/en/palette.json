@@ -13,6 +13,7 @@
   "navigate": "Navigate",
   "select": "Select",
   "pages": {
+    "stats": "Personal stats",
     "home": "Home",
     "about": "About",
     "projects": "Projects",

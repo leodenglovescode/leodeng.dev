@@ -13,6 +13,7 @@
   "navigate": "选择",
   "select": "确认",
   "pages": {
+    "stats": "个人统计",
     "home": "首页",
     "about": "关于我",
     "projects": "项目",

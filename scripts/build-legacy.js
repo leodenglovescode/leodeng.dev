@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse, parseFragment, serialize } from 'parse5'
@@ -142,7 +143,8 @@ export async function buildLegacySite({ routes, collections }) {
   await fs.rm(output, { recursive: true, force: true })
   await fs.mkdir(path.join(output, '_assets'), { recursive: true })
   for (const name of ['legacy.css', 'legacy.js']) await fs.copyFile(path.join(root, 'legacy', name), path.join(output, '_assets', name))
-  const navigation = ['home', 'about', 'projects', 'gallery', 'blog', 'contact', 'now', 'shelf', 'interests', 'stack', 'spotting', 'homelab', 'tokens', 'time', 'ip', 'terminal', 'changelog', 'feed', 'pgp']
+  const runtimeVersion = createHash('sha256').update(await fs.readFile(path.join(root, 'legacy/legacy.js'))).digest('hex').slice(0, 12)
+  const navigation = ['home', 'about', 'projects', 'gallery', 'blog', 'contact', 'now', 'shelf', 'interests', 'stack', 'stats', 'homelab', 'tokens', 'time', 'ip', 'terminal', 'changelog', 'feed', 'pgp']
   const css = (await fs.readFile(path.join(root, 'legacy/legacy.css'), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim()
   const localeRoute = (base, locale) => locale === 'zh' ? `/zh${base === '/' ? '' : base}` : base
   function shell(route, content, extra = '') {
@@ -170,7 +172,7 @@ export async function buildLegacySite({ routes, collections }) {
 <link rel="canonical" href="${escape(new URL(route.path, MODERN_ORIGIN).href)}">
 <link rel="alternate" type="application/rss+xml" href="${MODERN_ORIGIN}/rss.xml" title="RSS">
 <style id="legacy-style">${css}</style>
-<script src="${link('/_assets/legacy.js')}" defer></script>
+<script src="${link('/_assets/legacy.js')}?v=${runtimeVersion}" defer></script>
 </head><body id="top">
 <a class="skip-link" href="#content">${zh ? '跳到正文' : 'Skip to content'}</a>
 <header class="masthead"><div class="header-inner"><a class="wordmark" href="${link(localeRoute('/', route.locale))}"><span class="site-mark">ld</span>leodeng.dev</a>
@@ -268,7 +270,7 @@ ${playing}${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ?
           const pagedRoute = { ...route, path: page === 1 ? route.path : `${route.path}/page/${page}` }
           const pageLink = number => relativeLink(pagedRoute.path, number === 1 ? route.path : `${route.path}/page/${number}`)
           const photos = collection.photos.slice((page - 1) * pageSize, page * pageSize)
-          const body = `<h1>${escape(collection.title)}</h1><p>${escape(collection.description)}</p><div class="photo-list">` + photos.map(photo => {
+          const body = `<h1>${escape(collection.title)}</h1><p>${escape(collection.description)}</p>${slug === 'planespotting' ? `<p class="gallery-tools"><a href="${escape(relativeLink(pagedRoute.path, localeRoute('/spotting', route.locale)))}">${zh ? '拍摄统计' : 'Shooting stats'} &raquo;</a></p>` : ''}<div class="photo-list">` + photos.map(photo => {
             const full = compatibleImage(photo.fullSrc, media, pagedRoute.path)
             return `<figure>${full ? `<a href="${escape(full)}">` : ''}${picture(photo.thumbSrc, photo.caption, media, '', pagedRoute.path)}${full ? '</a>' : ''}<figcaption>${escape(photo.caption)}</figcaption></figure>`
           }).join('') + `</div><nav class="pagination" aria-label="${zh ? '相册页码' : 'Gallery pages'}">${page > 1 ? `<a href="${escape(pageLink(page - 1))}">${zh ? '上一页' : 'Previous'}</a> ` : ''}<span>${page} / ${pages}</span>${page < pages ? ` <a href="${escape(pageLink(page + 1))}">${zh ? '下一页' : 'Next'}</a>` : ''}</nav>`
@@ -276,6 +278,10 @@ ${playing}${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ?
         }
         continue
       }
+    }
+    if (base === '/stats') {
+      const copy = zh ? zhMeta.stats : enMeta.stats
+      content = `<h1>${escape(copy.title)}</h1><p>${escape(copy.description)}</p><p><a href="https://github.com/leodenglovescode">GitHub: @leodenglovescode</a> &middot; <a href="https://monkeytype.com/profile/leodeng">Monkeytype: @leodeng</a></p><div class="dashboard"><h2 class="dashboard-heading">${zh ? '个人统计' : 'Personal statistics'}</h2><div class="live-panel" data-live="stats"><p>${zh ? '正在加载统计...' : 'Loading stats...'}</p></div></div><noscript><p>${zh ? '实时统计需要 JavaScript。你也可以直接访问上方的个人主页链接。' : 'Live stats need JavaScript. You can also visit the profiles linked above.'}</p></noscript>`
     }
     if (['/homelab', '/tokens', '/ip', '/time'].includes(base)) {
       // Keep explanatory copy, replacing the Vue-only loading/chart UI.

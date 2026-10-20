@@ -9,10 +9,11 @@ import { gzipSync } from 'node:zlib'
 import { spawnSync } from 'node:child_process'
 import { cleanLegacyPath, MODERN_ORIGIN } from '../lib/legacy.js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
+import { loadMonkeyStats } from '../lib/monkeyStats.js'
 import { lookupLyrics } from '../lib/lyricsProxy.js'
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url))
-const publicApis = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics'])
+const publicApis = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype'])
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8' }
 
 export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_legacy'), fetchUpstream = fetch, cssFile = path.join(projectRoot, 'legacy/legacy.css') } = {}) {
@@ -50,6 +51,7 @@ export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_
     if (!pathname) return new Response('Invalid path.', { status: 400 })
     if (pathname.startsWith('/api/')) {
       if (!publicApis.has(pathname)) return new Response('Not found.', { status: 404 })
+      if (pathname === '/api/stats/monkeytype') return Response.json(await loadMonkeyStats({}, fetchUpstream), { headers: { 'Cache-Control': 'no-store' } })
       if (pathname === '/api/lyrics') return lookupLyrics(request, fetchUpstream)
       try {
         const upstream = await fetchUpstream(`${MODERN_ORIGIN}${pathname}${pathname === '/api/lyrics' ? url.search : ''}`, { signal: AbortSignal.timeout(8000), redirect: 'error', headers: { Accept: 'application/json' } })

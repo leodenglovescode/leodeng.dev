@@ -308,3 +308,5 @@ small, figcaption { color: #59687c; font-size: 11px; }
   .daybook-status-heading { width: 64px; }
   .daybook-register td { padding: 7px 5px; }
 }
+.gallery-tools a { display: inline-block; padding: 6px 10px; background: #dce5f0; color: #183d6b; border: 2px outset #e1e8f2; font: bold 12px Tahoma, sans-serif; text-decoration: none; }
+.gallery-tools a:hover { background: #fff8d7; }
