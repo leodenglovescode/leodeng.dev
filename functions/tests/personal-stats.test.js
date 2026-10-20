@@ -42,7 +42,7 @@ test('one shared history refresh per hour, safe publication and stale data on re
   const db = database(), env = { MONKEYTYPE_API_KEY: 'secret', HOMELAB_DB: db }
   let calls = 0
   const fetcher = async (url, options) => {
-    if (url.includes('/profile')) { assert.equal(options.headers.Authorization, undefined); return Response.json({ data: profile }) }
+    if (url.includes('/profile')) { assert.equal(options.headers.Authorization, 'ApeKey secret'); return Response.json({ data: profile }) }
     calls++
     assert.equal(url, 'https://api.monkeytype.com/results?limit=1000')
     assert.equal(options.headers.Authorization, 'ApeKey secret')
@@ -63,7 +63,7 @@ test('one shared history refresh per hour, safe publication and stale data on re
   assert.equal(calls, 2, 'failed attempts also reserve the hour')
 })
 
-test('wrong-account private results are not published, and missing D1 never calls authenticated upstream', async () => {
+test('wrong-account private results are not published, and missing D1 never requests private history', async () => {
   assert.throws(() => monkeyResults([{ ...result, uid: 'other-account' }], 'owner'))
   const env = { MONKEYTYPE_API_KEY: 'secret', HOMELAB_DB: database() }
   const data = await loadMonkeyStats(env, async url => Response.json({ data: url.includes('/profile') ? profile : [{ ...result, uid: 'other' }] }), now)
@@ -79,4 +79,20 @@ test('stats endpoint rejects writes and arbitrary queries; upstream reads are bo
   assert.equal((await onRequest({ request: new Request('https://example.com/api/stats/monkeytype?user=someone-else'), env: {} })).status, 400)
   await assert.rejects(statsJson('https://api.monkeytype.com/users/leodeng/profile', {}, async () => new Response(null, { status: 302 })))
   await assert.rejects(statsJson('https://api.monkeytype.com/users/leodeng/profile', {}, async () => Response.json({ huge: 'x'.repeat(2000000) })))
+})
+
+test('profile lookup failures do not consume the private history refresh slot', async () => {
+  const db = database(), env = { MONKEYTYPE_API_KEY: 'secret', HOMELAB_DB: db }
+  const failed = await loadMonkeyStats(env, async () => Response.json({}, { status: 429 }), now)
+  assert.equal(failed.profile, null)
+  assert.equal(db.row.refresh_after, 0)
+  let historyCalls = 0
+  const recovered = await loadMonkeyStats(env, async (url, options) => {
+    assert.equal(options.headers.Authorization, 'ApeKey secret')
+    if (url.includes('/profile')) return Response.json({ data: profile })
+    historyCalls++
+    return Response.json({ data: [result] })
+  }, now + 1000)
+  assert.equal(recovered.history.state, 'ready')
+  assert.equal(historyCalls, 1)
 })
