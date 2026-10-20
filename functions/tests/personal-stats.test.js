@@ -96,3 +96,21 @@ test('profile lookup failures do not consume the private history refresh slot', 
   assert.equal(recovered.history.state, 'ready')
   assert.equal(historyCalls, 1)
 })
+
+
+test('upstream rate-limit diagnostics contain only fixed classifications', async () => {
+  for (const [message, reason] of [
+    ['Too many bad authentication attempts, please try again later.', 'bad_auth_limit'],
+    ['Maximum API request (root) limit reached. Please try again later.', 'root_limit'],
+    ['Request limit reached, please try again later.', 'endpoint_limit'],
+  ]) {
+    await assert.rejects(statsJson('https://api.monkeytype.com/users/leodeng/profile', {},
+      async () => Response.json({ message, data: { uid: 'private-owner' } }, { status: 429 })), error => {
+      assert.equal(error.statsReason, reason)
+      assert.equal(error.statsStatus, 429)
+      assert.equal(error.statsPhase, 'response')
+      assert.doesNotMatch(JSON.stringify(error), /private-owner|Too many|Maximum API/)
+      return true
+    })
+  }
+})
