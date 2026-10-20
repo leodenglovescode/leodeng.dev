@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('monkeytype', Path(__file__).with_name('monkeytype.py'))
 m = importlib.util.module_from_spec(spec)
@@ -16,6 +17,22 @@ RESULT = {'uid': 'owner', 'wpm': 100, 'acc': 98, 'timestamp': 1800000000000,
 
 
 class CollectorTests(unittest.TestCase):
+    def test_requests_identify_collector_and_refuse_redirects(self):
+        class Response:
+            headers = {'Content-Type': 'application/json'}
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+            def read(self, limit): return b'{"ok":true}'
+
+        with patch.object(m.urllib.request, 'build_opener') as build:
+            build.return_value.open.return_value = Response()
+            self.assertEqual(m.request_json('https://example.com', {'Authorization': 'ApeKey secret'}), {'ok': True})
+            req = build.return_value.open.call_args.args[0]
+            self.assertEqual(req.get_header('User-agent'), m.USER_AGENT)
+            self.assertEqual(req.get_header('Authorization'), 'ApeKey secret')
+            self.assertIs(build.call_args.args[0], m.NoRedirect)
+            self.assertIsNone(m.NoRedirect().redirect_request(req, None, 302, '', {}, 'https://other.example'))
+
     def test_sanitizing_and_account_verification(self):
         data = m.snapshot(PROFILE, [RESULT])
         self.assertEqual(data['profile']['bests'][0]['wpm'], 100)

@@ -19,6 +19,7 @@ import urllib.request
 USER = 'leodeng'
 INTERVAL = 3600
 MAX_BYTES = 2_000_000
+USER_AGENT = 'leodeng.dev/1.0 (personal stats collector; https://leodeng.dev/stats)'
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -28,7 +29,9 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def request_json(url, headers, payload=None):
     data = None if payload is None else json.dumps(payload, separators=(',', ':'), allow_nan=False).encode()
-    req = urllib.request.Request(url, data=data, headers=headers)
+    # Monkeytype rejects Python's default urllib identity with HTTP 403.
+    # Identify this collector consistently for profile, history and upload.
+    req = urllib.request.Request(url, data=data, headers={'User-Agent': USER_AGENT, **headers})
     try:
         with urllib.request.build_opener(NoRedirect).open(req, timeout=15) as response:
             if 'application/json' not in response.headers.get('Content-Type', ''):
