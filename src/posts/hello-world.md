@@ -2,6 +2,7 @@
 title: "Hello, World!"
 date: 2026-05-26T04:09:00+08:00
 description: "First post in the NEW blog!"
+aiAuthorship: "human"
 ---
 
 Hello, welcome to the blog.

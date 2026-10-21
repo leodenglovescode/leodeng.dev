@@ -2,6 +2,7 @@
 title: "Made a miniplayer for Apple Music on MacOS"
 date: 2026-08-10T21:07:00+08:00
 description: "I Thought Apple Music's overlay is weird on macos, So I made my own version of the MiniPlayer"
+aiAuthorship: "human"
 ---
 
 ## The Issue

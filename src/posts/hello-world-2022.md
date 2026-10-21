@@ -2,6 +2,7 @@
 title: "Hello, World! (2022)"
 date: 2022-04-07T20:34:00+08:00
 description: "The very first post on my very first blog, running on a Raspberry Pi."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

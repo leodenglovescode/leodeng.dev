@@ -42,10 +42,11 @@ export function legacyJournalPost(html, zh = false) {
   const title = children.find(node => node.tagName === 'h1')
   const metadata = children.find(node => node.tagName === 'p')
   const prose = children.find(node => hasClass(node, 'prose'))
+  const disclosure = children.find(node => hasClass(node, 'ai-authorship'))
   if (!prose || !title) return html
   const navigation = children.find(node => node.tagName === 'div' && node !== prose && elements(node).some(child => child.tagName === 'a'))
   const links = elements(navigation).filter(node => node.tagName === 'a').map(link => `<a href="${escape(attr(link, 'href'))}">${elements(link).map((span, index) => `<span class="${index ? 'journal-destination' : 'journal-direction'}">${escape(text(span))}</span>`).join('')}</a>`).join('')
-  return `<article class="journal-post"><a class="journal-back" href="${escape(attr(back, 'href'))}">${escape(text(back))}</a><header class="journal-post-heading"><p class="journal-kicker">${zh ? 'Leo 的网络日志' : "Leo's weblog"}</p><h1>${escape(text(title))}</h1><p class="journal-byline">${zh ? '作者：Leo Deng' : 'By Leo Deng'} &middot; ${escape(text(metadata))}</p></header><div class="prose journal-prose">${serialize(prose)}</div>${links ? `<nav class="journal-pagination" aria-label="${zh ? '其他文章' : 'More entries'}">${links}</nav>` : ''}</article>`
+  return `<article class="journal-post"><a class="journal-back" href="${escape(attr(back, 'href'))}">${escape(text(back))}</a><header class="journal-post-heading"><p class="journal-kicker">${zh ? 'Leo 的网络日志' : "Leo's weblog"}</p><h1>${escape(text(title))}</h1><p class="journal-byline">${zh ? '作者：Leo Deng' : 'By Leo Deng'} &middot; ${escape(text(metadata))}</p></header>${disclosure ? `<aside>${serialize(disclosure)}</aside>` : ''}<div class="prose journal-prose">${serialize(prose)}</div>${links ? `<nav class="journal-pagination" aria-label="${zh ? '其他文章' : 'More entries'}">${links}</nav>` : ''}</article>`
 }
 
 export function legacyDaybook(html, copy, zh = false) {

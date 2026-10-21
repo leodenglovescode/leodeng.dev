@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AiAuthorship from '../components/AiAuthorship.vue'
 import { getPost, getAllPosts } from '../utils/posts.js'
 import { applyMeta } from '../utils/useMeta.js'
 import { renderMermaid } from '../utils/mermaid.js'
@@ -89,6 +90,8 @@ onUnmounted(() => {
       <p class="text-xs font-mono text-muted/90 mb-12">
         {{ post.displayDate }} · {{ t('minRead', { p0: post.readingTime }) }}
       </p>
+
+      <AiAuthorship :value="post.aiAuthorship" :reason="post.aiReason" />
 
       <div class="prose" v-html="post.html" />
 

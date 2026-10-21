@@ -1,7 +1,8 @@
 ---
 title: "Updates and recent projects Ver. 2"
-date: 2022-11-16T10:37:58+08:00
+date: 2022-11-16T10:37:00+08:00
 description: "Three weeks of summatives, and the start of ezCite."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

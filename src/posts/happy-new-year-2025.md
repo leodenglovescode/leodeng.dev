@@ -1,7 +1,8 @@
 ---
 title: "Happy New Year!"
-date: 2025-01-01T12:49:38+08:00
+date: 2025-01-01T12:49:00+08:00
 description: "Ringing in 2025 from Beijing."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

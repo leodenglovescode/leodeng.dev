@@ -1,7 +1,8 @@
 ---
 title: "What I'm working on recently"
-date: 2022-07-02T21:09:46+08:00
+date: 2022-07-02T21:09:00+08:00
 description: "HackGen, 6th grade online classes, CS:GO screenshots on a GTX 960, and a sci-fi novel I was going to write."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

@@ -51,6 +51,7 @@ const publicRoutes = [
   { path: '/blog/:slug', component: BlogPost, meta: routeMeta('blog') },
   { path: '/contact', component: Contact, meta: routeMeta('contact') },
   { path: '/pgp', component: Pgp, meta: routeMeta('pgp') },
+  { path: '/ai', component: () => import('../pages/Ai.vue'), meta: routeMeta('ai') },
   { path: '/privacy', component: () => import('../pages/Privacy.vue'), meta: routeMeta('privacy') },
   // The Three.js renderer is only useful here, so keep its bundle off every
   // other route just like the admin editor and its markdown dependencies.

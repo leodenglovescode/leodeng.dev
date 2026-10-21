@@ -2,6 +2,7 @@
 title: "Trying to make three old iPads useful & Made a old-internet styled version of my site"
 date: 2026-10-19T23:01:00+08:00
 description: "Trying to give three old iPads a second life, which somehow led to building a 2000s-style version of my website."
+aiAuthorship: "human"
 ---
 
 Hi! We meet again :)

@@ -1,7 +1,8 @@
 ---
 title: "Recent updates #3 and a new project"
-date: 2024-03-27T22:55:41+08:00
+date: 2024-03-27T22:55:00+08:00
 description: "2nd place at the NSL RC Racing competition, hotpot in Chongqing, and the start of the Raspberry Pi handheld."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

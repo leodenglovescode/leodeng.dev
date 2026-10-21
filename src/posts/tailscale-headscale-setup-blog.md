@@ -1,9 +1,10 @@
 ---
-title: Setting Up Headscale for Remote Access to My Home Server
-date: 2026-07-12T18:36:24+08:00
-description: What actually broke while getting my Mac, Windows PC, and phone to
-  reach my home server remotely, and how I fixed each one.
+title: "Setting Up Headscale for Remote Access to My Home Server"
+date: 2026-07-12T18:36:00+08:00
+description: "What actually broke while getting my Mac, Windows PC, and phone to reach my home server remotely, and how I fixed each one."
+aiAuthorship: "full"
 ---
+
 **The problem:** I wanted remote access to my homelab without turning half of it into public internet services. The goal was a private mesh between my server, Mac, Windows PC, and phone so they could reach each other more or less like they were on the same LAN, even when I was away.
 
 The actual use cases were pretty normal homelab stuff: **remote camera streaming**, controlling **Home Assistant**, **SSH** into the server without exposing port 22, and editing/debugging code remotely without building a separate public endpoint for every service.

@@ -1,4 +1,5 @@
 {
+  "ai": {"title": "AI 使用说明", "description": "我如何使用 LLM 编写代码和文章，以及博客上的 AI 标签代表什么。"},
   "stats": {"title": "个人统计", "description": "记录我花时间做的事情：写代码和练习打字。"},
   "privacy": {"title": "隐私说明", "description": "本站如何使用浏览器存储、Cloudflare 和外部服务。"},
   "defaultDescription": "这里是 Leo 的个人网站，放着项目、博客和最近在折腾的东西。",

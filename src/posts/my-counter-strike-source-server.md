@@ -1,7 +1,8 @@
 ---
 title: "My Counter-Strike: Source server is now open"
-date: 2023-04-04T15:42:02+08:00
+date: 2023-04-04T15:42:00+08:00
 description: "Running a full deathmatch CS:S server off an old ThinkPad, plus the SourceMod plugin list that made it work."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

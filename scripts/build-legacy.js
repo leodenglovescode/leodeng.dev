@@ -71,7 +71,7 @@ export function readableContent(html, route, media = { images: {} }) {
           || attr(node, 'aria-hidden') === 'true' || attr(node, 'data-legacy-hide') === 'true' || classes.includes('sr-only')) return []
       const keep = node.attrs.filter(a => ['href', 'src', 'alt', 'title', 'id', 'lang', 'colspan', 'rowspan', 'datetime', 'controls', 'type', 'download'].includes(a.name))
       node.attrs = keep
-      const useful = classes.filter(c => /^(?:prose|callout(?:-\w+)?|mermaid-block|mermaid-source)$/.test(c))
+      const useful = classes.filter(c => /^(?:prose|ai-authorship|callout(?:-\w+)?|mermaid-block|mermaid-source)$/.test(c))
       if (/^\/(?:zh\/)?blog\//.test(route) && ['code', 'span'].includes(node.tagName)) {
         useful.push(...classes.filter(c => /^(?:hljs(?:-[\w-]+)?|language-[\w-]+)$/.test(c)))
       }
@@ -146,7 +146,7 @@ export async function buildLegacySite({ routes, collections }) {
   await fs.mkdir(path.join(output, '_assets'), { recursive: true })
   for (const name of ['legacy.css', 'legacy.js']) await fs.copyFile(path.join(root, 'legacy', name), path.join(output, '_assets', name))
   const runtimeVersion = createHash('sha256').update(await fs.readFile(path.join(root, 'legacy/legacy.js'))).digest('hex').slice(0, 12)
-  const navigation = ['home', 'about', 'projects', 'gallery', 'blog', 'contact', 'now', 'shelf', 'interests', 'stack', 'stats', 'homelab', 'tokens', 'time', 'ip', 'terminal', 'changelog', 'feed', 'pgp']
+  const navigation = ['home', 'about', 'projects', 'gallery', 'blog', 'contact', 'now', 'shelf', 'interests', 'stack', 'stats', 'homelab', 'tokens', 'ai', 'time', 'ip', 'terminal', 'changelog', 'feed', 'pgp']
   const css = (await fs.readFile(path.join(root, 'legacy/legacy.css'), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim()
   const localeRoute = (base, locale) => locale === 'zh' ? `/zh${base === '/' ? '' : base}` : base
   function shell(route, content, extra = '') {

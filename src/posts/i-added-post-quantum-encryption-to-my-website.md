@@ -2,7 +2,9 @@
 title: "I added post-quantum encryption to my website"
 date: 2026-10-10T13:21:00+08:00
 description: "A connection dashboard, a GPS clock comparison, and a keyboard command palette. A few small updates that made this site more fun."
+aiAuthorship: "human"
 ---
+
 ## Intro
 So I added a few fun additions to my site, most of them are just for fun, but the rest is really QoL (Quality of Life) updates:
 

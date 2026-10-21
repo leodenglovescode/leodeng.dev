@@ -1,7 +1,8 @@
 ---
 title: "An update on recent things that happened"
-date: 2024-01-07T21:51:56+08:00
+date: 2024-01-07T21:51:00+08:00
 description: "Back after eight months: 8th grade, an RC car competition in Xiamen, and two new projects: YAUMSI and SafeSphereX."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

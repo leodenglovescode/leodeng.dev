@@ -2,6 +2,7 @@
 title: "How to make a Raspberry Pi NAS server"
 date: 2022-04-09T19:20:00+08:00
 description: "Turning a Raspberry Pi 4B and a leftover drive into a Samba file server you can reach from every machine in the house."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

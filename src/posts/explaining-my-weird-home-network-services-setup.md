@@ -2,6 +2,7 @@
 title: "Explaining my weird home network & services setup"
 date: 2026-08-07T00:30:00+08:00
 description: "Small peek at my setup as a sysadmin :)"
+aiAuthorship: "human"
 ---
 
 ## About My Network Setup...

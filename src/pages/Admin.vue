@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
+import AiAuthorship from '../components/AiAuthorship.vue'
+import { AI_AUTHORSHIP_LABELS, aiAuthorshipFields, aiAuthorshipLabel, usesAiWriting } from '../utils/aiAuthorship.js'
 import MarkdownEditor from '../components/admin/MarkdownEditor.vue'
 import GalleryManager from '../components/admin/GalleryManager.vue'
 import MediaManager from '../components/admin/MediaManager.vue'
@@ -121,6 +123,10 @@ function restoreRecovery(entry) {
   form.value = { ...entry.form }
   // Recoveries created before the Now editor existed are all post buffers.
   form.value.kind ||= 'post'
+  if (form.value.kind === 'post') {
+    form.value.aiAuthorship ||= ''
+    form.value.aiReason ||= ''
+  }
   // Recoveries from the old departure-board editor may still be sitting in
   // localStorage. Keep the writing and translate its presentation fields.
   if (form.value.kind === 'now' && !form.value.status) {
@@ -202,6 +208,7 @@ function buildMarkdown(d) {
     `title: ${yaml(d.title.trim())}`,
     `date: ${toIsoWithOffset(d.date)}`,
     `description: ${yaml(d.description.trim())}`,
+    ...aiAuthorshipFields(d.aiAuthorship, d.aiReason),
     '---',
     '',
     `${d.body.trim()}`,
@@ -311,6 +318,8 @@ async function loadDir(dir) {
         title: meta.title || entry.name,
         date: meta.date || '',
         description: meta.description || '',
+        aiAuthorship: meta.aiAuthorship || '',
+        aiReason: meta.aiReason || '',
         body: content,
       }
     }),
@@ -366,7 +375,7 @@ function snapshot(d) {
       d.id, d.title, d.status, d.startedAt, d.finishedAt, d.details,
     ])
   }
-  return JSON.stringify([d.slug, d.title, d.description, d.date, d.body])
+  return JSON.stringify([d.slug, d.title, d.description, d.date, d.body, d.aiAuthorship || '', d.aiReason || ''])
 }
 
 const isDirty = computed(() => projectDirty.value || shelfDirty.value || galleryDirty.value || (!!form.value && snapshot(form.value) !== pristine.value))
@@ -390,6 +399,8 @@ function newPost() {
     sha: null,
     title: '',
     description: '',
+    aiAuthorship: '',
+    aiReason: '',
     date: nowLocal(),
     body: '',
     slugTouched: false,
@@ -409,6 +420,8 @@ function editPost(post) {
     sha: post.sha,
     title: post.title,
     description: post.description,
+    aiAuthorship: post.aiAuthorship || '',
+    aiReason: post.aiReason || '',
     date: toLocalInput(post.date),
     body: post.body,
     slugTouched: true,
@@ -487,6 +500,7 @@ function onTitleInput() {
  */
 function validate(d, targetDir) {
   if (!d) return null
+  if (d.aiAuthorship && !aiAuthorshipLabel(d.aiAuthorship)) return 'Choose a supported AI authorship label.'
   if (!d.title.trim()) return 'A title is required.'
   if (!d.slug.trim()) return 'A slug is required.'
   if (!/^[a-z0-9][a-z0-9-]*$/.test(d.slug)) return 'The slug can only use lowercase letters, numbers and dashes.'
@@ -949,6 +963,7 @@ function displayDate(iso) {
               </h3>
               <p v-if="post.description" class="text-xs text-muted mt-1 line-clamp-2">{{ post.description }}</p>
               <p class="text-xs font-mono text-muted/90 mt-1.5">
+                <span v-if="aiAuthorshipLabel(post.aiAuthorship)" class="text-accent">{{ aiAuthorshipLabel(post.aiAuthorship) }} · </span>
                 {{ displayDate(post.date) }} ·
                 <template v-if="post.dir === DRAFTS_DIR">{{ post.slug }}.md · not published</template>
                 <template v-else>/blog/{{ post.slug }}</template>
@@ -1065,6 +1080,25 @@ function displayDate(iso) {
             />
           </label>
         </div>
+
+        <fieldset class="border border-fg/10 rounded-md p-4 mb-5 space-y-4">
+          <legend class="px-2 text-xs font-mono text-muted uppercase tracking-wider">Writing authorship</legend>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-sm text-fg">Writing label</span>
+            <select v-model="form.aiAuthorship" aria-describedby="ai-authorship-help" class="h-11 px-3 rounded-md bg-surface border border-fg/10 text-sm text-fg outline-none focus:border-accent/50">
+              <option value="">No label</option>
+              <option v-for="(label, value) in AI_AUTHORSHIP_LABELS" :key="value" :value="value">{{ label }}</option>
+            </select>
+            <span id="ai-authorship-help" class="text-xs text-muted">Labels appear inside the article and in its RSS content. Choose "Entirely written by me" only if no AI was involved, including grammar checks.</span>
+          </label>
+          <label v-if="usesAiWriting(form.aiAuthorship)" class="flex flex-col gap-1.5">
+            <span class="text-sm text-fg">Why I used AI (optional)</span>
+            <textarea v-model="form.aiReason" rows="2" placeholder="Explain why you used AI for this post, if you want to."
+              class="px-3 py-2.5 rounded-md bg-surface border border-fg/10 text-sm text-fg resize-y outline-none focus:border-accent/50" />
+            <span class="text-xs text-muted">This note is public. Leave it blank to show only the label.</span>
+          </label>
+          <AiAuthorship :value="form.aiAuthorship" :reason="form.aiReason" />
+        </fieldset>
 
         <MarkdownEditor
           ref="editor"

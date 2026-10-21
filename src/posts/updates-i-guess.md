@@ -2,6 +2,7 @@
 title: "Updates... I guess..."
 date: 2024-11-17T12:47:00+08:00
 description: "End of 8th grade, a business competition in Suzhou, and a montage shot on the R6 across Suzhou and Tianjin."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]

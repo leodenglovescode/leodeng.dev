@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { localePath } from './src/utils/localePath.js'
+import { aiAuthorshipLabel, usesAiWriting } from './src/utils/aiAuthorship.js'
 import { buildLegacySite } from './scripts/build-legacy.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -30,6 +31,7 @@ const staticRoutes = [
   { path: '/contact', key: 'contact' },
   { path: '/pgp', key: 'pgp' },
   { path: '/privacy', key: 'privacy' },
+  { path: '/ai', key: 'ai' },
   { path: '/interests', key: 'interests' },
 ]
 
@@ -142,6 +144,13 @@ async function prerender() {
   const rssItems = postRoutes.map(r => {
     const post = getPost(r.path.replace('/blog/', ''))
     const link = `https://leodeng.dev${r.path}`
+    const label = aiAuthorshipLabel(post.aiAuthorship)
+    const note = post.aiAuthorship === 'human'
+      ? 'No AI was involved, including grammar checks.'
+      : usesAiWriting(post.aiAuthorship) ? post.aiReason?.trim() : ''
+    const disclosure = label
+      ? `<aside><p><a href="https://leodeng.dev/ai">${label}</a></p>${note ? `<p>${escapeXml(note)}</p>` : ''}</aside>`
+      : ''
     return [
       '  <item>',
       `    <title>${escapeXml(r.title)}</title>`,
@@ -149,7 +158,7 @@ async function prerender() {
       `    <guid>${link}</guid>`,
       `    <pubDate>${new Date(post.date).toUTCString()}</pubDate>`,
       r.description ? `    <description>${escapeXml(r.description)}</description>` : '',
-      `    <content:encoded><![CDATA[${post.html}]]></content:encoded>`,
+      `    <content:encoded><![CDATA[${disclosure}${post.html}]]></content:encoded>`,
       '  </item>',
     ].filter(Boolean).join('\n')
   })

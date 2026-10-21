@@ -1,7 +1,8 @@
 ---
 title: "Raspberry Pi PDA"
-date: 2024-04-05T11:55:20+08:00
+date: 2024-04-05T11:55:00+08:00
 description: "Building a handheld Raspberry Pi 4B with its own battery, speakers and 3D-printed case, for about ¥150 in parts."
+aiAuthorship: "human"
 ---
 
 > [!NOTE]
