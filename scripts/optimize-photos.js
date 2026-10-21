@@ -282,6 +282,7 @@ async function main() {
   const titles = { ...previousManifest.titles }
   for (const result of results) if (result.title) titles[result.label] = result.title
   const manifest = { base: PUBLIC_BASE, prefix: KEY_PREFIX, titles, collections,
+    ...(previousManifest.featured ? { featured: previousManifest.featured.filter(item => collections[item.collection]?.some(entry => entry.name === item.name)) } : {}),
     ...(previousManifest.excluded ? { excluded: previousManifest.excluded } : {}) }
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true })
   fs.writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 1)}\n`)

@@ -40,17 +40,19 @@ function buildCollections() {
     .map(([slug, entries]) => {
       const photos = (entries ?? [])
         .map(entry => {
-          const { name, original, assets, kind, panorama, shotAt, make, camera, lens, focalLength, aperture, iso, shutter, location, width, height, caption } = { ...entry, ...entry.metadata }
+          const { name, original, assets, kind, panorama, shotAt, make, camera, lens, focalLength, aperture, iso, shutter, location, width, height, duration, caption } = { ...entry, ...entry.metadata }
           const assetUrl = key => `${manifest.base}/${encodeURIComponent(key)}`
           return {
             sortKey: name,
+            featuredRank: (manifest.featured ?? []).findIndex(item => item.collection === slug && item.name === name),
+            posterSrc: assets?.poster ? assetUrl(assets.poster) : undefined,
             thumbSrc: assets ? assetUrl(assets.thumb) : urlFor(slug, 'thumbs', name),
             fullSrc: assets ? assetUrl(assets.full) : original ? `${manifest.base}/${manifest.prefix}/${encodeURIComponent(slug)}/originals/${encodeURIComponent(original)}` : urlFor(slug, 'full', name),
             legacyThumbSrc: assets ? `/_assets/gallery/${assets.legacyThumb}` : undefined,
-            legacyFullSrc: assets ? `/_assets/gallery/${assets.legacyFull}` : undefined,
+            legacyFullSrc: kind === 'video' ? assetUrl(assets.full) : assets ? `/_assets/gallery/${assets.legacyFull}` : undefined,
             viewerSrc: original ? `/gallery-media/${encodeURIComponent(slug)}/${encodeURIComponent(original)}` : undefined,
             kind: kind ?? 'photo', panorama, shotAt,
-            make, camera, lens, focalLength, aperture, iso, shutter, location, width, height,
+            make, camera, lens, focalLength, aperture, iso, shutter, location, width, height, duration,
             caption: caption || toCaption(name), customCaption: caption || null,
           }
         })
@@ -60,7 +62,7 @@ function buildCollections() {
       return {
         slug,
         title: meta.title ?? manifest.titles?.[slug] ?? titleCase(slug),
-        description: meta.description ?? `${photos.length} photo${photos.length === 1 ? '' : 's'}.`,
+        description: meta.description ?? `${photos.length} ${photos.some(p => p.kind === 'video') ? 'works' : photos.length === 1 ? 'photo' : 'photos'}.`,
         photos,
         cover: photos[0]?.thumbSrc ?? null,
       }
@@ -73,3 +75,5 @@ export const collections = buildCollections()
 export function getCollection(slug) {
   return collections.find(c => c.slug === slug) ?? null
 }
+
+export const featured = collections.flatMap(collection => collection.photos.map((photo, index) => ({ ...photo, collection: collection.slug, collectionTitle: collection.title, href: `/gallery/${collection.slug}?page=${Math.floor(index / 10) + 1}&photo=${encodeURIComponent(photo.sortKey)}` }))).filter(photo => photo.featuredRank >= 0).sort((a, b) => a.featuredRank - b.featuredRank)

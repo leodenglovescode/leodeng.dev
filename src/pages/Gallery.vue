@@ -1,7 +1,8 @@
 <script setup>
-import { collections } from '../utils/gallery.js'
+import FeaturedHero from '../components/FeaturedHero.vue'
+import { collections, featured } from '../utils/gallery.js'
 import { useLocale } from '../utils/i18n.js'
-const { t, localePath } = useLocale('gallery')
+const { t, localePath, isZh } = useLocale('gallery')
 const collectionTitle = (collection) => collection.slug === 'planespotting' ? t('planespotting') : collection.title
 const collectionDescription = (collection) => collection.slug === 'planespotting' ? t('shotsFromPlanespottingTrips') : collection.description
 </script>
@@ -14,6 +15,7 @@ const collectionDescription = (collection) => collection.slug === 'planespotting
       {{ t('intro') }}
     </p>
 
+    <FeaturedHero v-if="featured.length" :works="featured" />
     <div v-if="collections.length" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <RouterLink
         v-for="c in collections"
@@ -33,7 +35,7 @@ const collectionDescription = (collection) => collection.slug === 'planespotting
         <div class="p-4">
           <div class="text-fg font-semibold">{{ collectionTitle(c) }}</div>
           <div class="text-sm text-muted mt-1">{{ collectionDescription(c) }}</div>
-          <div class="text-xs font-mono text-muted/90 mt-2">{{ t('photo', { p0: c.photos.length, p1: c.photos.length === 1 ? '' : 's' }) }}</div>
+          <div class="text-xs font-mono text-muted/90 mt-2">{{ c.photos.some(work => work.kind === 'video') ? `${c.photos.length} ${isZh ? '件作品' : 'works'}` : t('photo', { p0: c.photos.length, p1: c.photos.length === 1 ? '' : 's' }) }}</div>
         </div>
       </RouterLink>
     </div>

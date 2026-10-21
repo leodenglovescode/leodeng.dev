@@ -263,7 +263,14 @@ ${playing}${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ?
     }
     if (base === '/gallery' || base.startsWith('/gallery/')) {
       const slug = base.split('/')[2]
-      if (!slug) content = `<h1>${zh ? '相册' : 'Gallery'}</h1>` + collections.map(collection => `<article class="content-card"><h2><a href="${escape(relativeLink(route.path, localeRoute(`/gallery/${collection.slug}`, route.locale)))}">${escape(collection.title)}</a></h2>${picture(collection.photos[0]?.legacyThumbSrc || collection.cover, collection.title, media, '', route.path)}<p>${collection.photos.length} ${zh ? '张照片' : 'photos'}</p></article>`).join('')
+      if (!slug) content = `<h1>${zh ? '相册' : 'Gallery'}</h1>` + (() => {
+        const works = collections.flatMap(collection => collection.photos.map((photo, index) => ({ ...photo, slug: collection.slug, index }))).filter(photo => photo.featuredRank >= 0).sort((a, b) => a.featuredRank - b.featuredRank)
+        return works.length ? `<section class="featured-hero" data-featured-hero aria-label="${zh ? '精选作品' : 'Featured works'}"><div class="hero-track">` + works.map(photo => {
+          const page = Math.floor(photo.index / pageSize) + 1
+          const href = relativeLink(route.path, localeRoute(`/gallery/${photo.slug}${page > 1 ? `/page/${page}` : ''}`, route.locale)) + `#work-${encodeURIComponent(photo.sortKey)}`
+          return `<article class="hero-slide"><a href="${escape(href)}">${picture(photo.kind === 'video' ? photo.posterSrc : photo.kind !== 'photo' ? photo.legacyThumbSrc || photo.thumbSrc : photo.legacyFullSrc || photo.fullSrc, photo.caption, media, '', route.path)}<div class="hero-copy"><p class="hero-eyebrow">${zh ? '精选作品' : 'Featured works'}${photo.kind === 'video' ? ' · ▶ Video' : ''}</p><h2>${escape(photo.caption)}</h2></div></a></article>`
+        }).join('') + `</div>${works.length > 1 ? `<div class="hero-controls" hidden><div class="hero-dots">${works.map((photo, index) => `<button type="button" data-slide="${index}" aria-label="${zh ? '查看作品' : 'Show work'} ${index + 1}: ${escape(photo.caption)}"><span></span></button>`).join('')}</div><button type="button" class="hero-pause" aria-label="${zh ? '暂停幻灯片' : 'Pause slideshow'}">Ⅱ</button></div>` : ''}</section>` : ''
+      })() + collections.map(collection => `<article class="content-card"><h2><a href="${escape(relativeLink(route.path, localeRoute(`/gallery/${collection.slug}`, route.locale)))}">${escape(collection.title)}</a></h2>${picture(collection.photos[0]?.legacyThumbSrc || collection.cover, collection.title, media, '', route.path)}<p>${collection.photos.length} ${collection.photos.some(photo => photo.kind === 'video') ? (zh ? '件作品' : 'works') : (zh ? '张照片' : 'photos')}</p></article>`).join('')
       else {
         const collection = collections.find(item => item.slug === slug)
         if (!collection) throw new Error(`Unknown gallery ${slug}`)
@@ -273,11 +280,12 @@ ${playing}${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ?
           const pageLink = number => relativeLink(pagedRoute.path, number === 1 ? route.path : `${route.path}/page/${number}`)
           const photos = collection.photos.slice((page - 1) * pageSize, page * pageSize)
           const body = `<h1>${escape(collection.title)}</h1><p>${escape(collection.description)}</p>${slug === 'planespotting' ? `<p class="gallery-tools"><a href="${escape(relativeLink(pagedRoute.path, localeRoute('/spotting', route.locale)))}">${zh ? '拍摄统计' : 'Shooting stats'} &raquo;</a></p>` : ''}<div class="photo-list">` + photos.map(photo => {
+            if (photo.kind === 'video') return `<figure id="work-${escape(encodeURIComponent(photo.sortKey))}"><video class="gallery-video" controls playsinline preload="none" poster="${escape(compatibleImage(photo.posterSrc, media, pagedRoute.path))}" src="${escape(photo.fullSrc)}"><a href="${escape(photo.fullSrc)}">${zh ? '下载视频' : 'Download video'}</a></video><figcaption>${escape(photo.caption)}</figcaption><p><a href="${escape(photo.fullSrc)}">${zh ? '打开或下载视频' : 'Open or download video'}</a></p>${legacyPhotoDetails(photo, zh)}</figure>`
             const full = compatibleImage(photo.legacyFullSrc || photo.fullSrc, media, pagedRoute.path)
             const special = photo.kind && photo.kind !== 'photo'
             const original = special && photo.panorama && !photo.legacyFullSrc ? relativeLink(pagedRoute.path, photo.viewerSrc) : full
             const tools = special && original ? `<p class="gallery-tools"><a href="${escape(original)}" data-panorama="${escape(original)}">${zh ? '展开全景照片' : 'Expand panorama'} &raquo;</a></p><p>${zh ? '左右滚动查看。此版本以平面图片显示全景球。' : 'Scroll sideways to explore. This edition displays photospheres as flat images.'}</p>` : ''
-            return `<figure>${original ? `<a href="${escape(original)}">` : ''}${picture(photo.legacyThumbSrc || photo.thumbSrc, photo.caption, media, '', pagedRoute.path)}${original ? '</a>' : ''}<figcaption>${escape(photo.caption)}</figcaption>${tools}${legacyPhotoDetails(photo, zh)}</figure>`
+            return `<figure id="work-${escape(encodeURIComponent(photo.sortKey))}">${original ? `<a href="${escape(original)}">` : ''}${picture(photo.legacyThumbSrc || photo.thumbSrc, photo.caption, media, '', pagedRoute.path)}${original ? '</a>' : ''}<figcaption>${escape(photo.caption)}</figcaption>${tools}${legacyPhotoDetails(photo, zh)}</figure>`
           }).join('') + `</div><nav class="pagination" aria-label="${zh ? '相册页码' : 'Gallery pages'}">${page > 1 ? `<a href="${escape(pageLink(page - 1))}">${zh ? '上一页' : 'Previous'}</a> ` : ''}<span>${page} / ${pages}</span>${page < pages ? ` <a href="${escape(pageLink(page + 1))}">${zh ? '下一页' : 'Next'}</a>` : ''}</nav>`
           await write(pagedRoute, body)
         }

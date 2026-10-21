@@ -23,6 +23,7 @@ function loadFrames() {
   for (const [collection, entries] of Object.entries(manifest.collections ?? {})) {
     if (collection !== 'planespotting' || !Array.isArray(entries)) continue
     for (const entry of entries) {
+      if (entry.kind === 'video') continue
       const e = { ...entry, ...entry.metadata }
       // Entries without a readable capture time are still real photos and
       // still show in the gallery; they just can't be placed on a timeline.

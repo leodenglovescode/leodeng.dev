@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useLocale } from '../utils/i18n.js'
 const props = defineProps({ photo: { type: Object, required: true } })
-const { t } = useLocale('gallery-collection')
+const { t, isZh } = useLocale('gallery-collection')
 const camera = computed(() => {
   const { make, camera } = props.photo
   return make && camera && !camera.toLowerCase().includes(make.toLowerCase()) ? `${make} ${camera}` : camera ?? make
@@ -23,7 +23,7 @@ function exposure(value) {
 
 <template>
   <details class="photo-details">
-    <summary>{{ t('photoDetails') }}</summary>
+    <summary>{{ photo.kind === 'video' ? (isZh ? '视频信息' : 'Video details') : t('photoDetails') }}</summary>
     <div class="photo-details-body">
       <dl>
         <template v-if="photo.shotAt"><dt>{{ t('capturedAt') }}</dt><dd>{{ photo.shotAt.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3') }}</dd></template>
@@ -33,6 +33,7 @@ function exposure(value) {
         <template v-if="photo.aperture > 0"><dt>{{ t('aperture') }}</dt><dd>f/{{ photo.aperture }}</dd></template>
         <template v-if="photo.shutter > 0"><dt>{{ t('shutter') }}</dt><dd>{{ exposure(photo.shutter) }}</dd></template>
         <template v-if="photo.iso > 0"><dt>ISO</dt><dd>{{ photo.iso }}</dd></template>
+        <template v-if="photo.duration > 0"><dt>{{ isZh ? '时长' : 'Duration' }}</dt><dd>{{ Math.floor(photo.duration / 60) }}:{{ String(Math.floor(photo.duration % 60)).padStart(2, '0') }}</dd></template>
         <template v-if="photo.width && photo.height"><dt>{{ t('originalDimensions') }}</dt><dd>{{ photo.width }} × {{ photo.height }} px</dd></template>
         <template v-if="location"><dt>{{ t('coordinates') }}</dt><dd class="photo-coordinates">{{ coordinates }}<br /><a :href="mapUrl" target="_blank" rel="noopener noreferrer">{{ t('viewMap') }} ↗</a></dd></template>
       </dl>

@@ -2589,6 +2589,236 @@
   ],
   "xiamen-chongqing-fuzhou-2024": [
    {
+    "name": "upload-d1169c39-e1fc-47f3-8b47-69c7e8474dc2",
+    "kind": "video",
+    "detectedKind": "video",
+    "width": 1920,
+    "height": 1080,
+    "duration": 12.012109,
+    "shotAt": null,
+    "caption": "DJI 0083",
+    "assets": {
+     "full": "gallery-314a5bc5-e47b-4935-99a9-3fa2f1f2dc56-full.mp4",
+     "thumb": "gallery-314a5bc5-e47b-4935-99a9-3fa2f1f2dc56-thumb.webp",
+     "legacyThumb": "gallery-314a5bc5-e47b-4935-99a9-3fa2f1f2dc56-legacy-thumb.jpg",
+     "poster": "gallery-314a5bc5-e47b-4935-99a9-3fa2f1f2dc56-poster.jpg",
+     "legacyFull": "gallery-314a5bc5-e47b-4935-99a9-3fa2f1f2dc56-full.mp4"
+    },
+    "compression": "original",
+    "metadata": {
+     "caption": "Drone Video at Huangcuo Beach, Xiamen",
+     "make": "",
+     "camera": "",
+     "lens": "",
+     "shotAt": "2024:02:24 15:26:00",
+     "shutter": null,
+     "location": {
+      "latitude": 24.44361111111111,
+      "longitude": 118.15527777777778
+     },
+     "focalLength": null,
+     "aperture": null,
+     "iso": null
+    }
+   },
+   {
+    "name": "upload-bd90748f-1e18-4dda-a4a4-668fdfd0e92a",
+    "width": 3968,
+    "height": 2976,
+    "kind": "photo",
+    "detectedKind": "photo",
+    "shotAt": "2024:02:24 15:39:50",
+    "make": "DJI",
+    "camera": "FC1102",
+    "lens": null,
+    "focalLength": 4.49,
+    "aperture": 2.6,
+    "iso": 100,
+    "shutter": 0.001,
+    "location": {
+     "latitude": 24.44361111111111,
+     "longitude": 118.15527777777778
+    },
+    "assets": {
+     "thumb": "gallery-d9454887-c18a-4f3e-b5e9-012d94f94e26-thumb.webp",
+     "full": "gallery-d9454887-c18a-4f3e-b5e9-012d94f94e26-full.jpg",
+     "legacyThumb": "gallery-d9454887-c18a-4f3e-b5e9-012d94f94e26-legacy-thumb.jpg",
+     "legacyFull": "gallery-d9454887-c18a-4f3e-b5e9-012d94f94e26-full.jpg"
+    },
+    "compression": "original",
+    "metadata": {
+     "caption": "Drone Shot at Huangcuo Beach, Xiamen",
+     "make": "DJI",
+     "camera": "FC1102",
+     "lens": "",
+     "shotAt": "2024:02:24 15:39:50",
+     "shutter": 0.001,
+     "location": {
+      "latitude": 24.44361111111111,
+      "longitude": 118.15527777777778
+     },
+     "focalLength": 4.49,
+     "aperture": 2.6,
+     "iso": 100
+    }
+   },
+   {
+    "name": "upload-9901b691-505d-4625-a9c1-34440061eaaa",
+    "width": 3968,
+    "height": 2976,
+    "kind": "photo",
+    "detectedKind": "photo",
+    "shotAt": "2024:02:24 15:40:18",
+    "make": "DJI",
+    "camera": "FC1102",
+    "lens": null,
+    "focalLength": 4.49,
+    "aperture": 2.6,
+    "iso": 100,
+    "shutter": 0.001,
+    "location": {
+     "latitude": 24.44361111111111,
+     "longitude": 118.15527777777778
+    },
+    "assets": {
+     "thumb": "gallery-15469f53-fa45-40fa-9b17-331015834551-thumb.webp",
+     "full": "gallery-15469f53-fa45-40fa-9b17-331015834551-full.jpg",
+     "legacyThumb": "gallery-15469f53-fa45-40fa-9b17-331015834551-legacy-thumb.jpg",
+     "legacyFull": "gallery-15469f53-fa45-40fa-9b17-331015834551-full.jpg"
+    },
+    "compression": "original",
+    "metadata": {
+     "caption": "Drone Shot at Huangcuo Beach, Xiamen",
+     "make": "DJI",
+     "camera": "FC1102",
+     "lens": "",
+     "shotAt": "2024:02:24 15:40:18",
+     "shutter": 0.001,
+     "location": {
+      "latitude": 24.44361111111111,
+      "longitude": 118.15527777777778
+     },
+     "focalLength": 4.49,
+     "aperture": 2.6,
+     "iso": 100
+    }
+   },
+   {
+    "name": "upload-86a9aafe-3702-4680-913d-aa8780b90156",
+    "kind": "video",
+    "detectedKind": "video",
+    "width": 1920,
+    "height": 1080,
+    "duration": 29.529609,
+    "shotAt": null,
+    "caption": "DJI 0094",
+    "assets": {
+     "full": "gallery-ddd9b596-1a24-46ba-8b8b-96fb4c460050-full.mp4",
+     "thumb": "gallery-ddd9b596-1a24-46ba-8b8b-96fb4c460050-thumb.webp",
+     "legacyThumb": "gallery-ddd9b596-1a24-46ba-8b8b-96fb4c460050-legacy-thumb.jpg",
+     "poster": "gallery-ddd9b596-1a24-46ba-8b8b-96fb4c460050-poster.jpg",
+     "legacyFull": "gallery-ddd9b596-1a24-46ba-8b8b-96fb4c460050-full.mp4"
+    },
+    "compression": "original",
+    "metadata": {
+     "caption": "Drone Video at Huangcuo Beach, Xiamen",
+     "make": "",
+     "camera": "",
+     "lens": "",
+     "shotAt": "2024:02:24 15:38:00",
+     "shutter": null,
+     "location": {
+      "latitude": 24.44361111111111,
+      "longitude": 118.15527777777778
+     },
+     "focalLength": null,
+     "aperture": null,
+     "iso": null
+    }
+   },
+   {
+    "name": "upload-2db7ce3f-bcb2-42f4-944e-3fe6676740ea",
+    "width": 3968,
+    "height": 2976,
+    "kind": "photo",
+    "detectedKind": "photo",
+    "shotAt": "2024:02:24 15:40:34",
+    "make": "DJI",
+    "camera": "FC1102",
+    "lens": null,
+    "focalLength": 4.49,
+    "aperture": 2.6,
+    "iso": 100,
+    "shutter": 0.001,
+    "location": {
+     "latitude": 24.44361111111111,
+     "longitude": 118.155
+    },
+    "assets": {
+     "thumb": "gallery-2ab6c705-ead9-4e89-a755-b45fadfa834d-thumb.webp",
+     "full": "gallery-2ab6c705-ead9-4e89-a755-b45fadfa834d-full.jpg",
+     "legacyThumb": "gallery-2ab6c705-ead9-4e89-a755-b45fadfa834d-legacy-thumb.jpg",
+     "legacyFull": "gallery-2ab6c705-ead9-4e89-a755-b45fadfa834d-full.jpg"
+    },
+    "compression": "original",
+    "metadata": {
+     "caption": "Drone Shot at Huangcuo Beach, Xiamen",
+     "make": "DJI",
+     "camera": "FC1102",
+     "lens": "",
+     "shotAt": "2024:02:24 15:40:34",
+     "shutter": 0.001,
+     "location": {
+      "latitude": 24.44361111111111,
+      "longitude": 118.155
+     },
+     "focalLength": 4.49,
+     "aperture": 2.6,
+     "iso": 100
+    }
+   },
+   {
+    "name": "upload-16e9f3e3-ea85-4e2f-8484-4af15ec17e07",
+    "width": 3968,
+    "height": 2976,
+    "kind": "photo",
+    "detectedKind": "photo",
+    "shotAt": "2024:02:24 15:40:51",
+    "make": "DJI",
+    "camera": "FC1102",
+    "lens": null,
+    "focalLength": 4.49,
+    "aperture": 2.6,
+    "iso": 100,
+    "shutter": 0.0008,
+    "location": {
+     "latitude": 24.44361111111111,
+     "longitude": 118.155
+    },
+    "assets": {
+     "thumb": "gallery-24b96997-4af0-43fb-93b2-d9276238868e-thumb.webp",
+     "full": "gallery-24b96997-4af0-43fb-93b2-d9276238868e-full.jpg",
+     "legacyThumb": "gallery-24b96997-4af0-43fb-93b2-d9276238868e-legacy-thumb.jpg",
+     "legacyFull": "gallery-24b96997-4af0-43fb-93b2-d9276238868e-full.jpg"
+    },
+    "compression": "original",
+    "metadata": {
+     "caption": "Drone Shot at Huangcuo Beach, Xiamen",
+     "make": "DJI",
+     "camera": "FC1102",
+     "lens": "",
+     "shotAt": "2024:02:24 15:40:51",
+     "shutter": 0.0008,
+     "location": {
+      "latitude": 24.44361111111111,
+      "longitude": 118.155
+     },
+     "focalLength": 4.49,
+     "aperture": 2.6,
+     "iso": 100
+    }
+   },
+   {
     "name": "PXL_20240223_074625197",
     "shotAt": "2024:02:23 15:46:25",
     "make": "Google",
@@ -2854,6 +3084,26 @@
     "width": 4080,
     "height": 3072
    }
+  ]
+ },
+ "featured": [
+  {
+   "collection": "tianjin",
+   "name": "upload-c0b4e409-ddc6-4b16-a029-7aec451f3445"
+  },
+  {
+   "collection": "suzhou",
+   "name": "24"
+  },
+  {
+   "collection": "xiamen-chongqing-fuzhou-2024",
+   "name": "upload-86a9aafe-3702-4680-913d-aa8780b90156"
+  }
+ ],
+ "excluded": {
+  "xiamen-chongqing-fuzhou-2024": [
+   "upload-13d5a5e3-ad6d-468c-a7cd-7a7a136e6df1",
+   "upload-60408987-ba17-48ca-8d8a-46853cd8bf41"
   ]
  }
 }

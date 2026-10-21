@@ -84,20 +84,25 @@ function prev() {
 function onKeydown(e) {
   if (activeIndex.value === null) return
   if (e.key === 'Tab') {
-    const elements = [...(lightbox.value?.querySelectorAll('button, a[href], summary, [tabindex="0"]') ?? [])].filter(el => el.getClientRects().length)
+    const elements = [...(lightbox.value?.querySelectorAll('button, a[href], summary, video[controls], [tabindex="0"]') ?? [])].filter(el => el.getClientRects().length)
     if (e.shiftKey && document.activeElement === elements[0]) { e.preventDefault(); elements.at(-1)?.focus() }
     else if (!e.shiftKey && document.activeElement === elements.at(-1)) { e.preventDefault(); elements[0]?.focus() }
   }
   if (e.key === 'Escape' && !document.fullscreenElement) close()
+  if (e.target?.closest('video')) return
   if (e.key === 'ArrowRight') next()
   if (e.key === 'ArrowLeft') prev()
 }
 
 // A page/collection navigation can leave a stale index pointing at a photo
 // that's no longer on screen, so close the lightbox whenever the route changes.
-watch(() => route.fullPath, () => { activeIndex.value = null })
+function openLinkedWork() {
+  const index = pagePhotos.value.findIndex(photo => photo.sortKey === route.query.photo)
+  activeIndex.value = index < 0 ? null : index
+}
+watch(() => route.fullPath, () => { activeIndex.value = null; openLinkedWork() })
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => { window.addEventListener('keydown', onKeydown); openLinkedWork() })
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
   if (activeIndex.value !== null) document.body.style.overflow = previousOverflow ?? ''
@@ -128,7 +133,7 @@ onUnmounted(() => {
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <span v-if="photo.kind !== 'photo'" class="absolute bottom-2 left-2 rounded bg-black/75 px-2 py-1 text-xs text-white font-mono">
-            {{ photo.kind === 'photosphere' ? t('photosphere') : t('panorama') }}
+            {{ photo.kind === 'video' ? (isZh ? '▶ 视频' : '▶ Video') : photo.kind === 'photosphere' ? t('photosphere') : t('panorama') }}
           </span>
         </button>
       </div>
@@ -180,10 +185,11 @@ onUnmounted(() => {
         </button>
 
         <figure class="max-w-full max-h-full overflow-y-auto flex flex-col items-center">
-          <PanoramaViewer v-if="pagePhotos[activeIndex].kind !== 'photo'" :key="pagePhotos[activeIndex].fullSrc" :photo="pagePhotos[activeIndex]" />
+          <video v-if="pagePhotos[activeIndex].kind === 'video'" :key="pagePhotos[activeIndex].fullSrc" :src="pagePhotos[activeIndex].fullSrc" :poster="pagePhotos[activeIndex].posterSrc" controls playsinline preload="none" class="max-w-full max-h-[70vh] shrink-0 rounded-lg"><a :href="pagePhotos[activeIndex].fullSrc">{{ isZh ? '下载视频' : 'Download video' }}</a></video>
+          <PanoramaViewer v-else-if="pagePhotos[activeIndex].kind !== 'photo'" :key="pagePhotos[activeIndex].fullSrc" :photo="pagePhotos[activeIndex]" />
           <img v-else :src="pagePhotos[activeIndex].fullSrc" :alt="photoCaption(pagePhotos[activeIndex])" class="max-w-full max-h-[70vh] shrink-0 rounded-lg object-contain" />
           <figcaption class="text-sm text-white/60 font-mono mt-3">{{ photoCaption(pagePhotos[activeIndex]) }}</figcaption>
-          <PhotoDetails v-if="pagePhotos[activeIndex].kind === 'photo'" :key="pagePhotos[activeIndex].fullSrc" :photo="pagePhotos[activeIndex]" />
+          <PhotoDetails v-if="['photo', 'video'].includes(pagePhotos[activeIndex].kind)" :key="pagePhotos[activeIndex].fullSrc" :photo="pagePhotos[activeIndex]" />
         </figure>
 
         <button

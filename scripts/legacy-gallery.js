@@ -11,6 +11,7 @@ export function legacyPhotoDetails(photo, zh = false) {
   if (photo.aperture > 0) add('Aperture', '光圈', `f/${photo.aperture}`)
   if (photo.shutter > 0) add('Shutter speed', '快门速度', photo.shutter >= 1 ? `${Number(photo.shutter.toFixed(2))} s` : `1/${Math.round(1 / photo.shutter)} s`)
   if (photo.iso > 0) add('ISO', 'ISO', photo.iso)
+  if (photo.duration > 0) add('Duration', '时长', `${Math.floor(photo.duration / 60)}:${String(Math.floor(photo.duration % 60)).padStart(2, '0')}`)
   if (photo.width && photo.height) add('Original size', '原始尺寸', `${photo.width} × ${photo.height} px`)
   const { latitude, longitude } = photo.location ?? {}
   const gps = Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
@@ -19,5 +20,5 @@ export function legacyPhotoDetails(photo, zh = false) {
     const url = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=15/${latitude}/${longitude}`
     rows.push(`<dt>${zh ? '地图' : 'Map'}</dt><dd><a href="${escape(url)}">${zh ? '在地图上查看' : 'View on map'} &raquo;</a></dd>`)
   }
-  return `<details class="legacy-photo-details"><summary>${zh ? '照片信息 / EXIF' : 'Photo details / EXIF'}</summary><dl>${rows.join('')}</dl>${gps ? '' : `<p>${zh ? '这张照片没有记录 GPS 坐标。' : 'No GPS coordinates recorded in this photo.'}</p>`}</details>`
+  return `<details class="legacy-photo-details"><summary>${photo.kind === 'video' ? (zh ? '视频信息' : 'Video details') : (zh ? '照片信息 / EXIF' : 'Photo details / EXIF')}</summary><dl>${rows.join('')}</dl>${gps ? '' : `<p>${zh ? '这张照片没有记录 GPS 坐标。' : 'No GPS coordinates recorded in this photo.'}</p>`}</details>`
 }

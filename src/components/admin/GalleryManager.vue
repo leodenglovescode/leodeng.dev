@@ -114,7 +114,7 @@ async function choose(event) {
     return
   }
   if (dirty.value && !confirm('Discard unsaved gallery changes?')) return
-  reset(); busy.value = true; error.value = ''; notice.value = ''; progress.value = 'Reading photo and EXIF…'
+  reset(); busy.value = true; error.value = ''; notice.value = ''; progress.value = 'Reading media…'
   try {
     const entry = await inspectGalleryPhoto(file)
     sourceFile.value = file; preview.value = URL.createObjectURL(file)
@@ -123,7 +123,7 @@ async function choose(event) {
   } catch (err) { error.value = err.message } finally { busy.value = false; progress.value = '' }
 }
 async function prepare() {
-  if (!sourceFile.value) throw new Error('Select the image again to prepare its upload.')
+  if (!sourceFile.value) throw new Error('Select the file again to prepare its upload.')
   progress.value = 'Preparing image copies…'
   const entry = { ...form.value.entry }
   if (entry.kind === 'photosphere' && !entry.panorama) {
@@ -191,7 +191,7 @@ async function save() {
     if (next.collections[target].some(p => p.name === entry.name)) throw new Error('This photo already exists in that collection.')
     next.collections[target].unshift(entry)
     progress.value = 'Saving gallery…'
-    await commit(next, `content: ${form.value.isNew ? 'add gallery photo' : 'update gallery metadata'}`)
+    await commit(next, `content: ${form.value.isNew ? 'add gallery work' : 'update gallery metadata'}`)
     collection.value = target; reset()
     notice.value = localAdmin.value ? 'Saved to the local gallery. Build and deploy to publish.' : 'Gallery saved. The website will update after its build finishes.'
   } catch (err) {
@@ -199,16 +199,44 @@ async function save() {
   } finally { busy.value = false; progress.value = '' }
 }
 async function remove(entry) {
-  if (busy.value || dirty.value || !confirm('Remove this photo from the gallery? Its uploaded files will remain in R2.')) return
+  if (busy.value || dirty.value || !confirm('Remove this work from the gallery? Its uploaded files will remain in R2.')) return
   busy.value = true; error.value = ''
   try {
     const next = clone(manifest.value)
     next.collections[collection.value] = next.collections[collection.value].filter(p => p.name !== entry.name)
+    next.featured = (next.featured ?? []).filter(item => item.collection !== collection.value || item.name !== entry.name)
     next.excluded ||= {}
     next.excluded[collection.value] = [...new Set([...(next.excluded[collection.value] || []), entry.name])]
     await commit(next, 'content: remove photo from gallery')
-    notice.value = 'Photo removed from the gallery.'
+    notice.value = 'Work removed from the gallery.'
   } catch (err) { error.value = err.message } finally { busy.value = false }
+}
+function featuredIndex(entry, slug = collection.value) {
+  return (manifest.value?.featured ?? []).findIndex(item => item.collection === slug && item.name === entry.name)
+}
+async function feature(entry, slug = collection.value, direction = 0) {
+  if (busy.value || dirty.value) return
+  busy.value = true; error.value = ''; notice.value = ''
+  try {
+    const next = clone(manifest.value)
+    next.featured ||= []
+    const index = next.featured.findIndex(item => item.collection === slug && item.name === entry.name)
+    if (direction) {
+      const target = index + direction
+      if (index < 0 || target < 0 || target >= next.featured.length) return
+      ;[next.featured[index], next.featured[target]] = [next.featured[target], next.featured[index]]
+    } else if (index >= 0) next.featured.splice(index, 1)
+    else {
+      if (next.featured.length >= 5) throw new Error('Five works are already featured. Unfeature one first.')
+      next.featured.push({ collection: slug, name: entry.name })
+    }
+    await commit(next, 'content: update featured gallery works')
+    notice.value = localAdmin.value ? 'Featured selection saved locally. Build and deploy to publish.' : 'Featured selection saved. The website will update after its build finishes.'
+  } catch (err) { error.value = err.message } finally { busy.value = false }
+}
+function featuredCaption(item) {
+  const entry = manifest.value.collections[item.collection]?.find(entry => entry.name === item.name)
+  return entry?.metadata?.caption || entry?.caption || item.name
 }
 function restore() {
   form.value = recovery.value.form ?? null; collectionForm.value = recovery.value.collectionForm ?? null
@@ -227,8 +255,9 @@ function restore() {
       <button type="button" :disabled="busy" @click="load">Reload gallery</button>
       <button type="button" :disabled="busy || !manifest" @click="startCollection">New collection</button>
       <label class="upload-label" :class="{ disabled: busy }">Add photo<input type="file" accept="image/jpeg,image/png,image/webp" :disabled="busy" class="sr-only" @change="choose" /></label>
+      <label class="upload-label" :class="{ disabled: busy }">Add video<input type="file" accept="video/mp4,video/webm,.mp4,.webm" :disabled="busy" class="sr-only" @change="choose" /></label>
     </div>
-    <p class="text-sm text-muted mb-5">Images are stored in R2. Metadata is saved with the gallery and appears on both versions of the site.</p>
+    <p class="text-sm text-muted mb-5">Photos and videos are stored in R2. Metadata is saved with the gallery and appears on both versions of the site.</p>
     <p v-if="loading" role="status">Loading gallery…</p>
     <p v-if="error" role="alert" class="text-red-400 mb-4">{{ error }}</p>
     <p v-if="notice" role="status" class="text-accent mb-4">{{ notice }}</p>
@@ -237,9 +266,21 @@ function restore() {
       Unsaved gallery changes are available. <button @click="restore">Restore</button>
       <button @click="reset">Discard</button>
     </div>
+    <div v-if="manifest" class="border border-fg/15 rounded p-4 mb-6">
+      <h3 class="font-semibold">Featured works ({{ manifest.featured?.length || 0 }}/5)</h3>
+      <p class="text-sm text-muted my-2">Choose up to five photos or videos using Feature below. They appear first on the gallery page.</p>
+      <ol v-if="manifest.featured?.length" class="space-y-2">
+        <li v-for="(item, index) in manifest.featured" :key="`${item.collection}/${item.name}`" class="flex flex-wrap items-center gap-2">
+          <span class="mr-auto">{{ index + 1 }}. {{ featuredCaption(item) }}</span>
+          <button :disabled="busy || dirty || index === 0" @click="feature(item, item.collection, -1)">Move up</button>
+          <button :disabled="busy || dirty || index === manifest.featured.length - 1" @click="feature(item, item.collection, 1)">Move down</button>
+          <button :disabled="busy || dirty" @click="feature(item, item.collection)">Unfeature</button>
+        </li>
+      </ol>
+    </div>
     <div v-if="manifest" class="flex flex-wrap gap-3 mb-5">
       <label>Browse collection<select v-model="collection"><option v-for="slug in collections" :key="slug" :value="slug">{{ title(slug) }} ({{ manifest.collections[slug].length }})</option></select></label>
-      <label>Find photos<input v-model="search" type="search" placeholder="Caption, filename, or camera" /></label>
+      <label>Find works<input v-model="search" type="search" placeholder="Caption, filename, or camera" /></label>
     </div>
     <form v-if="collectionForm" class="gallery-form collection-form mb-8" @submit.prevent="createCollection">
       <h3 class="font-semibold mb-4">New collection</h3>
@@ -252,19 +293,20 @@ function restore() {
       <div class="flex gap-3 mt-4"><button type="submit" :disabled="busy">{{ busy ? 'Creating…' : 'Create collection' }}</button><button type="button" :disabled="busy" @click="close">Cancel</button></div>
     </form>
     <form v-if="form" class="gallery-form mb-8" @submit.prevent="save">
-      <h3 class="font-semibold mb-4">{{ form.isNew ? 'Add photo' : 'Edit photo metadata' }}</h3>
-      <img :src="preview || thumb(form.staged || form.entry, form.origin)" alt="Selected photo preview" class="max-h-52 max-w-full object-contain mb-4 rounded" />
+      <h3 class="font-semibold mb-4">{{ form.isNew ? 'Add work' : 'Edit metadata' }}</h3>
+      <video v-if="form.entry.kind === 'video'" :key="preview || form.entry.name" :src="preview || (form.entry.assets ? `${manifest.base}/${form.entry.assets.full}` : undefined)" controls playsinline preload="metadata" class="max-h-52 max-w-full mb-4 rounded" />
+      <img v-else :src="preview || thumb(form.staged || form.entry, form.origin)" alt="Selected photo preview" class="max-h-52 max-w-full object-contain mb-4 rounded" />
       <label>Collection<select v-model="form.target" :disabled="busy || !form.isNew"><option v-for="slug in collections" :key="slug" :value="slug">{{ title(slug) }}</option><option value="__new">New collection…</option></select></label>
       <div v-if="form.target === '__new'" class="fields"><label>Collection title<input v-model="newTitle" :disabled="busy" /></label><label>Collection slug<input v-model="newSlug" :disabled="busy" placeholder="summer-in-suzhou" /></label></div>
       <template v-if="form.isNew && !form.staged">
-        <label>Photo type<select v-model="form.entry.kind" :disabled="busy || form.entry.detectedKind !== 'photo'"><option value="photo">Photo</option><option value="panorama">Panorama</option><option value="photosphere">360° photosphere</option></select></label>
-        <label>Compression<select v-model="compression" :disabled="busy || form.entry.kind !== 'photo'"><option v-for="(preset, key) in COMPRESSION" :key="key" :value="key">{{ preset.label }}</option></select></label>
-        <p class="text-sm text-muted my-3">{{ form.entry.kind !== 'photo' ? 'Panorama and photosphere originals are always uploaded unchanged. Only separate grid previews are resized.' : 'Original uploads the full photo unchanged. Normal uses up to 2200 px at 82% quality. Maximum uses up to 1600 px at 55% quality. Small previews and JPEG copies are prepared separately.' }}</p>
+        <label v-if="form.entry.kind !== 'video'">Photo type<select v-model="form.entry.kind" :disabled="busy || form.entry.detectedKind !== 'photo'"><option value="photo">Photo</option><option value="panorama">Panorama</option><option value="photosphere">360° photosphere</option></select></label>
+        <label v-if="form.entry.kind !== 'video'">Compression<select v-model="compression" :disabled="busy || form.entry.kind !== 'photo'"><option v-for="(preset, key) in COMPRESSION" :key="key" :value="key">{{ preset.label }}</option></select></label>
+        <p class="text-sm text-muted my-3">{{ form.entry.kind === 'video' ? 'Video is uploaded unchanged, up to 95 MB. Use MP4 with H.264 for the widest device support. A poster and small previews are generated separately. Video metadata can be entered below.' : form.entry.kind !== 'photo' ? 'Panorama and photosphere originals are always uploaded unchanged. Only separate grid previews are resized.' : 'Original uploads the full photo unchanged. Normal uses up to 2200 px at 82% quality. Maximum uses up to 1600 px at 55% quality. Small previews and JPEG copies are prepared separately.' }}</p>
         <button type="button" :disabled="busy || !sourceFile" @click="previewCompression">Prepare and check size</button>
-        <p v-if="prepared" class="text-sm mt-2">Full image: {{ bytes(prepared.fullBytes) }}. Total upload including previews: {{ bytes(prepared.totalBytes) }}.</p>
-        <p v-if="!sourceFile" class="text-sm text-muted mt-2">Choose the image again to finish this upload. The metadata buffer has been restored.</p>
+        <p v-if="prepared" class="text-sm mt-2">Full file: {{ bytes(prepared.fullBytes) }}. Total upload including previews: {{ bytes(prepared.totalBytes) }}.</p>
+        <p v-if="!sourceFile" class="text-sm text-muted mt-2">Choose the file again to finish this upload. The metadata buffer has been restored.</p>
       </template>
-      <p v-if="form.staged" class="text-sm text-accent my-3">Image files are uploaded. Saving again will reuse them.</p>
+      <p v-if="form.staged" class="text-sm text-accent my-3">Media files are uploaded. Saving again will reuse them.</p>
       <div class="fields mt-4">
         <label v-for="field in strings" :key="field.key">{{ field.label }}<input v-model="form.metadata[field.key]" :disabled="busy" /></label>
         <label>Captured at<input v-model="form.metadata.capturedAt" type="datetime-local" step="1" :disabled="busy" /></label>
@@ -274,13 +316,13 @@ function restore() {
         <label>Longitude<input v-model="form.metadata.longitude" type="number" step="any" min="-180" max="180" :disabled="busy" /></label>
       </div>
       <p class="text-xs text-muted my-3">Metadata edits update the displayed photo details. Coordinates are published with this photo. Leave both blank to omit its location.</p>
-      <div class="flex gap-3 mt-4"><button type="submit" :disabled="busy">{{ busy ? 'Saving…' : form.isNew ? 'Upload and publish photo' : 'Save metadata' }}</button><button type="button" :disabled="busy" @click="close">Cancel</button></div>
+      <div class="flex gap-3 mt-4"><button type="submit" :disabled="busy">{{ busy ? 'Saving…' : form.isNew ? 'Upload and publish work' : 'Save metadata' }}</button><button type="button" :disabled="busy" @click="close">Cancel</button></div>
     </form>
-    <p v-if="manifest && collection && !photos.length && !loading" class="text-sm text-muted mb-5">{{ search ? 'No photos match your search.' : 'This collection is empty. Choose Add photo to upload its first photo.' }}</p>
+    <p v-if="manifest && collection && !photos.length && !loading" class="text-sm text-muted mb-5">{{ search ? 'No works match your search.' : 'This collection is empty. Choose Add photo or Add video to upload its first work.' }}</p>
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       <article v-for="photo in photos" :key="photo.name" class="border border-fg/10 rounded-lg overflow-hidden">
         <button type="button" class="photo-tile" :disabled="busy" @click="edit(photo)"><img :src="thumb(photo)" :alt="photo.metadata?.caption || photo.name" loading="lazy" class="aspect-square w-full object-cover" /></button>
-        <div class="p-3"><p class="text-xs break-all mb-2">{{ photo.metadata?.caption || photo.name }}</p><div class="flex flex-wrap gap-2"><button :disabled="busy" @click="edit(photo)">Edit</button><button :disabled="busy || dirty" @click="remove(photo)">Remove</button></div></div>
+        <div class="p-3"><p v-if="photo.kind === 'video'" class="text-xs text-accent mb-1">▶ Video</p><p class="text-xs break-all mb-2">{{ photo.metadata?.caption || photo.name }}</p><div class="flex flex-wrap gap-2"><button :disabled="busy" @click="edit(photo)">Edit</button><button :disabled="busy || dirty || (featuredIndex(photo) < 0 && manifest.featured?.length >= 5)" @click="feature(photo)">{{ featuredIndex(photo) >= 0 ? 'Unfeature' : 'Feature' }}</button><button :disabled="busy || dirty" @click="remove(photo)">Remove</button></div></div>
       </article>
     </div>
   </section>
