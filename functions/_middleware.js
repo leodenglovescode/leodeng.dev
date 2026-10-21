@@ -1,4 +1,5 @@
 import { LEGACY_ORIGIN, LEGACY_PREFIX, MODERN_ORIGIN, cleanLegacyPath, isDocumentRequest, isLegacyBrowser, modernLink, prefersModern } from '../lib/legacy.js'
+import { onRequest as galleryImage } from './gallery-media/[[path]].js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
 
 const PUBLIC_APIS = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype'])
@@ -35,6 +36,7 @@ export async function onRequest(context) {
 
   const pathname = cleanLegacyPath(url.pathname)
   if (!pathname) return new Response('Invalid path.', { status: 400 })
+  if (pathname.startsWith('/gallery-media/')) return galleryImage({ request, env, params: { path: pathname.slice('/gallery-media/'.length).split('/') } })
   if (/^\/api(?:\/|$)/.test(pathname)) {
     if (PUBLIC_APIS.has(pathname) && ['GET', 'HEAD'].includes(request.method)) return context.next()
     return new Response('Not found.', { status: 404, headers: { 'Cache-Control': 'no-store' } })

@@ -473,6 +473,57 @@
     document.addEventListener('visibilitychange', visibility);
     visibility();
   }
+  // A plain JPEG and native scrolling work even without WebGL or modern JS.
+  var panoramaLinks = document.querySelectorAll('[data-panorama]');
+  for (var photoIndex = 0; photoIndex < panoramaLinks.length; photoIndex++) {
+    (function (link) {
+      link.addEventListener('click', function (event) {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        var overlay = node('div', ''); overlay.className = 'legacy-panorama-overlay';
+        overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', zh ? '全景照片' : 'Panorama');
+        var toolbar = node('div', ''); toolbar.className = 'legacy-panorama-toolbar';
+        var close = node('button', zh ? '关闭' : 'Close'); close.type = 'button'; toolbar.appendChild(close);
+        var fullscreen = node('button', zh ? '全屏查看' : 'Fullscreen'); fullscreen.type = 'button'; toolbar.appendChild(fullscreen);
+        var original = node('a', zh ? '打开原图' : 'Open original'); original.href = link.href; toolbar.appendChild(original);
+        var hint = node('span', zh ? '左右滚动查看' : 'Scroll sideways to explore'); toolbar.appendChild(hint);
+        var viewport = node('div', ''); viewport.className = 'legacy-panorama-scroll'; viewport.tabIndex = 0;
+        var image = document.createElement('img'); image.alt = zh ? '全景照片' : 'Panorama';
+        viewport.appendChild(image); overlay.appendChild(toolbar); overlay.appendChild(viewport);
+        var oldOverflow = document.body.style.overflow;
+        function resize() { image.style.height = Math.max(100, window.innerHeight - 100) + 'px'; }
+        function exit() {
+          var leave = document.exitFullscreen || document.webkitExitFullscreen;
+          if ((document.fullscreenElement || document.webkitFullscreenElement) === overlay && leave) {
+            var result = leave.call(document); if (result && result['catch']) result['catch'](function () {});
+          }
+          window.removeEventListener('resize', resize); document.removeEventListener('keydown', keydown);
+          document.body.style.overflow = oldOverflow; image.src = ''; document.body.removeChild(overlay); link.focus();
+        }
+        function keydown(event) {
+          if (event.keyCode === 27) { event.preventDefault(); exit(); }
+          if (event.keyCode === 9) {
+            if (event.shiftKey && document.activeElement === close) { event.preventDefault(); viewport.focus(); }
+            else if (!event.shiftKey && document.activeElement === viewport) { event.preventDefault(); close.focus(); }
+          }
+        }
+        close.addEventListener('click', exit);
+        var enter = overlay.requestFullscreen || overlay.webkitRequestFullscreen;
+        var leave = document.exitFullscreen || document.webkitExitFullscreen;
+        if (!enter) fullscreen.style.display = 'none';
+        fullscreen.addEventListener('click', function () {
+          var active = (document.fullscreenElement || document.webkitFullscreenElement) === overlay;
+          var result = active && leave ? leave.call(document) : enter.call(overlay);
+          if (result && result['catch']) result['catch'](function () {});
+        });
+        function fullscreenChanged() { fullscreen.textContent = (document.fullscreenElement || document.webkitFullscreenElement) === overlay ? (zh ? '退出全屏' : 'Exit fullscreen') : (zh ? '全屏查看' : 'Fullscreen'); }
+        overlay.addEventListener('fullscreenchange', fullscreenChanged); overlay.addEventListener('webkitfullscreenchange', fullscreenChanged);
+        image.onload = function () { viewport.scrollLeft = Math.max(0, (image.offsetWidth - viewport.clientWidth) / 2); };
+        document.body.appendChild(overlay); document.body.style.overflow = 'hidden'; resize(); image.src = link.href; close.focus();
+        window.addEventListener('resize', resize); document.addEventListener('keydown', keydown);
+      });
+    })(panoramaLinks[photoIndex]);
+  }
   var panels = document.querySelectorAll('[data-live]');
   for (var i = 0; i < panels.length; i++) {
     (function (element) {

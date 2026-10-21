@@ -56,7 +56,7 @@ function harness(kind, { reduced = false } = {}) {
     hidden: false, documentElement: { lang: 'en' },
     createElement: tag => new Element(tag),
     querySelector: () => ({ src: 'https://old.leodeng.dev/_assets/legacy.js' }),
-    querySelectorAll: () => [panel],
+    querySelectorAll: selector => selector === '[data-live]' ? [panel] : [],
     getElementById: id => id === 'now-playing-content' ? content : null,
     addEventListener: (name, callback) => { (events[name] ||= []).push(callback) },
   }

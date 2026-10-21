@@ -1,4 +1,5 @@
 // Vite development middleware only. Never import this from src/ or functions/.
+import { GALLERY_PATH, validateGalleryManifest } from '../lib/gallery-validation.js'
 import { createHash, randomUUID } from 'node:crypto'
 import { lstat, mkdir, readFile, readdir, realpath, rename, unlink, writeFile } from 'node:fs/promises'
 import { networkInterfaces } from 'node:os'
@@ -8,7 +9,7 @@ import { EnvHttpProxyAgent, fetch as nodeFetch } from 'undici'
 import { createShelfCatalogSearch, searchShelfCatalog } from '../lib/shelf-search.js'
 
 const REPO = 'local/workspace'
-const CONTENT = new Set(['src/content/now.json', 'src/content/projects.json', 'src/content/shelf.json'])
+const CONTENT = new Set([GALLERY_PATH, 'src/content/now.json', 'src/content/projects.json', 'src/content/shelf.json'])
 const POST = /^src\/(posts|drafts)\/[a-zA-Z0-9][a-zA-Z0-9._-]*\.md$/
 const MEDIA = /^[a-z0-9][a-z0-9._-]{0,127}$/
 
@@ -129,6 +130,7 @@ export async function createLocalAdminMiddleware(projectRoot, { media = createR2
       return await serial(file, async () => {
         const current = await optionalRead(file)
         if (current ? data.sha !== sha(current) : !!data.sha) throw fail(409, 'The local file changed. Reload before saving.')
+        if (target === GALLERY_PATH && req.method === 'DELETE') throw fail(405, 'The gallery manifest cannot be deleted.')
         if (req.method === 'DELETE') {
           if (!current) throw fail(404, 'File not found.')
           await unlink(file)
@@ -137,6 +139,9 @@ export async function createLocalAdminMiddleware(projectRoot, { media = createR2
         const bytes = Buffer.from(data.content, 'base64')
         if (CONTENT.has(target)) {
           try { JSON.parse(bytes.toString('utf8')) } catch { throw fail(400, 'Content files must contain valid JSON.') }
+        }
+        if (target === GALLERY_PATH) {
+          try { validateGalleryManifest(JSON.parse(bytes.toString('utf8'))) } catch (error) { throw fail(400, error.message) }
         }
         await atomicWrite(file, bytes)
         return json(res, { content: { path: target, sha: sha(bytes) } }, current ? 200 : 201)

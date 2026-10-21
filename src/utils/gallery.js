@@ -39,18 +39,27 @@ function buildCollections() {
   return Object.entries(manifest.collections ?? {})
     .map(([slug, entries]) => {
       const photos = (entries ?? [])
-        .map(({ name }) => ({
-          sortKey: name,
-          thumbSrc: urlFor(slug, 'thumbs', name),
-          fullSrc: urlFor(slug, 'full', name),
-          caption: toCaption(name),
-        }))
-        .sort((a, b) => b.sortKey.localeCompare(a.sortKey)) // newest first
+        .map(entry => {
+          const { name, original, assets, kind, panorama, shotAt, make, camera, lens, focalLength, aperture, iso, shutter, location, width, height, caption } = { ...entry, ...entry.metadata }
+          const assetUrl = key => `${manifest.base}/${encodeURIComponent(key)}`
+          return {
+            sortKey: name,
+            thumbSrc: assets ? assetUrl(assets.thumb) : urlFor(slug, 'thumbs', name),
+            fullSrc: assets ? assetUrl(assets.full) : original ? `${manifest.base}/${manifest.prefix}/${encodeURIComponent(slug)}/originals/${encodeURIComponent(original)}` : urlFor(slug, 'full', name),
+            legacyThumbSrc: assets ? `/_assets/gallery/${assets.legacyThumb}` : undefined,
+            legacyFullSrc: assets ? `/_assets/gallery/${assets.legacyFull}` : undefined,
+            viewerSrc: original ? `/gallery-media/${encodeURIComponent(slug)}/${encodeURIComponent(original)}` : undefined,
+            kind: kind ?? 'photo', panorama, shotAt,
+            make, camera, lens, focalLength, aperture, iso, shutter, location, width, height,
+            caption: caption || toCaption(name), customCaption: caption || null,
+          }
+        })
+        .sort((a, b) => String(b.shotAt ?? b.sortKey).localeCompare(String(a.shotAt ?? a.sortKey))) // newest first
 
       const meta = COLLECTION_META[slug] ?? {}
       return {
         slug,
-        title: meta.title ?? titleCase(slug),
+        title: meta.title ?? manifest.titles?.[slug] ?? titleCase(slug),
         description: meta.description ?? `${photos.length} photo${photos.length === 1 ? '' : 's'}.`,
         photos,
         cover: photos[0]?.thumbSrc ?? null,

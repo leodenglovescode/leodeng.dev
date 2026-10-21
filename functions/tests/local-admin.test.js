@@ -109,3 +109,17 @@ test('production APIs still require GitHub sessions regardless of local-looking 
   assert.equal(plugin.apply, 'serve')
   assert.equal(plugin.configurePreviewServer, undefined)
 })
+
+test('local gallery metadata is validated and uses revision checks', async t => {
+  const { request, file, content } = await fixture(t)
+  const target = file('src/generated/photos.json')
+  const gallery = { base: 'https://media.leodeng.dev', prefix: 'photos', collections: { trips: [{ name: 'one', metadata: { caption: 'Edited', location: { latitude: 0, longitude: -1 } } }] } }
+  const created = await request(target, { method: 'PUT', body: { content: content(JSON.stringify(gallery)) } })
+  assert.equal(created.status, 201)
+  const read = await request(target)
+  assert.equal(JSON.parse(Buffer.from(read.body.content, 'base64').toString()).collections.trips[0].metadata.location.latitude, 0)
+  assert.equal((await request(target, { method: 'PUT', body: { content: content(JSON.stringify(gallery)), sha: 'stale' } })).status, 409)
+  gallery.collections.trips[0].metadata.location.latitude = 91
+  assert.equal((await request(target, { method: 'PUT', body: { content: content(JSON.stringify(gallery)), sha: read.body.sha } })).status, 400)
+  assert.equal((await request(target, { method: 'DELETE', body: { sha: read.body.sha } })).status, 405)
+})

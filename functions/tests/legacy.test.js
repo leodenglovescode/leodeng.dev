@@ -113,3 +113,20 @@ test('shared HTML becomes readable content with working relative links and compa
   assert.equal(cleanLegacyPath('/%5cprivate'), null)
   assert.equal(cleanLegacyPath('/%00'), null)
 })
+
+test('classic host streams only published panorama originals through the same-origin gallery route', async () => {
+  const { default: manifest } = await import('../../src/generated/photos.json', { with: { type: 'json' } })
+  const [collection, photos] = Object.entries(manifest.collections).find(([, entries]) => entries.some(photo => photo.panorama))
+  const photo = photos.find(photo => photo.panorama)
+  const { context, nextCalls } = setup(`https://old.leodeng.dev/gallery-media/${collection}/${photo.original}`)
+  context.env.MEDIA = { get: async key => {
+    assert.equal(key, `${manifest.prefix}/${collection}/originals/${photo.original}`)
+    return { body: new Blob(['original']).stream(), size: 8, httpEtag: '"original"', httpMetadata: { contentType: 'image/jpeg' } }
+  } }
+  const response = await onRequest(context)
+  assert.equal(response.status, 200)
+  assert.equal(await response.text(), 'original')
+  assert.equal(nextCalls(), 0)
+  const unknown = setup('https://old.leodeng.dev/gallery-media/private/secret.jpg')
+  assert.equal((await onRequest(unknown.context)).status, 404)
+})

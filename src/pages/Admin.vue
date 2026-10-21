@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import MarkdownEditor from '../components/admin/MarkdownEditor.vue'
+import GalleryManager from '../components/admin/GalleryManager.vue'
 import MediaManager from '../components/admin/MediaManager.vue'
 import ProjectManager from '../components/admin/ProjectManager.vue'
 import ShelfManager from '../components/admin/ShelfManager.vue'
@@ -33,6 +34,8 @@ const mediaOpen = ref(false)
 const editor = ref(null)
 const projectDirty = ref(false)
 const shelfDirty = ref(false)
+const galleryDirty = ref(false)
+const galleryBusy = ref(false)
 
 const form = ref(null)
 const pristine = ref('')
@@ -261,6 +264,7 @@ function warnIfDirty(event) {
 // Covers navigation that stays inside the SPA — the back gesture, the browser's
 // back button, any in-app link. beforeunload never fires for these.
 onBeforeRouteLeave(() => {
+  if (galleryBusy.value) return false
   if (!isDirty.value) return true
   return confirm('You have unsaved changes. Leave the editor? They stay on this device and are offered back when you return.')
 })
@@ -365,10 +369,11 @@ function snapshot(d) {
   return JSON.stringify([d.slug, d.title, d.description, d.date, d.body])
 }
 
-const isDirty = computed(() => projectDirty.value || shelfDirty.value || (!!form.value && snapshot(form.value) !== pristine.value))
+const isDirty = computed(() => projectDirty.value || shelfDirty.value || galleryDirty.value || (!!form.value && snapshot(form.value) !== pristine.value))
 
 function selectTab(nextTab) {
-  if (nextTab === tab.value) return
+  if (nextTab === tab.value || galleryBusy.value) return
+  if (galleryDirty.value && !confirm('Leave unsaved gallery changes? Metadata can be restored from the Gallery tab.')) return
   if (projectDirty.value && !confirm('Discard unsaved project changes?')) return
   if (shelfDirty.value && !confirm('Leave unsaved shelf changes? They stay on this device and can be restored from the Shelf tab.')) return
   tab.value = nextTab
@@ -848,7 +853,8 @@ function displayDate(iso) {
                                 { key: 'drafts', label: 'Drafts', count: drafts.length },
                                 { key: 'now', label: 'Now', count: nowEvents.length },
                                 { key: 'projects', label: 'Projects', count: null },
-                                { key: 'shelf', label: 'Shelf', count: null }]"
+                                { key: 'shelf', label: 'Shelf', count: null },
+                                { key: 'gallery', label: 'Gallery', count: null }]"
               :key="option.key"
               type="button"
               class="h-8 px-3 rounded-md text-xs font-mono uppercase tracking-widest transition-colors"
@@ -864,20 +870,21 @@ function displayDate(iso) {
           <div class="ml-auto flex items-center gap-2">
             <button
               type="button"
-              v-if="!['now', 'projects', 'shelf'].includes(tab)"
+              v-if="!['now', 'projects', 'shelf', 'gallery'].includes(tab)"
               class="h-9 px-3 rounded-md border border-fg/10 text-sm text-muted hover:text-fg hover:border-fg/20 transition-colors"
               @click="mediaOpen = true"
             >Media</button>
             <button
               type="button"
-              v-if="!['projects', 'shelf'].includes(tab)"
+              v-if="!['projects', 'shelf', 'gallery'].includes(tab)"
               class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110 transition-colors"
               @click="tab === 'now' ? newNowEvent() : newPost()"
             >{{ tab === 'now' ? 'New event' : 'New post' }}</button>
           </div>
         </div>
 
-        <ShelfManager v-if="tab === 'shelf'" @dirty-change="shelfDirty = $event" />
+        <GalleryManager v-if="tab === 'gallery'" @dirty-change="galleryDirty = $event" @busy-change="galleryBusy = $event" />
+        <ShelfManager v-else-if="tab === 'shelf'" @dirty-change="shelfDirty = $event" />
         <ProjectManager v-else-if="tab === 'projects'" @dirty-change="projectDirty = $event" />
 
         <template v-else-if="tab === 'now'">

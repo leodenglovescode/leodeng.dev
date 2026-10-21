@@ -1,9 +1,11 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import PhotoDetails from '../components/PhotoDetails.vue'
 import { getCollection } from '../utils/gallery.js'
 import { useLocale } from '../utils/i18n.js'
 
+const PanoramaViewer = defineAsyncComponent(() => import('../components/PanoramaViewer.vue'))
 const PAGE_SIZE = 10
 
 const route = useRoute()
@@ -15,7 +17,8 @@ const collectionTitle = computed(() => collection.value?.slug === 'planespotting
 const collectionDescription = computed(() => collection.value?.slug === 'planespotting' ? t('shotsFromPlanespottingTrips') : collection.value?.description)
 
 function photoCaption(photo) {
-  const match = photo.sortKey.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})(?:-\d+)?$/)
+  if (photo.customCaption) return photo.customCaption
+  const match = photo.shotAt?.match(/^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/) ?? photo.sortKey.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})(?:-\d+)?$/)
   if (!match) return photo.caption
   const [, year, month, day, hour, minute, second] = match
   const when = isZh.value
@@ -46,6 +49,21 @@ function goToPage(p) {
 }
 
 const activeIndex = ref(null)
+const lightbox = ref(null)
+let previousFocus
+let previousOverflow
+watch(activeIndex, async (value, old) => {
+  if (value !== null && old === null) {
+    previousFocus = document.activeElement
+    previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    await nextTick()
+    lightbox.value?.querySelector('button')?.focus()
+  } else if (value === null && old !== null) {
+    document.body.style.overflow = previousOverflow ?? ''
+    previousFocus?.focus()
+  }
+})
 
 function open(i) {
   activeIndex.value = i
@@ -65,7 +83,12 @@ function prev() {
 
 function onKeydown(e) {
   if (activeIndex.value === null) return
-  if (e.key === 'Escape') close()
+  if (e.key === 'Tab') {
+    const elements = [...(lightbox.value?.querySelectorAll('button, a[href], summary, [tabindex="0"]') ?? [])].filter(el => el.getClientRects().length)
+    if (e.shiftKey && document.activeElement === elements[0]) { e.preventDefault(); elements.at(-1)?.focus() }
+    else if (!e.shiftKey && document.activeElement === elements.at(-1)) { e.preventDefault(); elements[0]?.focus() }
+  }
+  if (e.key === 'Escape' && !document.fullscreenElement) close()
   if (e.key === 'ArrowRight') next()
   if (e.key === 'ArrowLeft') prev()
 }
@@ -75,7 +98,10 @@ function onKeydown(e) {
 watch(() => route.fullPath, () => { activeIndex.value = null })
 
 onMounted(() => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  if (activeIndex.value !== null) document.body.style.overflow = previousOverflow ?? ''
+})
 </script>
 
 <template>
@@ -92,7 +118,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         <button
           v-for="(photo, i) in pagePhotos"
           :key="photo.sortKey"
-          class="group block aspect-square overflow-hidden rounded-lg border border-fg/8 hover:border-accent/20 transition-colors"
+          class="group relative block aspect-square overflow-hidden rounded-lg border border-fg/8 hover:border-accent/20 transition-colors"
           @click="open(i)"
         >
           <img
@@ -101,6 +127,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
             loading="lazy"
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
+          <span v-if="photo.kind !== 'photo'" class="absolute bottom-2 left-2 rounded bg-black/75 px-2 py-1 text-xs text-white font-mono">
+            {{ photo.kind === 'photosphere' ? t('photosphere') : t('panorama') }}
+          </span>
         </button>
       </div>
 
@@ -124,6 +153,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
       <div
         v-if="activeIndex !== null"
+        ref="lightbox"
+        role="dialog" aria-modal="true" :aria-label="photoCaption(pagePhotos[activeIndex])"
         class="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 sm:p-10"
         @click.self="close"
       >
@@ -148,9 +179,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           </svg>
         </button>
 
-        <figure class="max-w-full max-h-full flex flex-col items-center">
-          <img :src="pagePhotos[activeIndex].fullSrc" :alt="photoCaption(pagePhotos[activeIndex])" class="max-w-full max-h-[80vh] rounded-lg object-contain" />
+        <figure class="max-w-full max-h-full overflow-y-auto flex flex-col items-center">
+          <PanoramaViewer v-if="pagePhotos[activeIndex].kind !== 'photo'" :key="pagePhotos[activeIndex].fullSrc" :photo="pagePhotos[activeIndex]" />
+          <img v-else :src="pagePhotos[activeIndex].fullSrc" :alt="photoCaption(pagePhotos[activeIndex])" class="max-w-full max-h-[70vh] shrink-0 rounded-lg object-contain" />
           <figcaption class="text-sm text-white/60 font-mono mt-3">{{ photoCaption(pagePhotos[activeIndex]) }}</figcaption>
+          <PhotoDetails v-if="pagePhotos[activeIndex].kind === 'photo'" :key="pagePhotos[activeIndex].fullSrc" :photo="pagePhotos[activeIndex]" />
         </figure>
 
         <button

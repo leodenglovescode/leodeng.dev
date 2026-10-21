@@ -7,6 +7,7 @@ import { interests } from '../src/content/interests.js'
 import { compareShelfTitles, shelfLink, shelfStatus } from '../src/utils/shelf.js'
 import { LEGACY_ORIGIN, MODERN_ORIGIN } from '../lib/legacy.js'
 import { renderLegacyDiagrams } from './legacy-diagrams.js'
+import { legacyPhotoDetails } from './legacy-gallery.js'
 import { legacyJournalIndex, legacyJournalPost, legacyDaybook } from './legacy-editorial.js'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -39,6 +40,7 @@ function find(node, predicate) {
 }
 function localized(item, locale) { return typeof item === 'string' ? item : item?.[locale] || item?.en || '' }
 function compatibleImage(source, media, route = '/') {
+  if (source.startsWith('/_assets/gallery/')) return relativeLink(route, source)
   if (media.images[source]) {
     const url = media.images[source]
     const match = url.match(/^https:\/\/media\.leodeng\.dev\/legacy\/images\/([a-f0-9]{64}\.jpg)$/)
@@ -261,7 +263,7 @@ ${playing}${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ?
     }
     if (base === '/gallery' || base.startsWith('/gallery/')) {
       const slug = base.split('/')[2]
-      if (!slug) content = `<h1>${zh ? '相册' : 'Gallery'}</h1>` + collections.map(collection => `<article class="content-card"><h2><a href="${escape(relativeLink(route.path, localeRoute(`/gallery/${collection.slug}`, route.locale)))}">${escape(collection.title)}</a></h2>${picture(collection.cover, collection.title, media, '', route.path)}<p>${collection.photos.length} ${zh ? '张照片' : 'photos'}</p></article>`).join('')
+      if (!slug) content = `<h1>${zh ? '相册' : 'Gallery'}</h1>` + collections.map(collection => `<article class="content-card"><h2><a href="${escape(relativeLink(route.path, localeRoute(`/gallery/${collection.slug}`, route.locale)))}">${escape(collection.title)}</a></h2>${picture(collection.photos[0]?.legacyThumbSrc || collection.cover, collection.title, media, '', route.path)}<p>${collection.photos.length} ${zh ? '张照片' : 'photos'}</p></article>`).join('')
       else {
         const collection = collections.find(item => item.slug === slug)
         if (!collection) throw new Error(`Unknown gallery ${slug}`)
@@ -271,8 +273,11 @@ ${playing}${extra}<section class="sidebar-card"><h2 class="sidebar-title">${zh ?
           const pageLink = number => relativeLink(pagedRoute.path, number === 1 ? route.path : `${route.path}/page/${number}`)
           const photos = collection.photos.slice((page - 1) * pageSize, page * pageSize)
           const body = `<h1>${escape(collection.title)}</h1><p>${escape(collection.description)}</p>${slug === 'planespotting' ? `<p class="gallery-tools"><a href="${escape(relativeLink(pagedRoute.path, localeRoute('/spotting', route.locale)))}">${zh ? '拍摄统计' : 'Shooting stats'} &raquo;</a></p>` : ''}<div class="photo-list">` + photos.map(photo => {
-            const full = compatibleImage(photo.fullSrc, media, pagedRoute.path)
-            return `<figure>${full ? `<a href="${escape(full)}">` : ''}${picture(photo.thumbSrc, photo.caption, media, '', pagedRoute.path)}${full ? '</a>' : ''}<figcaption>${escape(photo.caption)}</figcaption></figure>`
+            const full = compatibleImage(photo.legacyFullSrc || photo.fullSrc, media, pagedRoute.path)
+            const special = photo.kind && photo.kind !== 'photo'
+            const original = special && photo.panorama && !photo.legacyFullSrc ? relativeLink(pagedRoute.path, photo.viewerSrc) : full
+            const tools = special && original ? `<p class="gallery-tools"><a href="${escape(original)}" data-panorama="${escape(original)}">${zh ? '展开全景照片' : 'Expand panorama'} &raquo;</a></p><p>${zh ? '左右滚动查看。此版本以平面图片显示全景球。' : 'Scroll sideways to explore. This edition displays photospheres as flat images.'}</p>` : ''
+            return `<figure>${original ? `<a href="${escape(original)}">` : ''}${picture(photo.legacyThumbSrc || photo.thumbSrc, photo.caption, media, '', pagedRoute.path)}${original ? '</a>' : ''}<figcaption>${escape(photo.caption)}</figcaption>${tools}${legacyPhotoDetails(photo, zh)}</figure>`
           }).join('') + `</div><nav class="pagination" aria-label="${zh ? '相册页码' : 'Gallery pages'}">${page > 1 ? `<a href="${escape(pageLink(page - 1))}">${zh ? '上一页' : 'Previous'}</a> ` : ''}<span>${page} / ${pages}</span>${page < pages ? ` <a href="${escape(pageLink(page + 1))}">${zh ? '下一页' : 'Next'}</a>` : ''}</nav>`
           await write(pagedRoute, body)
         }

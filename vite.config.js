@@ -4,6 +4,12 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { templateCompilerOptions } from '@tresjs/core'
 
+const galleryProxy = {
+  target: 'https://media.leodeng.dev',
+  changeOrigin: true,
+  rewrite: path => path.replace(/^\/gallery-media\/([^/]+)\//, '/photos/$1/originals/'),
+}
+
 const audioProxy = {
   target: 'https://media.leodeng.dev',
   changeOrigin: true,
@@ -22,6 +28,7 @@ export default defineConfig(async ({ isSsrBuild, command }) => {
       // Plain Vite does not run Pages Functions. Proxy the public, read-only
       // endpoints so the clock and now-playing data can be previewed locally.
       proxy: {
+        '/gallery-media': galleryProxy,
         '/api/terminal-audio': audioProxy,
         '/api/time': {
           target: 'https://leodeng.dev',
@@ -33,7 +40,7 @@ export default defineConfig(async ({ isSsrBuild, command }) => {
         },
       },
     },
-    preview: { proxy: { '/api/terminal-audio': audioProxy } },
+    preview: { proxy: { '/api/terminal-audio': audioProxy, '/gallery-media': galleryProxy } },
     build: {
       rollupOptions: {
         output: isSsrBuild ? {} : {

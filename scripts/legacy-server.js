@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
 import { spawnSync } from 'node:child_process'
 import { cleanLegacyPath, MODERN_ORIGIN } from '../lib/legacy.js'
+import { galleryMediaKey } from '../lib/gallery-media.js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
 import { lookupLyrics } from '../lib/lyricsProxy.js'
 
@@ -58,8 +59,24 @@ export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_
         return new Response(request.method === 'HEAD' ? null : upstream.body, { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } })
       } catch { return new Response('Live reading unavailable.', { status: 503 }) }
     }
+    if (pathname.startsWith('/gallery-media/')) {
+      const galleryKey = galleryMediaKey(pathname.slice('/gallery-media/'.length).split('/'))
+      if (!galleryKey) return new Response('Not found.', { status: 404 })
+      try {
+        const upstream = await fetchUpstream(`https://media.leodeng.dev/${galleryKey}`, { method: request.method, signal: AbortSignal.timeout(30000), redirect: 'error' })
+        if (!upstream.ok) return new Response('Image unavailable.', { status: 502 })
+        return new Response(request.method === 'HEAD' ? null : upstream.body, { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' } })
+      } catch { return new Response('Image unavailable.', { status: 502 }) }
+    }
     const key = legacyMediaKey(pathname)
     if (key) {
+      if (pathname.startsWith('/_assets/gallery/')) {
+        try {
+          const upstream = await fetchUpstream(`https://media.leodeng.dev/${key}`, { method: request.method, signal: AbortSignal.timeout(30000), redirect: 'error' })
+          if (!upstream.ok) return new Response('Image unavailable.', { status: 502 })
+          return new Response(request.method === 'HEAD' ? null : upstream.body, { headers: { 'Content-Type': key.endsWith('.png') ? 'image/png' : 'image/jpeg' } })
+        } catch { return new Response('Image unavailable.', { status: 502 }) }
+      }
       try {
         const bytes = await image(key)
         return bytes ? new Response(request.method === 'HEAD' ? null : bytes, { headers: { 'Content-Type': key.endsWith('.png') ? 'image/png' : 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable' } }) : new Response('Image not found.', { status: 404 })

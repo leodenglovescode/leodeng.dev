@@ -21,8 +21,9 @@ function parseShotAt(raw) {
 function loadFrames() {
   const frames = []
   for (const [collection, entries] of Object.entries(manifest.collections ?? {})) {
-    if (!Array.isArray(entries)) continue
-    for (const e of entries) {
+    if (collection !== 'planespotting' || !Array.isArray(entries)) continue
+    for (const entry of entries) {
+      const e = { ...entry, ...entry.metadata }
       // Entries without a readable capture time are still real photos and
       // still show in the gallery; they just can't be placed on a timeline.
       const when = parseShotAt(e.shotAt)

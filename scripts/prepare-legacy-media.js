@@ -15,19 +15,31 @@ const media = await fs.readFile(manifestPath, 'utf8').then(JSON.parse).catch(() 
 const photos = JSON.parse(await fs.readFile(path.join(root, 'src/generated/photos.json'), 'utf8'))
 const routes = JSON.parse(await fs.readFile(path.join(root, 'dist/_site-routes.json'), 'utf8'))
 const sources = new Set()
-for (const [collection, entries] of Object.entries(photos.collections)) for (const { name } of entries) {
-  for (const variant of ['thumbs', 'full']) sources.add(`${photos.base}/${photos.prefix}/${collection}/${variant}/${encodeURIComponent(name)}.webp`)
+const managedSources = new Set()
+for (const [collection, entries] of Object.entries(photos.collections)) for (const { name, original, assets } of entries) {
+  if (assets) { for (const key of ['thumb', 'full']) managedSources.add(`${photos.base}/${encodeURIComponent(assets[key])}`); continue }
+  for (const variant of original ? ['thumbs'] : ['thumbs', 'full']) sources.add(`${photos.base}/${photos.prefix}/${collection}/${variant}/${encodeURIComponent(name)}.webp`)
 }
 function scan(node) {
   if (node.tagName === 'img') {
     const source = node.attrs.find(attribute => attribute.name === 'src')?.value
-    if (source && /\.webp(?:[?#]|$)/i.test(source)) sources.add(source)
+    if (source && /\.webp(?:[?#]|$)/i.test(source) && !managedSources.has(source)) sources.add(source)
   }
   for (const child of node.childNodes || []) scan(child)
 }
 for (const route of routes) {
   const filename = route.path === '/' ? 'index.html' : `${route.path.slice(1)}.html`
   scan(parse(await fs.readFile(path.join(root, 'dist', filename), 'utf8')))
+}
+const localSources = new Map()
+for (const [collection, title] of Object.entries(photos.titles ?? {})) {
+  for (const { name, original, assets } of photos.collections[collection] ?? []) {
+    if (assets) continue
+    for (const variant of original ? ['thumbs'] : ['thumbs', 'full']) {
+      localSources.set(`${photos.base}/${photos.prefix}/${collection}/${variant}/${encodeURIComponent(name)}.webp`,
+        path.join(root, 'src/photos/travel-import', title, '_generated', variant, `${name}.webp`))
+    }
+  }
 }
 const pending = [...sources].filter(source => process.argv.includes('--refresh') || !media.images[source])
 if (!pending.length) { console.log('Legacy JPEG alternatives are up to date.'); process.exit(0) }
@@ -39,7 +51,12 @@ const errors = []
 const publicBase = (process.env.R2_PUBLIC_BASE || 'https://media.leodeng.dev').replace(/\/+$/, '')
 async function convert(source) {
   let bytes
-  if (source.startsWith('/') && !source.startsWith('//')) {
+  if (localSources.has(source)) {
+    try { bytes = await fs.readFile(localSources.get(source)) } catch { /* Use R2 when originals are not on this machine. */ }
+  }
+  if (bytes) {
+    // The source is already an optimized derivative, not a panorama original.
+  } else if (source.startsWith('/') && !source.startsWith('//')) {
     const filename = path.resolve(root, 'public', `.${decodeURIComponent(source)}`)
     if (!filename.startsWith(path.join(root, 'public') + path.sep)) throw new Error('Invalid local media path.')
     bytes = await fs.readFile(filename)

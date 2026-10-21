@@ -1,7 +1,7 @@
 ---
-title: Hello, World!
-date: 2026-05-26T04:09:55+08:00
-description: First post in the NEW blog!
+title: "Hello, World!"
+date: 2026-05-26T04:09:00+08:00
+description: "First post in the NEW blog!"
 ---
 
 Hello, welcome to the blog.
@@ -12,7 +12,7 @@ I've been thinking about writing a blog for a long time but never really committ
 
 Probably a mix of:
 
-- Build logs / project updates (ShutterWingPhotos, llmgps, basically whatever I am working on)
+- Build logs / project updates (basically whatever I am working on)
 - Self-hosting stuff: things that took me WAYYYY too long to figure out
 - IoT and HomeAssistant experiments
 - Occasional hot takes on AI tools
