@@ -115,7 +115,8 @@ test('shared HTML becomes readable content with working relative links and compa
 })
 
 test('classic host streams only published panorama originals through the same-origin gallery route', async () => {
-  const { default: manifest } = await import('../../src/generated/photos.json', { with: { type: 'json' } })
+  const { readFileSync } = await import('node:fs')
+  const manifest = JSON.parse(readFileSync(new URL('../../src/generated/photos.json', import.meta.url), 'utf8'))
   const [collection, photos] = Object.entries(manifest.collections).find(([, entries]) => entries.some(photo => photo.panorama))
   const photo = photos.find(photo => photo.panorama)
   const { context, nextCalls } = setup(`https://old.leodeng.dev/gallery-media/${collection}/${photo.original}`)

@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { onRequest } from '../gallery-media/[[path]].js'
-import manifest from '../../src/generated/photos.json' with { type: 'json' }
+import { readFileSync } from 'node:fs'
+const manifest = JSON.parse(readFileSync(new URL('../../src/generated/photos.json', import.meta.url), 'utf8'))
 const [collection, entries] = Object.entries(manifest.collections).find(([, entries]) => entries.some(e => e.panorama))
 const entry = entries.find(e => e.panorama)
 const params = { path: [collection, entry.original] }
