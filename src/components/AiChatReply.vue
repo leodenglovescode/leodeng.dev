@@ -1,7 +1,9 @@
 <script setup>
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useLocale } from '../utils/i18n.js'
+import { renderChatMarkdown } from '../utils/chatMarkdown.js'
 const props = defineProps({ turn: { type: Object, required: true } })
+const answerHtml = computed(() => renderChatMarkdown(props.turn.text))
 const { t, localePath } = useLocale('daily-ai')
 const open = ref(props.turn.status === 'running' && props.turn.phase !== 'answering'), follow = ref(true), pane = ref(null)
 const errors = { provider_auth: 'errorProviderAuth', provider_balance: 'errorProviderBalance', provider_busy: 'errorProviderBusy', provider_error: 'errorProvider',
@@ -29,10 +31,16 @@ function track() { if (pane.value) follow.value = pane.value.scrollHeight - pane
       <p class="text-xs text-muted mt-3 mb-3">{{ t('thinkingNotice') }}</p>
       <p ref="pane" tabindex="0" @scroll="track" class="text-sm text-muted whitespace-pre-wrap break-words leading-relaxed max-h-72 overflow-y-auto">{{ turn.thinking }}</p>
     </details>
-    <!-- User messages, answers and reasoning are escaped text, never HTML. -->
-    <p class="text-muted whitespace-pre-wrap break-words leading-relaxed">{{ turn.text }}<span v-if="turn.status === 'running' && turn.text" aria-hidden="true" class="inline-block w-1.5 h-4 bg-accent ml-1 align-middle motion-safe:animate-pulse"></span></p>
+    <!-- Model Markdown is sanitized separately from trusted blog content. -->
+    <div class="prose chat-answer text-muted break-words leading-relaxed" v-html="answerHtml"></div>
+    <span v-if="turn.status === 'running' && turn.text" aria-hidden="true" class="inline-block w-1.5 h-4 bg-accent align-middle motion-safe:animate-pulse"></span>
     <p v-if="turn.status === 'error' || turn.status === 'cancelled'" role="status" class="text-sm text-muted mt-3">{{ t(errors[turn.code] || 'generationFailed') }}</p>
     <p v-if="turn.stats?.finishReason === 'length'" class="text-xs text-muted mt-3">{{ t('outputTruncated') }}</p>
     <ul v-if="turn.sources?.length" class="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-xs"><li v-for="source in turn.sources" :key="source"><RouterLink :to="localePath(source)" class="text-accent underline underline-offset-4">{{ source }}</RouterLink></li></ul>
   </article>
 </template>
+
+<style scoped>
+.chat-answer { overflow-wrap: anywhere; min-width: 0; }
+.chat-answer :deep(> :last-child) { margin-bottom: 0; }
+</style>
