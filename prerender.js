@@ -3,6 +3,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { localePath } from './src/utils/localePath.js'
 import { aiAuthorshipLabel, usesAiWriting } from './src/utils/aiAuthorship.js'
+import { buildDailyAiContext } from './scripts/build-daily-ai-context.js'
 import { buildLegacySite } from './scripts/build-legacy.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -32,6 +33,7 @@ const staticRoutes = [
   { path: '/pgp', key: 'pgp' },
   { path: '/privacy', key: 'privacy' },
   { path: '/ai', key: 'ai' },
+  { path: '/daily', key: 'daily' },
   { path: '/interests', key: 'interests' },
 ]
 
@@ -180,6 +182,7 @@ async function prerender() {
   fs.writeFileSync(path.join(__dirname, 'dist/rss.xml'), rss)
   console.log('✓ Generated rss.xml')
   fs.writeFileSync(path.join(__dirname, 'dist/_site-routes.json'), JSON.stringify(routes))
+  await buildDailyAiContext(__dirname, getAllPosts(), getPost)
   await buildLegacySite({ routes, collections })
 }
 

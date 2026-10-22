@@ -44,3 +44,6 @@ R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
 
 # Monkeytype API keys belong only in /etc/homelab-status.env on the home server.
 # Pages uses the existing HOMELAB_TOKEN and HOMELAB_DB for snapshot ingest/read.
+
+# Separate secret for the homelab Daily AI publisher, never exposed to visitors.
+DAILY_AI_TOKEN=your_daily_ai_publishing_token

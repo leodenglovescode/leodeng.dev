@@ -1,0 +1,26 @@
+[Unit]
+Description=Generate five daily answers with local Ollama and publish to leodeng.dev
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+EnvironmentFile=/etc/daily-ai.env
+ExecStart=/usr/bin/python3 /usr/local/lib/daily-ai/daily_ai.py
+ExecStopPost=/usr/bin/python3 /usr/local/lib/daily-ai/daily_ai.py --unload
+StateDirectory=daily-ai
+TimeoutStartSec=65min
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=

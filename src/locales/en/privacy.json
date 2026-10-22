@@ -1,6 +1,6 @@
 {
   "title": "Privacy & browser storage",
-  "updated": "Last updated: October 20, 2026",
+  "updated": "Last updated: October 22, 2026",
   "intro": "This is Leo Deng’s personal website. This notice covers leodeng.dev and its classic edition at old.leodeng.dev.",
   "sections": [
     {
@@ -49,6 +49,14 @@
       "paragraphs": [
         "Depending on the page, your browser may request Google Fonts, public data from GitHub, lyrics from LRCLIB, or cover art from external providers such as Cover Art Archive. Those providers receive connection information when your browser contacts them. Links to other websites take you to services with their own privacy practices.",
         "The site’s own browser storage supports the features described above. I have not added advertising trackers to the site’s application code."
+      ]
+    },
+    {
+      "id": "daily-ai",
+      "title": "Daily AI and abuse controls",
+      "paragraphs": [
+        "Daily AI offers five fixed questions with answers generated ahead of time on my homelab. Visitors cannot submit text, and visitor requests, IP addresses, and user agents are not sent to the model.",
+        "The AI endpoint stores your IP address and chosen question to enforce one selection per Beijing calendar day. These records are removed after seven days when a new batch is published. Malformed AI requests and curl/Python user agents create permanent AI-endpoint bans. A ban stores the IP address, a short reason and a timestamp until I remove it through the admin page. These bans do not block the rest of the website."
       ]
     },
     {

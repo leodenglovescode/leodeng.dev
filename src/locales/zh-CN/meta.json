@@ -1,4 +1,5 @@
 {
+  "daily": {"title": "每日 AI", "description": "由家庭服务器上的本地模型每天回答的五个固定问题。"},
   "ai": {"title": "AI 使用说明", "description": "我如何使用 LLM 编写代码和文章，以及博客上的 AI 标签代表什么。"},
   "stats": {"title": "个人统计", "description": "记录我花时间做的事情：写代码和练习打字。"},
   "privacy": {"title": "隐私说明", "description": "本站如何使用浏览器存储、Cloudflare 和外部服务。"},

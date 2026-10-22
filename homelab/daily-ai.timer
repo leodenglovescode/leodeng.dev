@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for today's Daily AI batch every hour
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=120
+Unit=daily-ai.service
+
+[Install]
+WantedBy=timers.target

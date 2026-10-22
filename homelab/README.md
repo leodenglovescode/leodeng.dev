@@ -364,3 +364,8 @@ HTTP errors are logged without response bodies, account IDs, or secrets.
 In Cloudflare Pages, keep `HOMELAB_TOKEN` and `HOMELAB_DB` configured on the main
 project. The old `MONKEYTYPE_API_KEY` Pages secret is no longer used and can be
 removed. The classic site continues to read the main site's public endpoint.
+
+## Daily AI
+
+The separate Ollama publisher, five fixed questions, kill switch, daily IP allowance,
+and permanent AI-endpoint bans are documented in [DAILY_AI.md](DAILY_AI.md).
