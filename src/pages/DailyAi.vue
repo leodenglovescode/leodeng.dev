@@ -116,6 +116,6 @@ onBeforeUnmount(() => { disposed = true; clearInterval(refreshTimer); controller
       <ul v-if="sources.length" class="text-sm space-y-2"><li v-for="source in sources" :key="source"><RouterLink :to="localePath(source)" class="text-accent underline underline-offset-4">{{ source }}</RouterLink></li></ul>
       <button v-if="phase === 'error' && state?.selected && !busy" type="button" class="mt-4 text-sm text-accent underline" @click="generate()">{{ t('reconnect') }}</button>
     </article>
-    <p data-legacy-only="true" class="hidden"><a :href="`https://leodeng.dev${isZh ? '/zh' : ''}/daily?view=modern`" class="hover:text-accent underline underline-offset-4">{{ t('fullSite') }}</a></p>
+    <p data-legacy-only="true" hidden><a :href="`https://leodeng.dev${isZh ? '/zh' : ''}/daily?view=modern`" class="hover:text-accent underline underline-offset-4">{{ t('fullSite') }}</a></p>
   </section>
 </template>

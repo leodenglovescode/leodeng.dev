@@ -17,6 +17,8 @@ const readJson = name => fs.readFile(path.join(root, name), 'utf8').then(JSON.pa
 const routeDirectory = route => route === '/' ? '/' : `${route.replace(/\/+$/, '')}/`
 
 export function relativeLink(from, to) {
+  // Explicit modern-site fallbacks must escape the classic host.
+  if (to.startsWith(`${MODERN_ORIGIN}/`) && new URL(to).searchParams.get('view') === 'modern') return to
   if (to.startsWith(`${MODERN_ORIGIN}/`)) to = to.slice(MODERN_ORIGIN.length)
   if (!to.startsWith('/') || to.startsWith('//')) return to
   const url = new URL(to, MODERN_ORIGIN)

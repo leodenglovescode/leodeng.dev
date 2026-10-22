@@ -131,3 +131,12 @@ test('classic host streams only published panorama originals through the same-or
   const unknown = setup('https://old.leodeng.dev/gallery-media/private/secret.jpg')
   assert.equal((await onRequest(unknown.context)).status, 404)
 })
+
+
+test('interactive classic fallbacks retain the modern host and are hidden in modern HTML', () => {
+  assert.equal(relativeLink('/daily', 'https://leodeng.dev/daily?view=modern'), 'https://leodeng.dev/daily?view=modern')
+  assert.equal(relativeLink('/zh/daily', 'https://leodeng.dev/zh/daily?view=modern'), 'https://leodeng.dev/zh/daily?view=modern')
+  const html = readableContent('<main><p data-legacy-only="true" hidden><a href="https://leodeng.dev/daily?view=modern">Open the full site</a></p></main>', '/daily', { images: {} })
+  assert.match(html, /href="https:\/\/leodeng\.dev\/daily\?view=modern"/)
+  assert(!html.includes('hidden'))
+})
