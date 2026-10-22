@@ -343,3 +343,8 @@ small, figcaption { color: #59687c; font-size: 11px; }
 .featured-hero button:focus { outline: 2px solid #fff; }
 @media (max-width: 600px) { .featured-hero .hero-slide img { height: 380px; } .featured-hero .hero-copy h2 { font-size: 25px; } }
 @media (prefers-reduced-motion: reduce) { .featured-hero.is-ready .hero-track { transition: none; } }
+
+/* Small catalog thumbnails retain the classic table layout. */
+.music-stat-art { display:inline-block; width:40px; height:40px; margin-right:9px; vertical-align:middle; background:#e5e9f0; border:1px solid #aab6c9; overflow:hidden; }
+.music-stat-art.artist-photo { border-radius:50%; }
+.music-stat-art img { display:block; width:40px; height:40px; object-fit:cover; }

@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import MusicArtwork from './MusicArtwork.vue'
 import { useLocale } from '../utils/i18n.js'
 import { statsJson } from '../../lib/monkeyStats.js'
 const { isZh } = useLocale('stats')
@@ -49,13 +50,16 @@ onBeforeUnmount(() => { mounted = false; clearInterval(timer); document.removeEv
           <p v-if="!summary[kind].length" class="text-xs text-muted">{{ words.no }}</p>
           <ol v-else class="space-y-4">
             <li v-for="(item,index) in summary[kind]" :key="index" class="text-sm">
-              <div class="flex justify-between gap-3"><span class="min-w-0 break-words">{{ item.name }}<small v-if="item.artist" class="block text-muted">{{ item.artist }}</small></span><span class="text-xs text-muted whitespace-nowrap">{{ (item.listenedMs/60000).toFixed(0) }} {{ words.minutes }}</span></div>
-              <div class="music-bar"><span :style="{ width: `${item.listenedMs/rankingMax(kind)*100}%` }"></span></div>
+              <div class="flex gap-3">
+                <MusicArtwork v-if="kind !== 'tracks'" :kind="kind" :name="item.name" :artist="item.artist" />
+                <div class="min-w-0 flex-1"><div class="flex justify-between gap-3"><span class="min-w-0 break-words">{{ item.name }}<small v-if="item.artist" class="block text-muted">{{ item.artist }}</small></span><span class="text-xs text-muted whitespace-nowrap">{{ (item.listenedMs/60000).toFixed(0) }} {{ words.minutes }}</span></div>
+              <div class="music-bar"><span :style="{ width: `${item.listenedMs/rankingMax(kind)*100}%` }"></span></div></div></div>
             </li>
           </ol>
         </section>
       </div>
-      <p class="text-xs text-muted mt-6">{{ words.through }} {{ data.through }} (UTC). <span v-if="data.stale">{{ words.stale }}</span></p>
+      <p class="text-xs text-muted mt-6">{{ isZh ? '图片来源：' : 'Artwork: ' }}<a href="https://www.theaudiodb.com" class="underline" target="_blank" rel="noopener noreferrer">TheAudioDB</a>. {{ isZh ? '点击图片查看来源。' : 'Select an image to view its source.' }}</p>
+      <p class="text-xs text-muted mt-3">{{ words.through }} {{ data.through }} (UTC). <span v-if="data.stale">{{ words.stale }}</span></p>
     </template>
   </section>
 </template>

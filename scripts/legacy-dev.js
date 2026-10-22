@@ -13,7 +13,7 @@ export function legacyPreviewPlugin({ fetchUpstream } = {}) {
         const pathname = new URL(request.url, 'http://localhost').pathname
         // The classic script uses same-origin API URLs even under /_legacy/.
         // Handle lyrics here too, before Vite's SPA HTML fallback.
-        if (!/^\/_legacy(?:\/|$)/.test(pathname) && pathname !== '/api/lyrics' && pathname !== '/api/stats/monkeytype' && pathname !== '/api/stats/music') return next()
+        if (!/^\/_legacy(?:\/|$)/.test(pathname) && pathname !== '/api/lyrics' && pathname !== '/api/stats/monkeytype' && pathname !== '/api/stats/music' && pathname !== '/api/stats/music-artwork') return next()
         try {
           const result = await respond(new Request(new URL(request.url, 'http://localhost'), { method: request.method }))
           response.statusCode = result.status

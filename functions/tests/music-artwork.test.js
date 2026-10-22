@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import { artworkQuery, artworkCacheKey, isRankedArtwork, lookupMusicArtwork, validArtwork } from '../../lib/musicArtwork.js'
+import { onRequest } from '../api/stats/music-artwork.js'
+const query={kind:'albums',name:'Weezer',artist:'Weezer'}
+const image={image:'https://r2.theaudiodb.com/images/media/album/thumb/test.jpg/small',source:'https://www.theaudiodb.com/album/123',provider:'TheAudioDB'}
+const summary={ranges:{all:{albums:[{name:'Weezer',artist:'Weezer'}]}}}
+test('artwork queries are bounded and only existing rankings may be searched',async()=>{
+ assert.deepEqual(artworkQuery('https://example.com?kind=albums&name=Weezer&artist=Weezer'),query)
+ for(const q of ['kind=tracks&name=x','kind=albums&name=x','kind=artists&name=x&url=https://evil.test','kind=artists&name=x&name=y'])assert.throws(()=>artworkQuery('https://example.com?'+q))
+ assert.equal(isRankedArtwork(summary,query),true)
+ assert.equal(isRankedArtwork(summary,{...query,artist:'Other'}),false)
+ assert.equal(await artworkCacheKey(query),await artworkCacheKey({...query,name:'weezer'}))
+ assert.equal(validArtwork(image),true)
+ assert.equal(validArtwork({...image,image:'https://evil.test/image.jpg'}),false)
+ assert.equal(validArtwork({...image,source:'javascript:alert(1)'}),false)
+})
+test('provider matching requires the exact album and artist and refuses ambiguous editions',async()=>{
+ const row={strArtist:'Weezer',strAlbum:'Weezer',idAlbum:'123',strAlbumThumb:'https://r2.theaudiodb.com/images/media/album/thumb/test.jpg'}
+ const run=rows=>lookupMusicArtwork(query,async(url,options)=>{assert.equal(new URL(url).hostname,'www.theaudiodb.com');assert.equal(options.redirect,'manual');return Response.json({album:rows})})
+ assert.deepEqual(await run([row]),image)
+ assert.equal(await run([{...row,strArtist:'Other'}]),null)
+ assert.equal(await run([row,row]),null)
+ assert.equal(await run([{...row,strAlbumThumb:'https://evil.test/file.jpg'}]),null)
+ await assert.rejects(lookupMusicArtwork(query,async()=>Response.json({}, {status:429})))
+})
+test('cached metadata is served without upstream calls and unknown titles cannot trigger searches',async()=>{
+ const key=await artworkCacheKey(query)
+ const bucket={async get(name){const body=name===key?JSON.stringify({artwork:image,expiresAt:Date.now()+100000}):JSON.stringify(summary);return{size:body.length,text:async()=>body}}}
+ const request=new Request('https://example.com/api/stats/music-artwork?kind=albums&name=Weezer&artist=Weezer')
+ const response=await onRequest({request,env:{MEDIA:bucket}})
+ assert.equal(response.status,200);assert.deepEqual((await response.json()).artwork,image)
+ const unknown=await onRequest({request:new Request('https://example.com?kind=artists&name=Unknown'),env:{MEDIA:{async get(){return null}}}})
+ assert.equal(unknown.status,404)
+ assert.equal((await onRequest({request:new Request('https://example.com',{method:'POST'}),env:{}})).status,405)
+})
+
+test('cache-only probes never call the provider on a cold entry',async()=>{
+ const response=await onRequest({request:new Request('https://example.com?kind=artists&name=Weezer&cached=1'),env:{MEDIA:{async get(){return null}}}})
+ assert.equal(response.status,202)
+ assert.equal(response.headers.get('cache-control'),'no-store')
+ assert.deepEqual(await response.json(),{artwork:null,pending:true})
+})
+
+test('edition labels can use the original cover while colored album identities are preserved',async()=>{
+ const row={strArtist:'Weezer',strAlbum:'Weezer',idAlbum:'123',strAlbumThumb:'https://r2.theaudiodb.com/images/media/album/thumb/test.jpg'}
+ const deluxe=await lookupMusicArtwork({...query,name:'Weezer (Deluxe Edition)'},async url=>{
+  assert.equal(new URL(url).searchParams.get('a'),'Weezer')
+  return Response.json({album:[row]})
+ })
+ assert.deepEqual(deluxe,image)
+ assert.equal(await lookupMusicArtwork({...query,name:'Weezer (Green Album)'},async()=>Response.json({album:[row]})),null)
+})

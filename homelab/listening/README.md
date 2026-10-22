@@ -136,3 +136,22 @@ The receiver may keep running its current version; its ingestion protocol and
 SQLite schema remain compatible. The new publisher creates its own tiny local
 publication-state table automatically. Keep the existing MEDIA binding on the
 Pages project. No additional Cloudflare secrets or bindings are needed.
+
+## Ranking artwork
+
+Artist photos and album covers are looked up through TheAudioDB's documented
+public v1 API (free key `123`). The website resolves only artists/albums already
+in its public rankings. Artist and album identities must match; standard deluxe/remaster edition
+labels may use the original cover, while meaningful color labels remain
+distinct. Ambiguous results keep a placeholder. No publisher, receiver, or Mac changes are needed.
+
+Only image URLs and source-page links are cached in R2, under
+`stats/artwork/v1/`, for 30 days. Genuine misses are cached for a day; temporary
+API errors are not persisted. Browsers reuse cached metadata immediately and
+space cold lookups to respect the provider's free rate limit. Images are small
+provider-hosted thumbnails, loaded lazily with source links and attribution.
+The stats remain usable when the provider or an image is unavailable. Public
+API access does not change the underlying images' copyright or license.
+
+Provider documentation: https://www.theaudiodb.com/free_music_api
+Terms: https://www.theaudiodb.com/docs_terms_of_use.php

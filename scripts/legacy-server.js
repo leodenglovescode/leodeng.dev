@@ -13,7 +13,7 @@ import { legacyMediaKey } from '../lib/legacy-media.js'
 import { lookupLyrics } from '../lib/lyricsProxy.js'
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url))
-const publicApis = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music'])
+const publicApis = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music', '/api/stats/music-artwork'])
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8' }
 
 export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_legacy'), fetchUpstream = fetch, cssFile = path.join(projectRoot, 'legacy/legacy.css') } = {}) {
@@ -53,7 +53,7 @@ export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_
       if (!publicApis.has(pathname)) return new Response('Not found.', { status: 404 })
       if (pathname === '/api/lyrics') return lookupLyrics(request, fetchUpstream)
       try {
-        const upstream = await fetchUpstream(`${MODERN_ORIGIN}${pathname}${pathname === '/api/lyrics' ? url.search : ''}`, { signal: AbortSignal.timeout(8000), redirect: 'error', headers: { Accept: 'application/json' } })
+        const upstream = await fetchUpstream(`${MODERN_ORIGIN}${pathname}${['/api/lyrics','/api/stats/music-artwork'].includes(pathname) ? url.search : ''}`, { signal: AbortSignal.timeout(8000), redirect: 'error', headers: { Accept: 'application/json' } })
         if (![200, 204].includes(upstream.status)) return new Response('Live reading unavailable.', { status: 503 })
         if (upstream.status === 204) return new Response(null, { status: 204 })
         return new Response(request.method === 'HEAD' ? null : upstream.body, { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } })
