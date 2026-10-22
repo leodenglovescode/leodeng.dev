@@ -1,16 +1,18 @@
 [Unit]
-Description=Generate five daily answers with local Ollama and publish to leodeng.dev
+Description=Stream fixed site questions through an outbound private Ollama relay
 After=network-online.target ollama.service
 Wants=network-online.target
 
 [Service]
-Type=oneshot
+Type=simple
+Restart=on-failure
+RestartSec=5
 DynamicUser=yes
 EnvironmentFile=/etc/daily-ai.env
-ExecStart=/usr/bin/python3 /usr/local/lib/daily-ai/daily_ai.py
+ExecStart=/usr/bin/python3 /usr/local/lib/daily-ai/daily_ai_live.py
 ExecStopPost=/usr/bin/python3 /usr/local/lib/daily-ai/daily_ai.py --unload
 StateDirectory=daily-ai
-TimeoutStartSec=65min
+TimeoutStartSec=30
 TimeoutStopSec=45
 UMask=0077
 NoNewPrivileges=yes

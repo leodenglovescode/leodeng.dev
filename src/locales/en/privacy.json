@@ -55,8 +55,8 @@
       "id": "daily-ai",
       "title": "Daily AI and abuse controls",
       "paragraphs": [
-        "Daily AI offers five fixed questions with answers generated ahead of time on my homelab. Visitors cannot submit text, and visitor requests, IP addresses, and user agents are not sent to the model.",
-        "The AI endpoint stores your IP address and chosen question to enforce one selection per Beijing calendar day. These records are removed after seven days when a new batch is published. Malformed AI requests and curl/Python user agents create permanent AI-endpoint bans. A ban stores the IP address, a short reason and a timestamp until I remove it through the admin page. These bans do not block the rest of the website."
+        "Daily AI offers five fixed questions, answered live by a local model on my homelab. Visitors cannot submit text. Only the fixed question ID, a random job ID and the day reach the homelab relay; IP addresses and user agents do not. The model receives a fixed prompt and public site content. Its thinking output and answer are streamed as generated and may be inaccurate.",
+        "The AI endpoint stores your IP address and chosen question to enforce one selection per Beijing calendar day. Selection records are pruned after seven days when a new question is accepted. Generated answers and model thinking are retained on Cloudflare for about seven days so the same answer can be reopened; cleanup runs daily. Failed or cancelled generations can be retried. The admin can reset allowances and bans for testing. Malformed AI requests and curl/Python user agents create permanent AI-endpoint bans. A ban stores the IP address, a short reason and a timestamp until I remove it through the admin page. These bans do not block the rest of the website."
       ]
     },
     {

@@ -50,8 +50,14 @@ Environment="OLLAMA_HOST=127.0.0.1:11434"
 CONF
 fi
 
+# websocket-client is provided by the distro, never installed into system pip.
+if ! /usr/bin/python3 -c 'import websocket' 2>/dev/null; then
+  apt-get update
+  apt-get install -y python3-websocket
+fi
+
 install -d -m 755 /usr/local/lib/daily-ai
-install -m 644 "$source_dir/daily_ai.py" /usr/local/lib/daily-ai/daily_ai.py
+install -m 644 "$source_dir/daily_ai.py" "$source_dir/daily_ai_live.py" /usr/local/lib/daily-ai/
 install -m 600 "$env_source" /etc/daily-ai.env
 install -m 644 "$source_dir/daily-ai.service" "$source_dir/daily-ai.timer" /etc/systemd/system/
 systemctl daemon-reload
@@ -70,7 +76,8 @@ else:
     raise SystemExit('Ollama did not start its loopback listener.')
 PY
 fi
-systemctl enable --now daily-ai.timer
-systemctl start daily-ai.service
-systemctl list-timers daily-ai.timer --no-pager
+systemctl disable --now daily-ai.timer
+systemctl enable daily-ai.service
+systemctl restart daily-ai.service
+systemctl status daily-ai.service --no-pager
 journalctl -u daily-ai.service -n 15 --no-pager

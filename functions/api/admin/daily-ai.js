@@ -1,3 +1,4 @@
+import { relay } from '../../../lib/daily-ai-live.js'
 import { requireSession } from '../../../lib/auth.js'
 import { readBoundedJson } from '../../../lib/nowPlaying.js'
 import { clientIp, dailyDb, dailyJson, dailyUnavailable, exactKeys, foreignBrowser } from '../../../lib/daily-ai.js'
@@ -24,9 +25,24 @@ export async function onRequest({ request, env }) {
     const parsed = await readBoundedJson(request, 512)
     if (parsed.error) return dailyJson({ error: 'Invalid request.' }, 400)
     const body = parsed.value
+    if (exactKeys(body, ['resetAll']) && body.resetAll === true) {
+      const reset = await relay(env, 'reset', {})
+      if (!reset.ok) return dailyJson({ error: 'Could not reset the live relay. Try again.' }, 503)
+      await db.batch([
+        db.prepare('DELETE FROM daily_ai_live_reads'),
+        db.prepare('DELETE FROM daily_ai_reads'),
+        db.prepare('DELETE FROM daily_ai_bans'),
+        db.prepare('UPDATE daily_ai_control SET revision = revision + 1, updated_at = ? WHERE singleton = 1').bind(Date.now()),
+      ])
+      return dailyJson({ ok: true })
+    }
     if (exactKeys(body, ['enabled']) && typeof body.enabled === 'boolean') {
       await db.prepare('UPDATE daily_ai_control SET enabled = ?, revision = revision + 1, updated_at = ? WHERE singleton = 1')
         .bind(body.enabled ? 1 : 0, Date.now()).run()
+      if (!body.enabled) {
+        const stopped = await relay(env, 'reset', {})
+        if (!stopped.ok) return dailyJson({ error: 'New requests are disabled; the relay could not confirm cancellation. The homelab also checks the kill switch.' }, 503)
+      }
       return dailyJson({ ok: true, enabled: body.enabled })
     }
     if (exactKeys(body, ['unban']) && typeof body.unban === 'string'

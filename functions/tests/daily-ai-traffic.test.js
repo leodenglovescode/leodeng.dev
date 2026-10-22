@@ -1,31 +1,21 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import worker from '../../workers/daily-ai-traffic/index.js'
+import worker from '../../workers/daily-ai-traffic/handler.js'
 
-test('private limiter enforces both IP and aggregate budgets without trusting forwarded identity', async () => {
-  const counts = new Map()
-  let overall = 0
-  const env = {
-    PER_IP: { async limit({ key }) {
-      counts.set(key, (counts.get(key) || 0) + 1)
-      return { success: counts.get(key) <= 2 }
-    } },
-    OVERALL: { async limit({ key }) {
-      assert.equal(key, 'daily-ai')
-      return { success: ++overall <= 3 }
-    } },
-  }
-  const read = ip => worker.fetch(new Request('https://limiter.internal/', {
-    headers: { 'cf-connecting-ip': ip, 'x-forwarded-for': crypto.randomUUID() },
-  }), env)
-  assert.equal((await read('2001:db8:0:0::1')).status, 204)
-  assert.equal((await read('2001:db8::1')).status, 204)
-  assert.equal((await read('2001:db8::1')).status, 429)
-  assert.equal(overall, 2, 'IP-denied requests do not consume the aggregate budget')
-  assert.equal((await read('192.0.2.1')).status, 204)
-  assert.equal((await read('192.0.2.2')).status, 429)
-  assert.equal((await read('invalid')).status, 400)
-  assert.equal((await worker.fetch(new Request('https://limiter.internal/', {
-    headers: { 'cf-connecting-ip': '192.0.2.3' },
-  }), {})).status, 503)
+test('private traffic gate canonicalizes identity and fails closed', async () => {
+  let calls = 0
+  const env = { LIVE_HUB: { getByName(name) {
+    assert.equal(name, 'superserver-qwen')
+    return { async fetch(url, options) {
+      calls++
+      assert.equal(url, 'https://hub.internal/limit')
+      assert.deepEqual(options.headers, { 'cf-connecting-ip': '2001:db8::1' })
+      return new Response(null, { status: 429 })
+    } }
+  } } }
+  const request = ip => new Request('https://limiter.internal/', { headers: { 'cf-connecting-ip': ip, 'x-forwarded-for': '192.0.2.1' } })
+  assert.equal((await worker.fetch(request('2001:db8:0:0::1'), env)).status, 429)
+  assert.equal((await worker.fetch(request('invalid'), env)).status, 400)
+  assert.equal(calls, 1)
+  assert.equal((await worker.fetch(request('2001:db8::1'), {})).status, 503)
 })

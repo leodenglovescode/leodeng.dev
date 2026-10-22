@@ -6,9 +6,42 @@
   "compatibility_date": "2026-10-22",
   "workers_dev": false,
   "preview_urls": false,
-  "observability": { "enabled": true, "head_sampling_rate": 0.01 },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.01
+  },
   "ratelimits": [
-    { "name": "PER_IP", "namespace_id": "2026102201", "simple": { "limit": 10, "period": 60 } },
-    { "name": "OVERALL", "namespace_id": "2026102202", "simple": { "limit": 300, "period": 60 } }
+    {
+      "name": "PER_IP",
+      "namespace_id": "2026102201",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
+      "name": "OVERALL",
+      "namespace_id": "2026102202",
+      "simple": {
+        "limit": 300,
+        "period": 60
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LIVE_HUB",
+        "class_name": "LiveHub"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-live-hub",
+      "new_sqlite_classes": [
+        "LiveHub"
+      ]
+    }
   ]
 }

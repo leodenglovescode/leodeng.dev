@@ -49,11 +49,24 @@ async function fixture(t, { enabled = true, published = true } = {}) {
   const directory = await mkdtemp(path.join(tmpdir(), 'daily-ai-test-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const db = new SQLiteD1(path.join(directory, 'state.sqlite'))
-  db.call({ schema: await readFile(new URL('../../homelab/migrations/0003_daily_ai.sql', import.meta.url), 'utf8') })
+  db.call({ schema: await readFile(new URL('../../homelab/migrations/0003_daily_ai.sql', import.meta.url), 'utf8') + await readFile(new URL('../../homelab/migrations/0004_daily_ai_live.sql', import.meta.url), 'utf8') })
   if (enabled) await db.prepare('UPDATE daily_ai_control SET enabled = 1 WHERE singleton = 1').run()
   const batch = { day: dailyDay(), revision: 0, model: 'qwen-local:27b',
     answers: DAILY_AI_IDS.map(id => ({ id, text: `Answer for ${id}.`, sources: ['/ai'] })) }
-  const env = { DAILY_AI_TRAFFIC: { fetch: async () => new Response(null, { status: 204 }) }, HOMELAB_DB: db, DAILY_AI_TOKEN: 'test-publishing-secret' }
+  const jobs = new Map()
+  let online = true
+  const resets = []
+  const env = { DAILY_AI_TRAFFIC: { async fetch(url, options) {
+    const action = new URL(url).pathname
+    if (action === '/') return new Response(null, { status: 204 })
+    const body = options?.body ? JSON.parse(options.body) : {}
+    if (action === '/status') return Response.json({ online, pending: 0 })
+    if (action === '/job') return Response.json(jobs.get(body.job) || null)
+    if (action === '/start') { jobs.set(body.job, { id: body.id, status: 'generating' }); return Response.json({ ok: true }) }
+    if (action === '/reset') { resets.push(true); for (const job of jobs.values()) job.status = 'cancelled'; return Response.json({ ok: true }) }
+    if (action === '/stream') return new Response('data: ' + JSON.stringify({ type: 'snapshot', ...jobs.get(body.job) }) + '\n\n', { headers: { 'content-type': 'text/event-stream' } })
+    throw new Error('Unexpected relay action')
+  } }, HOMELAB_DB: db, DAILY_AI_TOKEN: 'test-publishing-secret' }
   const make = (url = '/api/daily-ai', options = {}) => new Request(`https://leodeng.dev${url}`, {
     ...options,
     headers: { 'user-agent': 'Mozilla/5.0', 'cf-connecting-ip': '192.0.2.7', ...options.headers },
@@ -65,7 +78,7 @@ async function fixture(t, { enabled = true, published = true } = {}) {
     method: 'POST', body: JSON.stringify(value), headers: { authorization: `Bearer ${env.DAILY_AI_TOKEN}`, 'content-type': 'application/json', ...headers },
   }) })
   if (published && enabled) assert.equal((await publish()).status, 200)
-  return { db, env, make, read, select, publish, batch }
+  return { db, env, make, read, select, publish, batch, jobs, resets, offline() { online = false } }
 }
 
 test('five fixed choices; one atomic selection; status only reveals the selected answer', async t => {
@@ -76,15 +89,20 @@ test('five fixed choices; one atomic selection; status only reveals the selected
   const responses = await Promise.all([select({ id: 'homelab' }), select({ id: 'site' })])
   assert.deepEqual(responses.map(response => response.status).sort(), [200, 429])
   const saved = await (await read()).json()
-  assert.equal(saved.answer.id, saved.selected)
+  assert(DAILY_AI_IDS.includes(saved.selected))
+  assert.equal(saved.answer, null)
+  const streamed = await read({ headers: { accept: 'text/event-stream' } })
+  assert.match(streamed.headers.get('content-type'), /text\/event-stream/)
+  assert.match(await streamed.text(), /snapshot/)
   assert.equal((await select({ id: 'archive' })).status, 429)
   assert.equal((await read()).status, 200, 'A valid exhausted quota does not cause a ban')
 })
 
-test('missing batch does not consume quota; disabled feature fails closed', async t => {
+test('offline runner does not consume quota; disabled feature fails closed', async t => {
   const f = await fixture(t, { published: false })
-  assert.equal((await (await f.select({ id: 'site' })).json()).ready, false)
-  assert.equal((await f.db.prepare('SELECT COUNT(*) AS count FROM daily_ai_reads').first()).count, 0)
+  f.offline()
+  assert.equal((await f.select({ id: 'site' })).status, 503)
+  assert.equal((await f.db.prepare('SELECT COUNT(*) AS count FROM daily_ai_live_reads').first()).count, 0)
   await f.db.prepare('UPDATE daily_ai_control SET enabled = 0 WHERE singleton = 1').run()
   assert.equal((await f.read()).status, 503)
 })
@@ -173,6 +191,16 @@ test('admin authentication, kill switch revision, unban and pagination use the r
   await f.db.batch(Array.from({ length: 55 }, (_, i) => f.db.prepare('INSERT INTO daily_ai_bans VALUES (?, ?, ?)').bind(`198.51.100.${i}`, 'test', i)))
   const listing = await (await manage()).json()
   assert.equal(listing.total, 55); assert.equal(listing.bans.length, 50)
+  assert.equal((await manage({ resetAll: true }, { cookie: '' })).status, 401)
+  assert.equal((await manage({ resetAll: true, prompt: 'hello' })).status, 400)
+  assert.equal((await manage({ resetAll: true })).status, 200)
+  assert.equal((await f.db.prepare('SELECT COUNT(*) AS count FROM daily_ai_bans').first()).count, 0)
+  assert.equal((await f.db.prepare('SELECT COUNT(*) AS count FROM daily_ai_live_reads').first()).count, 0)
+  assert.equal((await f.select({ id: 'archive' })).status, 200)
+  assert(f.resets.length >= 2, 'Disable and reset both stop active relay jobs')
+  await manage({ enabled: false })
+  await manage({ resetAll: true })
+  assert.equal((await (await manage()).json()).enabled, false, 'Reset never reenables a disabled endpoint')
 })
 
 test('Beijing day boundary is independent of host timezone', () => {
@@ -206,4 +234,13 @@ test('traffic denial and limiter failures never query D1 or create permanent ban
     assert.equal((await visitor({ env, request })).status, 503)
   }
   assert.equal(queries, 0)
+})
+
+
+test('failed live jobs refund only their own daily selection', async t => {
+  const f = await fixture(t)
+  assert.equal((await f.select({ id: 'site' })).status, 200)
+  for (const job of f.jobs.values()) job.status = 'error'
+  assert.equal((await (await f.read()).json()).selected, null)
+  assert.equal((await f.select({ id: 'archive' })).status, 200)
 })
