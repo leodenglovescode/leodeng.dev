@@ -4,7 +4,7 @@ import { useLocale } from '../utils/i18n.js'
 const props = defineProps({ turn: { type: Object, required: true } })
 const { t, localePath } = useLocale('daily-ai')
 const open = ref(props.turn.status === 'running' && props.turn.phase !== 'answering'), follow = ref(true), pane = ref(null)
-const errors = { provider_auth: 'errorProviderAuth', provider_busy: 'errorProviderBusy', provider_error: 'errorProvider',
+const errors = { provider_auth: 'errorProviderAuth', provider_balance: 'errorProviderBalance', provider_busy: 'errorProviderBusy', provider_error: 'errorProvider',
   stream_incomplete: 'errorStreamIncomplete', output_limit: 'errorOutputLimit', generation_timeout: 'errorGenerationTimeout',
   generation_cancelled: 'errorCancelled', empty_answer: 'errorEmptyAnswer' }
 watch(() => props.turn.phase, phase => { if (phase === 'answering') open.value = false })

@@ -86,7 +86,7 @@ export class ChatState extends DurableObject {
       if (!row || row.status !== 'running' || row.revision !== control.revision || !control.enabled) return json({ error: 'Turn cancelled.' }, 409)
       if (!['done', 'error'].includes(body.status) || typeof body.answer !== 'string' || body.answer.length > 16000
           || typeof body.thinking !== 'string' || body.thinking.length > 24000) return json({ error: 'Invalid response.' }, 400)
-      const codes = ['provider_error', 'provider_auth', 'provider_busy', 'stream_incomplete', 'output_limit', 'generation_timeout', 'generation_cancelled', 'empty_answer']
+      const codes = ['provider_error', 'provider_auth', 'provider_balance', 'provider_busy', 'stream_incomplete', 'output_limit', 'generation_timeout', 'generation_cancelled', 'empty_answer']
       this.sql.exec('UPDATE turns SET answer = ?, thinking = ?, stats = ?, status = ?, code = ? WHERE job = ?', body.answer, body.thinking,
         body.stats && JSON.stringify(body.stats).length <= 2048 ? JSON.stringify(body.stats) : null, body.status, codes.includes(body.code) ? body.code : null, body.job)
       this.sql.exec('DELETE FROM turns WHERE session = ? AND day = ? AND job NOT IN (SELECT job FROM turns WHERE session = ? AND day = ? ORDER BY created DESC, rowid DESC LIMIT 20)', body.session, body.day, body.session, body.day)

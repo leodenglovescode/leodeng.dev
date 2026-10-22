@@ -156,3 +156,13 @@ test('authenticated whitelist canonicalizes addresses, unbans, and survives rese
   assert.equal((await change({ removeWhitelist: '2001:db8::1' })).status, 200)
   assert.equal((await f.db.prepare('SELECT COUNT(*) n FROM daily_ai_whitelist').first()).n, 0)
 })
+
+test('provider rejection is sanitized and insufficient balance has an actionable error', async t => {
+  const f = await fixture(t)
+  t.mock.method(globalThis, 'fetch', async () => new Response('secret provider error with test-secret', { status: 402 }))
+  const response = await f.send()
+  const events = await response.text()
+  await Promise.all(f.pending)
+  assert.match(events, /"code":"provider_balance"/)
+  assert.ok(!events.includes('test-secret'))
+})

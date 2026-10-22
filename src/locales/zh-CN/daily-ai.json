@@ -47,5 +47,6 @@
   "chatBusy": "已有回答正在生成，或聊天服务繁忙，请稍后重试。",
   "errorProviderAuth": "AI 服务商未能验证本站身份，请联系站长。",
   "errorProviderBusy": "AI 服务商繁忙，请稍后重试。",
-  "errorProvider": "AI 服务商未能完成回答，请稍后重试。"
+  "errorProvider": "AI 服务商未能完成回答，请稍后重试。",
+  "errorProviderBalance": "网站的 AI 服务账户余额不足，请联系网站所有者。"
 }

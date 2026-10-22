@@ -47,5 +47,6 @@
   "chatBusy": "A reply is already running, or chat is busy. Please wait and try again.",
   "errorProviderAuth": "The AI provider could not authenticate this site. Please contact the site owner.",
   "errorProviderBusy": "The AI provider is busy. Please try again later.",
-  "errorProvider": "The AI provider could not complete this reply. Please try again later."
+  "errorProvider": "The AI provider could not complete this reply. Please try again later.",
+  "errorProviderBalance": "The site’s AI provider balance is insufficient. Please contact the site owner."
 }
