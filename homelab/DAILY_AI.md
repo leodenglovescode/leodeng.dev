@@ -113,3 +113,31 @@ ollama stop YOUR_DEDICATED_MODEL_TAG
 
 Stopping the timer/service prevents further publisher work. Use the web kill
 switch as well to stop serving answers already stored on Cloudflare.
+
+## HTTP traffic protection
+
+Every visitor GET and POST calls the private `DAILY_AI_TRAFFIC` service binding
+before accessing D1, including requests through Pages aliases. Deploy it with:
+
+```bash
+npx wrangler deploy --config workers/daily-ai-traffic/wrangler.jsonc
+```
+
+In both Pages production and preview settings, bind `DAILY_AI_TRAFFIC` to the
+`leodeng-daily-ai-traffic` Worker. It has no public routes, workers.dev address,
+or preview URLs. The binding carries only Cloudflare's canonical client IP,
+never the visitor's body or arbitrary headers. Missing or failed protection
+returns 503 without querying D1.
+
+The edge budgets are 10 requests per minute per IP and 300 requests per minute
+across all visitors, per Cloudflare location. These approximate counters reduce
+HTTP flooding; the strict one-question-per-IP-per-day allowance still uses D1's
+unique constraint. Excess traffic returns temporary HTTP 429 with `Retry-After:
+60`, without creating a permanent ban. Malformed requests that pass the traffic
+gate still follow the permanent-ban policy. The admin kill switch and authenticated
+publisher do not share these visitor budgets.
+
+This protects database access, not total Pages/Worker invocation counts, and is
+not a strict worldwide spending cap. Cloudflare's platform DDoS protection still
+handles network-level floods. Do not replace this with D1 counters: that would
+make each blocked request consume database work again.

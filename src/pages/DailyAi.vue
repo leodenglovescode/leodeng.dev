@@ -26,7 +26,7 @@ async function load(id = null) {
     const data = await response.json()
     if (!response.ok) {
       state.value = null
-      error.value = data.banned ? t('banned') : response.status === 429 ? t('limit') : t('unavailable')
+      error.value = data.banned ? t('banned') : response.status === 429 ? t(data.code === 'traffic_limited' ? 'trafficLimit' : 'limit') : t('unavailable')
       return
     }
     state.value = data

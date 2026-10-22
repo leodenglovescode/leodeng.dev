@@ -53,7 +53,7 @@ async function fixture(t, { enabled = true, published = true } = {}) {
   if (enabled) await db.prepare('UPDATE daily_ai_control SET enabled = 1 WHERE singleton = 1').run()
   const batch = { day: dailyDay(), revision: 0, model: 'qwen-local:27b',
     answers: DAILY_AI_IDS.map(id => ({ id, text: `Answer for ${id}.`, sources: ['/ai'] })) }
-  const env = { HOMELAB_DB: db, DAILY_AI_TOKEN: 'test-publishing-secret' }
+  const env = { DAILY_AI_TRAFFIC: { fetch: async () => new Response(null, { status: 204 }) }, HOMELAB_DB: db, DAILY_AI_TOKEN: 'test-publishing-secret' }
   const make = (url = '/api/daily-ai', options = {}) => new Request(`https://leodeng.dev${url}`, {
     ...options,
     headers: { 'user-agent': 'Mozilla/5.0', 'cf-connecting-ip': '192.0.2.7', ...options.headers },
@@ -178,4 +178,32 @@ test('admin authentication, kill switch revision, unban and pagination use the r
 test('Beijing day boundary is independent of host timezone', () => {
   assert.equal(dailyDay(Date.parse('2026-10-21T15:59:59Z')), '2026-10-21')
   assert.equal(dailyDay(Date.parse('2026-10-21T16:00:00Z')), '2026-10-22')
+})
+
+test('traffic denial and limiter failures never query D1 or create permanent bans', async () => {
+  let queries = 0
+  const env = { HOMELAB_DB: { prepare() { queries++; throw new Error('D1 must not be touched') } } }
+  const request = new Request('https://leodeng.dev/api/daily-ai', {
+    headers: { 'cf-connecting-ip': '192.0.2.7', 'user-agent': 'Mozilla/5.0' },
+  })
+  for (const method of ['GET', 'POST', 'DELETE']) {
+    env.DAILY_AI_TRAFFIC = { async fetch(url, options) {
+      assert.equal(url, 'https://daily-ai-traffic.internal/')
+      assert.deepEqual(options.headers, { 'cf-connecting-ip': '192.0.2.7' })
+      assert.equal(options.body, undefined)
+      return new Response(null, { status: 429 })
+    } }
+    const response = await visitor({ env, request: new Request(request, { method }) })
+    assert.equal(response.status, 429)
+    assert.equal(response.headers.get('retry-after'), '60')
+    assert.equal(response.headers.get('cache-control'), 'no-store')
+    assert.equal((await response.json()).code, 'traffic_limited')
+  }
+  for (const gate of [undefined, { fetch: async () => new Response(null, { status: 503 }) },
+    { fetch: async () => { throw new Error('Unavailable') } },
+    { fetch: async () => new Response(null, { status: 200 }) }]) {
+    env.DAILY_AI_TRAFFIC = gate
+    assert.equal((await visitor({ env, request })).status, 503)
+  }
+  assert.equal(queries, 0)
 })

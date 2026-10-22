@@ -7,10 +7,22 @@ export async function onRequest({ request, env }) {
     // Refuse cross-site browser requests before creating bans: another site
     // must not be able to ban a visitor by embedding a link, image or form.
     if (foreignBrowser(request)) return dailyJson({ error: 'Use Daily AI on this website.' }, 403)
-    const db = dailyDb(env)
-    if (!db) return dailyJson({ error: 'Daily AI storage is not configured.' }, 503)
     const ip = clientIp(request)
     if (!ip) return dailyJson({ error: 'Client address is unavailable.' }, 503)
+    // All visitor reads and writes, on every Pages hostname, pass the private
+    // edge limiter before any D1 query. Never forward visitor headers/body.
+    if (!env.DAILY_AI_TRAFFIC) return dailyJson({ error: 'Daily AI traffic protection is unavailable.' }, 503)
+    const gate = await env.DAILY_AI_TRAFFIC.fetch('https://daily-ai-traffic.internal/', {
+      headers: { 'cf-connecting-ip': ip }, signal: AbortSignal.timeout(3000),
+    })
+    if (gate.status === 429) {
+      const response = dailyJson({ error: 'Too many requests. Try again in a minute.', code: 'traffic_limited' }, 429)
+      response.headers.set('retry-after', '60')
+      return response
+    }
+    if (gate.status !== 204) return dailyJson({ error: 'Daily AI traffic protection is unavailable.' }, 503)
+    const db = dailyDb(env)
+    if (!db) return dailyJson({ error: 'Daily AI storage is not configured.' }, 503)
     if (await db.prepare('SELECT ip FROM daily_ai_bans WHERE ip = ?').bind(ip).first()) {
       return dailyJson({ error: 'This IP is permanently banned from Daily AI.', banned: true }, 403)
     }

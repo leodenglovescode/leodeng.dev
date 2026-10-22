@@ -11,6 +11,7 @@
   "unavailable": "Daily AI is currently unavailable.",
   "banned": "This IP is banned from Daily AI. Contact the site owner if you need the ban reviewed.",
   "limit": "This IP has already chosen a question today. Refresh to reopen its answer.",
+  "trafficLimit": "Too many requests. Please wait a minute before trying again.",
   "timeout": "The request timed out. Refresh to check whether your selection was accepted.",
   "batch": "{day} · {model} · daily batch",
   "choose": "Choose",
