@@ -72,3 +72,11 @@ test('provider request bounds history, disables tools and never replays reasonin
   const stats = cloudStats({ completion_tokens: 100, prompt_tokens: 200 }, 0, 1000, 3000, 'stop')
   assert.equal(stats.tokensPerSecond, 50); assert.equal(stats.durationMs, 3000)
 })
+
+test('actual provider request options construct successfully in Cloudflare workerd', async t => {
+  const result = await build({ stdin: { contents: `import { providerInit, providerBody, CHAT_ENDPOINT } from './lib/deepseek-chat.js';
+    export default { async fetch() { const request = new Request(CHAT_ENDPOINT, providerInit('test-secret', providerBody('Hi', true, [], 'public'), new AbortController().signal)); return Response.json({ redirect: request.redirect, url: request.url, method: request.method }); } };`, resolveDir: process.cwd() }, bundle: true, write: false, format: 'esm', platform: 'browser' })
+  const mf = new miniflare.Miniflare(compatibleOptions({ name: 'provider-options', modules: true, script: result.outputFiles[0].text, compatibilityDate: '2026-10-03' }))
+  t.after(() => mf.dispose())
+  assert.deepEqual(await (await mf.dispatchFetch('http://test/')).json(), { redirect: 'manual', url: 'https://api.deepseek.com/chat/completions', method: 'POST' })
+})
