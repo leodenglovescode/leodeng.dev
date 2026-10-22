@@ -1,3 +1,4 @@
+import { generationStats, LIVE_ERROR_CODES } from '../../lib/daily-ai-result.js'
 import { dailyDay } from '../../lib/daily-ai.js'
 import { DurableObject } from 'cloudflare:workers'
 import { DAILY_AI_IDS } from '../../lib/daily-ai-questions.js'
@@ -22,6 +23,10 @@ export class LiveHub extends DurableObject {
       status TEXT NOT NULL, thinking TEXT NOT NULL DEFAULT '', answer TEXT NOT NULL DEFAULT '',
       sources TEXT NOT NULL DEFAULT '[]', created INTEGER NOT NULL, updated INTEGER NOT NULL)`)
     if (!this.rows('PRAGMA table_info(jobs)').some(column => column.name === 'revision')) this.sql.exec('ALTER TABLE jobs ADD COLUMN revision INTEGER NOT NULL DEFAULT 0')
+    const columns = this.rows('PRAGMA table_info(jobs)').map(column => column.name)
+    for (const [name, declaration] of [['stats', 'TEXT'], ['error_code', 'TEXT'], ['stage', "TEXT DEFAULT 'thinking'"]]) {
+      if (!columns.includes(name)) this.sql.exec(`ALTER TABLE jobs ADD COLUMN ${name} ${declaration}`)
+    }
     this.sql.exec('CREATE TABLE IF NOT EXISTS control (id INTEGER PRIMARY KEY, epoch TEXT, day TEXT, started INTEGER)')
     this.sql.exec("INSERT OR IGNORE INTO control VALUES (1, 'initial', '', 0)")
   }
@@ -30,16 +35,17 @@ export class LiveHub extends DurableObject {
   snapshot(job) {
     const row = this.rows('SELECT * FROM jobs WHERE job = ?', job)[0]
     return row ? { job: row.job, id: row.question, status: row.status, thinking: row.thinking,
-      text: row.answer, sources: JSON.parse(row.sources), model: 'qwen3.8:27b', generatedAt: row.updated } : null
+      text: row.answer, sources: JSON.parse(row.sources), model: 'qwen3.8:27b', generatedAt: row.updated, stats: row.stats ? JSON.parse(row.stats) : null, code: row.error_code, phase: row.stage } : null
   }
   emit(job, value) {
     for (const controller of this.listeners.get(job) || []) {
       try { controller.enqueue(wire(value)) } catch { this.listeners.get(job)?.delete(controller) }
     }
   }
-  finish(job, status) {
-    this.sql.exec('UPDATE jobs SET status = ?, updated = ? WHERE job = ?', status, Date.now(), job)
-    this.emit(job, { type: 'status', status })
+  finish(job, status, code = null) {
+    this.sql.exec('UPDATE jobs SET status = ?, error_code = ?, updated = ? WHERE job = ?', status, code, Date.now(), job)
+    this.emit(job, { type: 'status', status, ...(code ? { code } : {}) })
+    if (status === 'error') console.warn(JSON.stringify({ event: 'daily_ai_generation_failed', job, code }))
     for (const controller of this.listeners.get(job) || []) { try { controller.close() } catch { /* Already disconnected. */ } }
     this.listeners.delete(job)
   }
@@ -61,7 +67,7 @@ export class LiveHub extends DurableObject {
   async alarm() {
     for (const row of this.rows("SELECT job FROM jobs WHERE status IN ('queued','generating') AND created <= ?", Date.now() - DEADLINE)) {
       this.agent()?.send(JSON.stringify({ type: 'cancel', job: row.job }))
-      this.finish(row.job, 'error')
+      this.finish(row.job, 'error', 'generation_timeout')
     }
     this.sql.exec('DELETE FROM jobs WHERE updated < ?', Date.now() - 7 * 86400000)
     await this.dispatch()
@@ -73,7 +79,7 @@ export class LiveHub extends DurableObject {
       if (request.headers.get('upgrade')?.toLowerCase() !== 'websocket') return json({ error: 'WebSocket required' }, 426)
       // Reconnection replaces a stale socket and invalidates interrupted work.
       for (const ws of this.ctx.getWebSockets('agent')) ws.close(1000, 'Replaced')
-      for (const row of this.rows("SELECT job FROM jobs WHERE status = 'generating'")) this.finish(row.job, 'error')
+      for (const row of this.rows("SELECT job FROM jobs WHERE status = 'generating'")) this.finish(row.job, 'error', 'runner_reconnected')
       const [client, server] = Object.values(new WebSocketPair())
       server.serializeAttachment({ seen: Date.now() })
       this.ctx.acceptWebSocket(server, ['agent'])
@@ -96,7 +102,7 @@ export class LiveHub extends DurableObject {
     if (path === '/reset' && request.method === 'POST') {
       for (const row of this.rows("SELECT job FROM jobs WHERE status IN ('queued','generating')")) {
         this.agent()?.send(JSON.stringify({ type: 'cancel', job: row.job }))
-        this.finish(row.job, 'cancelled')
+        this.finish(row.job, 'cancelled', 'generation_cancelled')
       }
       this.sql.exec('UPDATE control SET epoch = ?, started = 0 WHERE id = 1', crypto.randomUUID())
       return json({ ok: true })
@@ -123,7 +129,7 @@ export class LiveHub extends DurableObject {
       const snapshot = this.snapshot(job)
       if (snapshot && !terminal(snapshot.status)) {
         this.agent()?.send(JSON.stringify({ type: 'cancel', job }))
-        this.finish(job, 'cancelled')
+        this.finish(job, 'cancelled', 'generation_cancelled')
         await this.dispatch()
       }
       return json({ ok: true })
@@ -156,32 +162,42 @@ export class LiveHub extends DurableObject {
     if (data.type === 'ping') { ws.send('{"type":"pong"}'); return }
     const job = this.snapshot(data.job)
     if (!job || job.status !== 'generating') return
-    if (data.type === 'delta' && ['thinking', 'answer'].includes(data.channel) && typeof data.text === 'string') {
+    if (data.type === 'phase' && data.phase === 'answering') {
+      this.sql.exec("UPDATE jobs SET stage = 'answering', updated = ? WHERE job = ?", Date.now(), job.job)
+      this.emit(job.job, { type: 'phase', phase: 'answering' })
+    } else if (data.type === 'delta' && ['thinking', 'answer'].includes(data.channel) && typeof data.text === 'string') {
       if (data.text.length > 4096 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(data.text)) return
       const current = data.channel === 'thinking' ? job.thinking : job.text
       if (current.length + data.text.length > (data.channel === 'thinking' ? 16000 : 6000)) {
-        ws.send(JSON.stringify({ type: 'cancel', job: job.job })); this.finish(job.job, 'error'); await this.dispatch(); return
+        ws.send(JSON.stringify({ type: 'cancel', job: job.job })); this.finish(job.job, 'error', 'output_limit'); await this.dispatch(); return
       }
       // Column comes from the fixed channel allowlist, never arbitrary SQL input.
       const column = data.channel === 'thinking' ? 'thinking' : 'answer'
       this.sql.exec(`UPDATE jobs SET ${column} = ${column} || ?, updated = ? WHERE job = ?`, data.text, Date.now(), job.job)
       this.emit(job.job, { type: 'delta', channel: data.channel, text: data.text })
     } else if (data.type === 'done') {
-      if (!job.text.trim() || !Array.isArray(data.sources) || data.sources.length < 1 || data.sources.length > 6
+      if (!job.text.trim()) this.finish(job.job, 'error', 'empty_answer')
+      else if (!Array.isArray(data.sources) || data.sources.length < 1 || data.sources.length > 6
           || !data.sources.every(source => typeof source === 'string' && /^\/(?:homelab|tokens|now|projects|blog(?:\/[a-z0-9-]+)?|gallery|spotting|stack|ai)$/.test(source))) {
-        this.finish(job.job, 'error')
+        this.finish(job.job, 'error', 'invalid_sources')
       } else {
-        this.sql.exec('UPDATE jobs SET sources = ? WHERE job = ?', JSON.stringify(data.sources), job.job)
+        const stats = generationStats(data.stats)
+        this.sql.exec('UPDATE jobs SET sources = ?, stats = ? WHERE job = ?', JSON.stringify(data.sources), stats ? JSON.stringify(stats) : null, job.job)
         this.emit(job.job, { type: 'sources', sources: data.sources })
+        if (stats) this.emit(job.job, { type: 'stats', stats })
         this.finish(job.job, 'done')
       }
       await this.dispatch()
-    } else if (data.type === 'error') { this.finish(job.job, 'error'); await this.dispatch() }
+    } else if (data.type === 'error') {
+      this.finish(job.job, 'error', LIVE_ERROR_CODES.includes(data.code) ? data.code : 'inference_failed')
+      await this.dispatch()
+    }
   }
+
   async webSocketClose(ws) {
     // A replaced socket must not cancel the new runner's jobs.
     if (!this.ctx.getWebSockets('agent').some(socket => socket !== ws && socket.readyState === 1)) {
-      for (const row of this.rows("SELECT job FROM jobs WHERE status IN ('queued','generating')")) this.finish(row.job, 'error')
+      for (const row of this.rows("SELECT job FROM jobs WHERE status IN ('queued','generating')")) this.finish(row.job, 'error', 'runner_disconnected')
     }
   }
   async webSocketError(ws) { await this.webSocketClose(ws) }

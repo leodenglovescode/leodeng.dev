@@ -30,5 +30,21 @@
   "reconnect": "重新连接回答",
   "globalLimit": "全站今天的 50 次生成额度已用完，北京时间午夜后恢复。",
   "remaining": "今天剩余 {count} 次生成机会，共 5 次。",
-  "askAgain": "再次提问"
+  "askAgain": "再次提问",
+  "statsTitle": "生成统计",
+  "duration": "生成用时",
+  "speed": "生成速度",
+  "outputTokens": "生成 Token",
+  "notAvailable": "暂无",
+  "durationNote": "模型请求的耗时，包括加载和提示词处理，不含排队时间。",
+  "speedNote": "模型生成思考和回答 Token 的速度，不含加载和提示词处理时间。",
+  "tokensNote": "Ollama 报告的实际 Token 数，包括思考以及补充的纯回答生成。",
+  "outputTruncated": "回答已达到输出上限，内容可能不完整。",
+  "errorEmptyAnswer": "模型结束时没有给出回答。额度已返还，请重试。",
+  "errorStreamIncomplete": "模型输出流意外中断。额度已返还，请重试。",
+  "errorOutputLimit": "模型输出超过了长度限制。额度已返还，请重试。",
+  "errorModelUnavailable": "本地模型暂时不可用。额度已返还，请稍后重试。",
+  "errorGenerationTimeout": "生成超时。额度已返还，请重试。",
+  "errorRunnerDisconnected": "家庭服务器连接中断。额度已返还，请重试。",
+  "errorCancelled": "网站控制已取消生成，额度已返还。"
 }

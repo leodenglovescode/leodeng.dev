@@ -1,3 +1,4 @@
+import { generationStats } from '../../lib/daily-ai-result.js'
 import { dailyDay } from '../../lib/daily-ai.js'
 import assert from 'node:assert/strict'
 import test from 'node:test'
@@ -50,6 +51,8 @@ test('real Durable Object streams model deltas, bounds the queue, replays result
   agent.send(JSON.stringify({ type: 'delta', job: first.job, channel: 'thinking', text: 'Checking public sources.' }))
   await waitFor(() => events.some(event => event.channel === 'thinking'))
   assert(!events.some(event => event.status === 'done'), 'Thinking arrives before completion')
+  agent.send(JSON.stringify({ type: 'phase', job: first.job, phase: 'answering' }))
+  await waitFor(() => events.some(event => event.type === 'phase' && event.phase === 'answering'))
   agent.send(JSON.stringify({ type: 'delta', job: first.job, channel: 'answer', text: 'A live answer. 中文' }))
   await waitFor(() => events.some(event => event.channel === 'answer'))
   // Two waiting jobs plus the active one fill the bounded single-GPU queue.
@@ -58,7 +61,7 @@ test('real Durable Object streams model deltas, bounds the queue, replays result
   assert.equal((await call('start', third)).status, 200)
   assert.equal((await call('start', job('archive'))).status, 503)
   assert.equal((await call('start', job('arbitrary-prompt'))).status, 400)
-  agent.send(JSON.stringify({ type: 'done', job: first.job, sources: ['/ai'] }))
+  agent.send(JSON.stringify({ type: 'done', job: first.job, sources: ['/ai'], stats: { durationMs: 12000, tokens: 160, evalDurationNs: 8000000000, promptTokens: 100, passes: 1, finishReason: 'stop' } }))
   await finished
   const replay = []
   await consumeDailyAiStream(await call('stream', { job: first.job }), event => replay.push(event))
@@ -66,6 +69,10 @@ test('real Durable Object streams model deltas, bounds the queue, replays result
   assert.equal(replay[0].thinking, 'Checking public sources.')
   assert.equal(replay[0].status, 'done')
   assert.deepEqual(replay[0].sources, ['/ai'])
+  assert.equal(replay[0].stats.tokensPerSecond, 20)
+  assert.equal(replay[0].stats.durationMs, 12000)
+  assert.equal(replay[0].phase, 'answering')
+  assert(events.some(event => event.type === 'stats'), 'Real metrics arrive before stream completion')
   assert.equal((await (await call('job', { job: second.job })).json()).answer, undefined)
   const limit = () => mf.dispatchFetch('http://relay.internal/', { headers: { 'cf-connecting-ip': '192.0.2.1' } })
   assert.equal((await limit()).status, 204)
@@ -94,6 +101,15 @@ test('real Durable Object streams model deltas, bounds the queue, replays result
   assert.equal((await (await call('status')).json()).remaining, 0)
   await call('reset', {})
   assert.equal((await (await call('status')).json()).remaining, 50)
+  const failed = job()
+  await call('start', failed)
+  const failureEvents = []
+  const failureStream = consumeDailyAiStream(await call('stream', { job: failed.job }), event => failureEvents.push(event))
+  agent.send(JSON.stringify({ type: 'error', job: failed.job, code: 'empty_answer', message: 'Never relay raw messages or secrets' }))
+  await failureStream
+  assert.equal(failureEvents.at(-1).code, 'empty_answer')
+  assert(!JSON.stringify(failureEvents).includes('Never relay'))
+  assert.equal((await (await call('job', { job: failed.job })).json()).code, 'empty_answer')
   // Late tokens from cancelled inference cannot revive an answer.
   agent.send(JSON.stringify({ type: 'delta', job: second.job, channel: 'answer', text: 'late token' }))
   assert.equal((await (await call('job', { job: second.job })).json()).text, '')
@@ -109,4 +125,13 @@ test('browser stream decoder handles split UTF-8, split frames and incomplete da
   await consumeDailyAiStream(new Response(stream), event => events.push(event))
   assert.equal(events[0].text, '中文')
   await assert.rejects(consumeDailyAiStream(new Response('data: {'), () => {}), /Incomplete/)
+})
+
+
+test('metrics use real token timings and reject invalid or unknown values', () => {
+  const value = { durationMs: 10000, tokens: 100, evalDurationNs: 5000000000, promptTokens: 200, passes: 2, finishReason: 'stop' }
+  assert.equal(generationStats(value).tokensPerSecond, 20)
+  assert.equal(generationStats({ ...value, evalDurationNs: 0 }).tokensPerSecond, null)
+  assert.equal(generationStats({ ...value, tokens: null }).tokensPerSecond, null)
+  for (const bad of [{ ...value, tokens: -1 }, { ...value, evalDurationNs: Infinity }, { ...value, durationMs: '100' }, { ...value, passes: 3 }]) assert.equal(generationStats(bad), null)
 })

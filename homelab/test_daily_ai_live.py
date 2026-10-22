@@ -17,7 +17,7 @@ class LiveTests(unittest.TestCase):
         frames = [
             {'message': {'thinking': 'Check the public source.'}, 'done': False},
             {'message': {'content': 'The answer. 中文'}, 'done': False},
-            {'message': {}, 'done': True},
+            {'message': {}, 'done': True, 'done_reason': 'stop', 'eval_count': 40, 'eval_duration': 2000000000, 'prompt_eval_count': 30},
         ]
         response = io.BytesIO(b''.join(json.dumps(frame).encode() + b'\n' for frame in frames))
         pipe = Mock()
@@ -26,13 +26,48 @@ class LiveTests(unittest.TestCase):
         with patch.object(live.urllib.request, 'build_opener', return_value=opener):
             live.stream_child(pipe, 'http://127.0.0.1:11434', 'qwen3.8:27b', 'A fixed prompt')
         self.assertEqual(pipe.send.call_args_list[0].args[0]['channel'], 'thinking')
-        self.assertEqual(pipe.send.call_args_list[1].args[0]['text'], 'The answer. 中文')
-        self.assertEqual(pipe.send.call_args_list[2].args[0]['type'], 'done')
+        events = [call.args[0] for call in pipe.send.call_args_list]
+        self.assertEqual(events[1], {'type': 'phase', 'phase': 'answering'})
+        self.assertEqual(events[2]['text'], 'The answer. 中文')
+        self.assertEqual(events[-1]['type'], 'done')
+        self.assertEqual(events[-1]['stats']['tokens'], 40)
+        self.assertEqual(events[-1]['stats']['evalDurationNs'], 2000000000)
         body = json.loads(opener.open.call_args.args[0].data)
         self.assertTrue(body['stream'])
         self.assertTrue(body['think'])
         self.assertEqual(body['options']['num_gpu'], 40)
         self.assertNotIn('tools', body)
+
+    def test_thinking_exhaustion_reserves_an_answer_only_pass_and_combines_real_metrics(self):
+        first = [{'message': {'thinking': 'Still thinking...'}, 'done': False},
+                 {'message': {}, 'done': True, 'done_reason': 'length', 'eval_count': 2048,
+                  'eval_duration': 100000000000, 'prompt_eval_count': 100}]
+        second = [{'message': {'content': 'A complete answer.'}, 'done': False},
+                  {'message': {}, 'done': True, 'done_reason': 'stop', 'eval_count': 100,
+                   'eval_duration': 5000000000, 'prompt_eval_count': 100}]
+        opener = Mock()
+        opener.open.side_effect = [io.BytesIO(b''.join(json.dumps(frame).encode() + b'\n' for frame in frames)) for frames in [first, second]]
+        pipe = Mock()
+        with patch.object(live.urllib.request, 'build_opener', return_value=opener):
+            live.stream_child(pipe, 'http://127.0.0.1:11434', 'test', 'fixed')
+        requests = [json.loads(call.args[0].data) for call in opener.open.call_args_list]
+        self.assertTrue(requests[0]['think'])
+        self.assertFalse(requests[1]['think'])
+        self.assertEqual(requests[1]['options']['num_predict'], 512)
+        events = [call.args[0] for call in pipe.send.call_args_list]
+        self.assertEqual(events[1], {'type': 'phase', 'phase': 'answering'})
+        self.assertEqual(events[-1]['type'], 'done')
+        self.assertEqual(events[-1]['stats']['tokens'], 2148)
+        self.assertEqual(events[-1]['stats']['evalDurationNs'], 105000000000)
+        self.assertEqual(events[-1]['stats']['passes'], 2)
+
+    def test_both_passes_empty_produce_a_specific_safe_error(self):
+        opener = Mock()
+        opener.open.side_effect = [io.BytesIO(b'{"message":{},"done":true}\n') for _ in range(2)]
+        pipe = Mock()
+        with patch.object(live.urllib.request, 'build_opener', return_value=opener):
+            live.stream_child(pipe, 'http://127.0.0.1:11434', 'test', 'fixed')
+        self.assertEqual(pipe.send.call_args_list[-1].args[0], {'type': 'error', 'code': 'empty_answer'})
 
     def test_truncated_ollama_stream_is_an_error(self):
         opener = Mock()

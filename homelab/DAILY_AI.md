@@ -63,9 +63,12 @@ Only the agent connects out to Cloudflare. It does not listen on a local port.
 
 The installed model is `qwen3.8:27b`, Q4_K_M. `DAILY_AI_GPU_LAYERS=40` limits
 offloading to preserve space on the 24 GB GPU; this is not a hard GPU partition.
-Inference uses an 8K context, thinking enabled and a combined 2048-token output
-budget. There is one generation at a time, at most three outstanding jobs, a
-10-minute job deadline and a shared 50-start daily compute budget. The model unloads
+Inference uses an 8K context and a 2048-token thinking/answer budget. If
+the model spends that budget thinking without an answer, a separate 512-token
+request with thinking disabled produces the answer from the same fixed public
+prompt. The original thinking stays visible, and both passes share the same job,
+deadline and generation allowance. There is one generation at a time, at most
+three outstanding jobs, a 10-minute job deadline and a shared 50-start daily compute budget. The model unloads
 after every request, including failures and cancellation.
 
 The agent reads only the generated public `/daily-ai-context.json` and bounded
@@ -130,3 +133,26 @@ Objects, a mock runner WebSocket and genuine streaming responses. It checks
 incremental thinking/answer delivery, Unicode framing, replay, queue capacity,
 cancellation and immediate traffic-counter reset. The Python tests check Ollama
 stream bounds, distinct output channels and child termination on cancellation.
+
+## Stream display and diagnostics
+
+The thinking pane follows new text while the reader stays near its bottom.
+Scrolling upward pauses following. An explicit answer-phase event collapses the
+pane, including while an answer-only fallback is preparing; readers can reopen
+it without subsequent answer tokens closing it again.
+
+Completed responses show model request elapsed time, generated tokens and
+tokens/second. Tokens and evaluation duration come from Ollama's terminal frames,
+including thinking and any answer-only recovery pass. Speed excludes loading and
+prompt evaluation, while elapsed time includes them; both exclude relay queueing.
+Metrics are validated, stored with the answer and restored on replay. Missing
+provider metrics display as unavailable, never estimates based on characters.
+
+Errors include fixed public codes for empty answers, output limits, incomplete
+streams, timeouts, control changes and runner disconnections. Relay and agent
+logs contain only job identifiers and these codes, never thinking, prompts, IPs
+or secrets. Older saved errors have no recoverable reason. Generation failures
+still refund the personal allowance when the page refreshes.
+
+After updating the agent, rerun the installer to replace the installed copy and
+restart the restricted service; deploying Pages alone cannot update the box.

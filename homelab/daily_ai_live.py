@@ -12,40 +12,78 @@ import urllib.request
 import websocket  # Debian/Ubuntu package: python3-websocket
 import daily_ai as ai
 
+THINKING_BUDGET = 2048
+ANSWER_BUDGET = 512
+
+
+class GenerationFailure(RuntimeError):
+    def __init__(self, code):
+        super().__init__(code)
+        self.code = code
+
 
 def stream_child(pipe, origin, model, prompt):
+    started = time.monotonic()
+    completions = []
+    saw_answer = False
+    answering = False
     try:
-        options = ai.inference_options()
-        options['num_predict'] = 2048
-        body = {'model': model, 'stream': True, 'think': True, 'keep_alive': '2m',
-                'messages': [{'role': 'system', 'content': ai.SYSTEM}, {'role': 'user', 'content': prompt}],
-                'options': options}
-        request = urllib.request.Request(origin + '/api/chat', data=json.dumps(body).encode(),
-                                         headers={'Content-Type': 'application/json'})
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), ai.NoRedirect())
-        total = 0
-        with opener.open(request, timeout=600) as response:
-            while True:
-                line = response.readline(8193)
-                if not line:
-                    raise RuntimeError('Ollama ended without completion')
-                total += len(line)
-                if len(line) > 8192 or total > 4 * 1024 * 1024:
-                    raise ValueError('Ollama stream exceeded its bounds')
-                data = json.loads(line)
-                if data.get('error'):
-                    raise RuntimeError('Ollama reported an error')
-                for field, channel in [('thinking', 'thinking'), ('content', 'answer')]:
-                    text = data.get('message', {}).get(field, '')
-                    if text:
-                        if not isinstance(text, str) or len(text) > 4096:
-                            raise ValueError('Invalid stream delta')
-                        pipe.send({'type': 'delta', 'channel': channel, 'text': text})
-                if data.get('done'):
-                    pipe.send({'type': 'done'})
-                    break
+        # The first request has a bounded thinking budget. If all of it is spent
+        # thinking, reserve a separate, bounded non-thinking request for the answer.
+        for attempt in range(2):
+            options = ai.inference_options()
+            options['num_predict'] = THINKING_BUDGET if attempt == 0 else ANSWER_BUDGET
+            body = {'model': model, 'stream': True, 'think': attempt == 0, 'keep_alive': '2m',
+                    'messages': [{'role': 'system', 'content': ai.SYSTEM}, {'role': 'user', 'content': prompt}],
+                    'options': options}
+            request = urllib.request.Request(origin + '/api/chat', data=json.dumps(body).encode(),
+                                             headers={'Content-Type': 'application/json'})
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), ai.NoRedirect())
+            total = 0
+            with opener.open(request, timeout=600) as response:
+                while True:
+                    line = response.readline(8193)
+                    if not line:
+                        raise GenerationFailure('stream_incomplete')
+                    total += len(line)
+                    if len(line) > 8192 or total > 4 * 1024 * 1024:
+                        raise GenerationFailure('output_limit')
+                    data = json.loads(line)
+                    if data.get('error'):
+                        raise GenerationFailure('model_unavailable')
+                    for field, channel in [('thinking', 'thinking'), ('content', 'answer')]:
+                        text = data.get('message', {}).get(field, '')
+                        if text:
+                            if not isinstance(text, str) or len(text) > 4096:
+                                raise GenerationFailure('output_limit')
+                            if channel == 'answer':
+                                if not answering:
+                                    pipe.send({'type': 'phase', 'phase': 'answering'})
+                                    answering = True
+                                saw_answer = saw_answer or bool(text.strip())
+                            pipe.send({'type': 'delta', 'channel': channel, 'text': text})
+                    if data.get('done'):
+                        completions.append(data)
+                        break
+            if saw_answer:
+                break
+            if attempt == 0:
+                pipe.send({'type': 'phase', 'phase': 'answering'})
+                answering = True
+        if not saw_answer:
+            raise GenerationFailure('empty_answer')
+        def summed(field):
+            values = [result.get(field) for result in completions]
+            return sum(values) if all(type(value) is int and value >= 0 for value in values) else None
+        pipe.send({'type': 'done', 'stats': {
+            'durationMs': round((time.monotonic() - started) * 1000),
+            'tokens': summed('eval_count'), 'evalDurationNs': summed('eval_duration'),
+            'promptTokens': summed('prompt_eval_count'), 'passes': len(completions),
+            'finishReason': completions[-1].get('done_reason') if completions[-1].get('done_reason') in {'stop', 'length'} else 'unknown',
+        }})
     except Exception as error:
-        pipe.send({'type': 'error', 'error': type(error).__name__})
+        code = error.code if isinstance(error, GenerationFailure) else 'model_unavailable' if isinstance(error, OSError) else 'inference_failed'
+        pipe.send({'type': 'error', 'code': code})
     finally:
         pipe.close()
 
@@ -72,7 +110,7 @@ def execute(ws, job, site, token, origin, model):
     try:
         lease = control()
         if not lease.get('enabled') or lease.get('day') != job['day'] or lease.get('revision') != job['revision']:
-            raise RuntimeError('Disabled or expired job')
+            raise GenerationFailure('controls_changed')
         context = ai.http_json(site + '/daily-ai-context.json')
         if context.get('version') != 1 or not isinstance(context.get('pages'), dict):
             raise ValueError('Invalid public context')
@@ -94,11 +132,11 @@ def execute(ws, job, site, token, origin, model):
         while not completed:
             now = time.monotonic()
             if now - started > 580:
-                raise RuntimeError('Inference deadline')
+                raise GenerationFailure('generation_timeout')
             if now - last_control > 3:
                 current = control()
                 if not current.get('enabled') or current.get('revision') != lease['revision'] or current.get('day') != job['day']:
-                    raise RuntimeError('Generation lease changed')
+                    raise GenerationFailure('controls_changed')
                 last_control = time.monotonic()
             if now - last_ping > 20:
                 ws.send('{"type":"ping"}')
@@ -108,17 +146,17 @@ def execute(ws, job, site, token, origin, model):
             try:
                 incoming = ws.recv()
                 if not incoming:
-                    raise RuntimeError('Relay disconnected')
+                    raise GenerationFailure('runner_disconnected')
                 command = json.loads(incoming)
                 if command.get('type') == 'cancel' and command.get('job') == job['job']:
-                    raise RuntimeError('Generation cancelled')
+                    raise GenerationFailure('generation_cancelled')
             except websocket.WebSocketTimeoutException:
                 pass
             while parent.poll():
                 event = parent.recv()
                 event['job'] = job['job']
                 if event['type'] == 'error':
-                    raise RuntimeError('Inference failed')
+                    raise GenerationFailure(event.get('code', 'inference_failed'))
                 if event['type'] == 'done':
                     event['sources'] = sources
                     completed = True
@@ -126,11 +164,12 @@ def execute(ws, job, site, token, origin, model):
                 if completed:
                     break
             if not process.is_alive() and not completed and not parent.poll():
-                raise RuntimeError('Inference process stopped')
+                raise GenerationFailure('inference_failed')
     except Exception as error:
-        print('Live generation stopped: ' + type(error).__name__, file=sys.stderr, flush=True)
+        code = error.code if isinstance(error, GenerationFailure) else 'runner_disconnected' if isinstance(error, websocket.WebSocketException) else 'inference_failed'
+        print(json.dumps({'event': 'live_generation_failed', 'job': job['job'], 'code': code}), file=sys.stderr, flush=True)
         try:
-            ws.send(json.dumps({'type': 'error', 'job': job['job']}))
+            ws.send(json.dumps({'type': 'error', 'job': job['job'], 'code': code}))
         except Exception:
             pass
     finally:
@@ -171,7 +210,7 @@ def run():
                 try:
                     raw = ws.recv()
                     if not raw:
-                        raise RuntimeError('Relay disconnected')
+                        raise GenerationFailure('runner_disconnected')
                     if len(raw) > 4096:
                         raise ValueError('Oversized relay command')
                     job = json.loads(raw)

@@ -30,5 +30,21 @@
   "reconnect": "Reconnect to the answer",
   "globalLimit": "The shared limit of 50 generations has been reached for today. New generations resume at midnight Beijing time.",
   "remaining": "{count} of 5 generations remaining today.",
-  "askAgain": "Ask again"
+  "askAgain": "Ask again",
+  "statsTitle": "Generation statistics",
+  "duration": "Generation time",
+  "speed": "Speed",
+  "outputTokens": "Generated tokens",
+  "notAvailable": "N/A",
+  "durationNote": "Time spent on the model requests, including loading and prompt processing. Queueing is excluded.",
+  "speedNote": "Model generation speed, including thinking and answer tokens. Loading and prompt processing are excluded.",
+  "tokensNote": "Actual tokens reported by Ollama, including thinking and any answer-only pass.",
+  "outputTruncated": "The answer reached its output limit and may be incomplete.",
+  "errorEmptyAnswer": "The model finished without an answer. Your allowance is refunded; please try again.",
+  "errorStreamIncomplete": "The model stream ended unexpectedly. Your allowance is refunded; please try again.",
+  "errorOutputLimit": "The model exceeded its output limit. Your allowance is refunded; please try again.",
+  "errorModelUnavailable": "The local model became unavailable. Your allowance is refunded; please try again later.",
+  "errorGenerationTimeout": "Generation exceeded its time limit. Your allowance is refunded; please try again.",
+  "errorRunnerDisconnected": "The homelab connection was interrupted. Your allowance is refunded; please try again.",
+  "errorCancelled": "Generation was cancelled by the site controls. Your allowance is refunded."
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { DAILY_AI_QUESTIONS } from '../../lib/daily-ai-questions.js'
 import { useLocale } from '../utils/i18n.js'
 import { consumeDailyAiStream } from '../utils/dailyAiStream.js'
@@ -7,26 +7,50 @@ import { consumeDailyAiStream } from '../utils/dailyAiStream.js'
 const { t, isZh, localePath } = useLocale('daily-ai')
 const state = ref(null), error = ref(''), busy = ref(false), loading = ref(true)
 const thinking = ref(''), answer = ref(''), sources = ref([]), phase = ref(''), model = ref('qwen3.8:27b')
+const stats = ref(null), thinkingOpen = ref(true), thinkingPane = ref(null), followThinking = ref(true), streamCode = ref(null)
 const selected = computed(() => DAILY_AI_QUESTIONS.find(question => question.id === state.value?.selected))
 let controller = null, refreshTimer = null, disposed = false
 function failure(response, data) {
   return data?.banned ? t('banned') : response.status === 429 ? t(data?.code === 'traffic_limited' ? 'trafficLimit' : data?.code === 'global_daily_limit' ? 'globalLimit' : 'limit') : t('unavailable')
 }
+const errorKeys = { empty_answer: 'errorEmptyAnswer', stream_incomplete: 'errorStreamIncomplete',
+  output_limit: 'errorOutputLimit', model_unavailable: 'errorModelUnavailable', generation_timeout: 'errorGenerationTimeout',
+  runner_disconnected: 'errorRunnerDisconnected', runner_reconnected: 'errorRunnerDisconnected',
+  generation_cancelled: 'errorCancelled', controls_changed: 'errorCancelled' }
+function generationError(code) { return t(errorKeys[code] || 'generationFailed') }
+function showAnswerPhase() {
+  if (phase.value !== 'answering') thinkingOpen.value = false
+  phase.value = 'answering'
+}
+function trackThinkingScroll() {
+  const pane = thinkingPane.value
+  if (pane) followThinking.value = pane.scrollHeight - pane.scrollTop - pane.clientHeight < 32
+}
+watch([thinking, thinkingOpen], async () => {
+  await nextTick()
+  if (busy.value && thinkingOpen.value && followThinking.value && thinkingPane.value) {
+    thinkingPane.value.scrollTop = thinkingPane.value.scrollHeight
+  }
+}, { flush: 'post' })
 function receive(event) {
   if (event.type === 'snapshot') {
     state.value = { ...state.value, selected: event.id }
     thinking.value = event.thinking || ''; answer.value = event.text || ''
-    sources.value = event.sources || []; phase.value = event.status; model.value = event.model
+    sources.value = event.sources || []; phase.value = event.status === 'generating' ? event.phase || 'thinking' : event.status; model.value = event.model
+    stats.value = event.stats || null; streamCode.value = event.code || null
+    thinkingOpen.value = !answer.value && !['answering', 'done'].includes(phase.value)
   } else if (event.type === 'delta') {
     if (event.channel === 'thinking') thinking.value += event.text
-    if (event.channel === 'answer') answer.value += event.text
-  } else if (event.type === 'sources') sources.value = event.sources
-  else if (event.type === 'status') phase.value = event.status
+    if (event.channel === 'answer') { showAnswerPhase(); answer.value += event.text }
+  } else if (event.type === 'phase' && event.phase === 'answering') showAnswerPhase()
+  else if (event.type === 'stats') stats.value = event.stats
+  else if (event.type === 'sources') sources.value = event.sources
+  else if (event.type === 'status') { phase.value = event.status; streamCode.value = event.code || null }
 }
 async function generate(id = null) {
   if (busy.value || disposed) return
   busy.value = true; error.value = ''; phase.value = 'connecting'
-  if (id) { thinking.value = ''; answer.value = ''; sources.value = [] }
+  if (id) { thinking.value = ''; answer.value = ''; sources.value = []; stats.value = null; streamCode.value = null; thinkingOpen.value = true; followThinking.value = true }
   controller?.abort(); controller = new AbortController()
   const timeout = setTimeout(() => controller?.abort(), 11 * 60000)
   try {
@@ -44,7 +68,7 @@ async function generate(id = null) {
     if (response.headers.get('content-type')?.startsWith('text/event-stream')) {
       await consumeDailyAiStream(response, receive)
       if (!['done', 'error', 'cancelled'].includes(phase.value)) throw new Error('Stream interrupted')
-      if (phase.value !== 'done') error.value = t('generationFailed')
+      if (phase.value !== 'done') error.value = generationError(streamCode.value)
     } else { state.value = await response.json(); phase.value = '' }
   } catch (failure) {
     if (!disposed) { phase.value = 'error'; error.value = failure.name === 'AbortError' ? t('timeout') : t('generationFailed') }
@@ -104,14 +128,20 @@ onBeforeUnmount(() => { disposed = true; clearInterval(refreshTimer); controller
     </ol>
     <article v-if="state?.selected || thinking || answer || busy && !loading" data-legacy-hide="true" class="border-l-2 border-accent pl-5">
       <h2 v-if="selected" class="text-lg font-semibold mb-4">{{ isZh ? selected.zh : selected.en }}</h2>
+      <dl v-if="phase === 'done' && stats" class="grid grid-cols-3 gap-3 mb-5" :aria-label="t('statsTitle')">
+        <div class="border border-fg/10 rounded px-3 py-3" :title="t('durationNote')"><dt class="text-xs text-muted mb-1">{{ t('duration') }}</dt><dd class="font-mono text-sm">{{ (stats.durationMs / 1000).toFixed(1) }} s</dd></div>
+        <div class="border border-fg/10 rounded px-3 py-3" :title="t('speedNote')"><dt class="text-xs text-muted mb-1">{{ t('speed') }}</dt><dd class="font-mono text-sm">{{ stats.tokensPerSecond == null ? t('notAvailable') : stats.tokensPerSecond.toFixed(1) + ' tok/s' }}</dd></div>
+        <div class="border border-fg/10 rounded px-3 py-3" :title="t('tokensNote')"><dt class="text-xs text-muted mb-1">{{ t('outputTokens') }}</dt><dd class="font-mono text-sm">{{ stats.tokens ?? t('notAvailable') }}</dd></div>
+      </dl>
+      <p v-if="phase === 'done' && stats?.finishReason === 'length'" class="text-sm text-muted mb-4">{{ t('outputTruncated') }}</p>
       <p v-if="phase" role="status" class="text-xs font-mono text-muted mb-5 flex items-center gap-2">
         <span v-if="busy" aria-hidden="true" class="size-1.5 rounded-full bg-accent motion-safe:animate-pulse"></span>
-        {{ t(phase === 'done' ? 'complete' : phase === 'queued' ? 'queued' : phase === 'generating' ? (answer ? 'answering' : 'thinking') : phase === 'connecting' ? 'connecting' : 'stopped') }}
+        {{ t(phase === 'done' ? 'complete' : phase === 'queued' ? 'queued' : phase === 'answering' ? 'answering' : ['generating', 'thinking'].includes(phase) ? 'thinking' : phase === 'connecting' ? 'connecting' : 'stopped') }}
       </p>
-      <details v-if="thinking" :open="busy && !answer" class="mb-6 border border-fg/10 rounded px-4 py-3">
+      <details v-if="thinking" :open="thinkingOpen" @toggle="thinkingOpen = $event.target.open" class="mb-6 border border-fg/10 rounded px-4 py-3">
         <summary class="cursor-pointer text-sm text-muted select-none">{{ t('modelThinking') }}</summary>
         <p class="text-xs text-muted mt-3 mb-3">{{ t('thinkingNotice') }}</p>
-        <p lang="en" class="text-sm text-muted leading-relaxed whitespace-pre-wrap break-words max-h-80 overflow-y-auto">{{ thinking }}</p>
+        <p ref="thinkingPane" lang="en" tabindex="0" @scroll="trackThinkingScroll" class="text-sm text-muted leading-relaxed whitespace-pre-wrap break-words max-h-80 overflow-y-auto">{{ thinking }}</p>
       </details>
       <!-- Both output channels are escaped text, never HTML or executable Markdown. -->
       <div :aria-busy="busy" class="text-muted leading-relaxed whitespace-pre-wrap break-words"><p lang="en">{{ answer }}<span v-if="busy && answer" aria-hidden="true" class="inline-block w-1.5 h-4 bg-accent align-middle ml-1 motion-safe:animate-pulse"></span></p></div>
