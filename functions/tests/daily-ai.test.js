@@ -49,7 +49,7 @@ async function fixture(t, { enabled = true, published = true } = {}) {
   const directory = await mkdtemp(path.join(tmpdir(), 'daily-ai-test-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const db = new SQLiteD1(path.join(directory, 'state.sqlite'))
-  db.call({ schema: await readFile(new URL('../../homelab/migrations/0003_daily_ai.sql', import.meta.url), 'utf8') + await readFile(new URL('../../homelab/migrations/0004_daily_ai_live.sql', import.meta.url), 'utf8') })
+  db.call({ schema: await readFile(new URL('../../homelab/migrations/0003_daily_ai.sql', import.meta.url), 'utf8') + await readFile(new URL('../../homelab/migrations/0004_daily_ai_live.sql', import.meta.url), 'utf8') + await readFile(new URL('../../homelab/migrations/0005_daily_ai_five_requests.sql', import.meta.url), 'utf8') })
   if (enabled) await db.prepare('UPDATE daily_ai_control SET enabled = 1 WHERE singleton = 1').run()
   const batch = { day: dailyDay(), revision: 0, model: 'qwen-local:27b',
     answers: DAILY_AI_IDS.map(id => ({ id, text: `Answer for ${id}.`, sources: ['/ai'] })) }
@@ -81,21 +81,23 @@ async function fixture(t, { enabled = true, published = true } = {}) {
   return { db, env, make, read, select, publish, batch, jobs, resets, offline() { online = false } }
 }
 
-test('five fixed choices; one atomic selection; status only reveals the selected answer', async t => {
-  const { read, select } = await fixture(t)
+test('five concurrent generations per IP are atomic, repeats count and replay is free', async t => {
+  const { read, select, jobs } = await fixture(t)
   const initial = await (await read()).json()
-  assert.equal(initial.ready, true); assert.equal(initial.answer, null)
-  assert(!JSON.stringify(initial).includes('Answer for'))
-  const responses = await Promise.all([select({ id: 'homelab' }), select({ id: 'site' })])
-  assert.deepEqual(responses.map(response => response.status).sort(), [200, 429])
+  assert.equal(initial.remaining, 5)
+  assert.equal(initial.answer, null)
+  const responses = await Promise.all(Array.from({ length: 8 }, () => select({ id: 'site' })))
+  assert.equal(responses.filter(response => response.status === 200).length, 5)
+  assert.equal(responses.filter(response => response.status === 429).length, 3)
+  assert.equal(jobs.size, 5, 'Only five actual generations were admitted, including repeat questions')
   const saved = await (await read()).json()
-  assert(DAILY_AI_IDS.includes(saved.selected))
-  assert.equal(saved.answer, null)
-  const streamed = await read({ headers: { accept: 'text/event-stream' } })
-  assert.match(streamed.headers.get('content-type'), /text\/event-stream/)
-  assert.match(await streamed.text(), /snapshot/)
-  assert.equal((await select({ id: 'archive' })).status, 429)
-  assert.equal((await read()).status, 200, 'A valid exhausted quota does not cause a ban')
+  assert.equal(saved.remaining, 0)
+  assert.equal(saved.selected, 'site')
+  const replay = await read({ headers: { accept: 'text/event-stream' } })
+  assert.match(replay.headers.get('content-type'), /text\/event-stream/)
+  assert.match(await replay.text(), /snapshot/)
+  assert.equal(jobs.size, 5, 'Reopening does not start new work')
+  assert.equal((await read()).status, 200, 'Exhausting quota does not ban the IP')
 })
 
 test('offline runner does not consume quota; disabled feature fails closed', async t => {
@@ -148,7 +150,7 @@ test('foreign websites cannot cause a visitor IP ban; X-Forwarded-For cannot eva
 
 test('IPv6 alternate representations share bans and quotas', async t => {
   const { read, select } = await fixture(t)
-  assert.equal((await select({ id: 'site' }, { 'cf-connecting-ip': '2001:db8::1' })).status, 200)
+  for (let i = 0; i < 5; i++) assert.equal((await select({ id: 'site' }, { 'cf-connecting-ip': i % 2 ? '2001:0db8:0:0:0:0:0:1' : '2001:db8::1' })).status, 200)
   assert.equal((await select({ id: 'archive' }, { 'cf-connecting-ip': '2001:0db8:0:0:0:0:0:1' })).status, 429)
   await select({ text: 'bad' }, { 'cf-connecting-ip': '2001:db8::1' })
   assert.equal((await read({ headers: { 'cf-connecting-ip': '2001:0db8:0:0:0:0:0:1' } })).status, 403)
@@ -180,7 +182,7 @@ test('admin authentication, kill switch revision, unban and pagination use the r
   assert.equal((await f.read()).status, 403)
   assert.equal((await manage({ unban: '192.0.2.7' })).status, 200)
   assert.equal((await f.read()).status, 200)
-  assert.equal((await f.select({ id: 'archive' })).status, 429, 'Unban does not reset allowance')
+  assert.equal((await (await f.read()).json()).remaining, 4, 'Unban does not reset allowance')
   assert.equal((await manage({ enabled: false })).status, 200)
   assert.equal((await f.read()).status, 503)
   assert.equal((await manage({ enabled: true })).status, 200)
@@ -243,4 +245,22 @@ test('failed live jobs refund only their own daily selection', async t => {
   for (const job of f.jobs.values()) job.status = 'error'
   assert.equal((await (await f.read()).json()).selected, null)
   assert.equal((await f.select({ id: 'archive' })).status, 200)
+})
+
+
+test('shared budget exhaustion refunds a personal slot even when the budget fills during admission', async t => {
+  for (const rejectAtStart of [false, true]) {
+    const f = await fixture(t)
+    const original = f.env.DAILY_AI_TRAFFIC.fetch
+    f.env.DAILY_AI_TRAFFIC.fetch = async (url, options) => {
+      const action = new URL(url).pathname
+      if (action === '/status') return Response.json({ online: true, pending: 0, remaining: rejectAtStart ? 1 : 0 })
+      if (action === '/start') return Response.json({ code: 'global_daily_limit' }, { status: 429 })
+      return original(url, options)
+    }
+    const response = await f.select({ id: 'site' })
+    assert.equal(response.status, 429)
+    assert.equal((await response.json()).code, 'global_daily_limit')
+    assert.equal((await f.db.prepare('SELECT COUNT(*) AS n FROM daily_ai_live_reads').first()).n, 0)
+  }
 })

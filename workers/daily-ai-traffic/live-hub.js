@@ -1,3 +1,4 @@
+import { dailyDay } from '../../lib/daily-ai.js'
 import { DurableObject } from 'cloudflare:workers'
 import { DAILY_AI_IDS } from '../../lib/daily-ai-questions.js'
 import { readBoundedJson } from '../../lib/nowPlaying.js'
@@ -79,7 +80,11 @@ export class LiveHub extends DurableObject {
       await this.dispatch()
       return new Response(null, { status: 101, webSocket: client })
     }
-    if (path === '/status') return json({ online: Boolean(this.agent()), pending: this.rows("SELECT COUNT(*) AS n FROM jobs WHERE status IN ('queued','generating')")[0].n })
+    if (path === '/status') {
+      const control = this.rows('SELECT day, started FROM control WHERE id = 1')[0]
+      return json({ online: Boolean(this.agent()), pending: this.rows("SELECT COUNT(*) AS n FROM jobs WHERE status IN ('queued','generating')")[0].n,
+        dailyLimit: 50, remaining: Math.max(0, 50 - (control.day === dailyDay() ? control.started : 0)) })
+    }
     if (path === '/limit') {
       const epoch = this.rows('SELECT epoch FROM control WHERE id = 1')[0].epoch
       const ip = request.headers.get('cf-connecting-ip')
@@ -101,13 +106,13 @@ export class LiveHub extends DurableObject {
     const { job } = parsed.value
     if (path === '/start') {
       const { id, day, revision } = parsed.value
-      if (!DAILY_AI_IDS.includes(id) || !/^\d{4}-\d{2}-\d{2}$/.test(day) || !Number.isSafeInteger(revision) || revision < 0) return json({ error: 'Invalid choice' }, 400)
+      if (!DAILY_AI_IDS.includes(id) || day !== dailyDay() || !Number.isSafeInteger(revision) || revision < 0) return json({ error: 'Invalid choice' }, 400)
       if (this.snapshot(job)) return json({ ok: true })
       if (!this.agent()) return json({ error: 'Homelab offline' }, 503)
       const count = this.rows("SELECT COUNT(*) AS n FROM jobs WHERE status IN ('queued','generating')")[0].n
       if (count >= MAX_QUEUE) return json({ error: 'Queue full' }, 503)
       const control = this.rows('SELECT day, started FROM control WHERE id = 1')[0]
-      if (control.day === day && control.started >= 30) return json({ error: 'Daily compute budget reached' }, 503)
+      if (control.day === day && control.started >= 50) return json({ error: 'Daily compute budget reached', code: 'global_daily_limit' }, 429)
       this.sql.exec('UPDATE control SET day = ?, started = ? WHERE id = 1', day, control.day === day ? control.started + 1 : 1)
       this.sql.exec("INSERT INTO jobs (job, question, day, status, created, updated, revision) VALUES (?, ?, ?, 'queued', ?, ?, ?)", job, id, day, Date.now(), Date.now(), revision)
       await this.dispatch()

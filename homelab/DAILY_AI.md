@@ -21,6 +21,7 @@ The existing Pages project uses `HOMELAB_DB` and the separate secret
 ```bash
 npx wrangler d1 execute leodeng-homelab --remote --file homelab/migrations/0003_daily_ai.sql
 npx wrangler d1 execute leodeng-homelab --remote --file homelab/migrations/0004_daily_ai_live.sql
+npx wrangler d1 execute leodeng-homelab --remote --file homelab/migrations/0005_daily_ai_five_requests.sql
 npx wrangler deploy --config workers/daily-ai-traffic/wrangler.jsonc
 ```
 
@@ -34,6 +35,8 @@ The authenticated `/api/internal/daily-ai-live` WebSocket accepts only the
 homelab's bearer token. No token in a query string and no browser authentication
 can connect a runner. Browsers use `/api/daily-ai` exclusively. The agent also
 uses the authenticated `/api/internal/daily-ai` GET for kill-switch leases.
+The five-request migration preserves existing selections as the first used slot.
+Apply it once to an existing one-request schema; fresh databases use schema.sql.
 The earlier batch table is retained for backwards compatibility, but live
 answers do not depend on it.
 
@@ -62,7 +65,7 @@ The installed model is `qwen3.8:27b`, Q4_K_M. `DAILY_AI_GPU_LAYERS=40` limits
 offloading to preserve space on the 24 GB GPU; this is not a hard GPU partition.
 Inference uses an 8K context, thinking enabled and a combined 2048-token output
 budget. There is one generation at a time, at most three outstanding jobs, a
-10-minute job deadline and a 30-start daily compute budget. The model unloads
+10-minute job deadline and a shared 50-start daily compute budget. The model unloads
 after every request, including failures and cancellation.
 
 The agent reads only the generated public `/daily-ai-context.json` and bounded
@@ -92,8 +95,8 @@ ollama stop qwen3.8:27b
   budgets are 10 requests per minute per IP and 300 per minute overall, per
   location. Excess traffic returns 429 and `Retry-After: 60`, without a permanent
   ban. Missing or failed traffic protection returns 503 before D1.
-- The daily allowance uses an atomic D1 unique key. Each IP can select one
-  question per Beijing day; shared networks share an allowance. An offline or
+- The daily allowance uses five atomic D1 slots per IP and day. Each IP can start five
+  generations per Beijing day, including repeats; shared networks share an allowance. An offline or
   full queue does not consume it. Failed/cancelled jobs can be retried. New IPs
   can bypass IP-only limits; the runner's global queue and compute budget still
   apply. This is not a strict worldwide HTTP spending cap.

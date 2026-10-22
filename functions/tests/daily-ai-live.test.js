@@ -1,3 +1,4 @@
+import { dailyDay } from '../../lib/daily-ai.js'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
@@ -9,7 +10,7 @@ const { Miniflare } = miniflare
 const compatibleOptions = options => miniflare.convertV4MiniflareOptions?.(options) || options
 import { consumeDailyAiStream } from '../../src/utils/dailyAiStream.js'
 
-const job = (id = 'site') => ({ job: crypto.randomUUID(), id, day: '2026-10-22', revision: 1 })
+const job = (id = 'site') => ({ job: crypto.randomUUID(), id, day: dailyDay(), revision: 1 })
 
 test('real Durable Object streams model deltas, bounds the queue, replays results and resets all counters', async t => {
   const directory = await mkdtemp(path.join(tmpdir(), 'daily-ai-live-'))
@@ -74,6 +75,25 @@ test('real Durable Object streams model deltas, bounds the queue, replays result
   assert.equal((await limit()).status, 204, 'Admin reset changes the traffic counter namespace immediately')
   assert.equal((await (await call('job', { job: second.job })).json()).status, 'cancelled')
   assert.equal((await (await call('status')).json()).pending, 0)
+  for (let i = 0; i < 50; i++) {
+    const next = job()
+    const eventsBefore = messages.length
+    assert.equal((await call('start', next)).status, 200)
+    await waitFor(() => messages.slice(eventsBefore).some(event => event.type === 'generate' && event.job === next.job))
+    agent.send(JSON.stringify({ type: 'delta', job: next.job, channel: 'answer', text: 'Answer' }))
+    agent.send(JSON.stringify({ type: 'done', job: next.job, sources: ['/ai'] }))
+    await waitFor(() => messages.length >= eventsBefore + 1)
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if ((await (await call('job', { job: next.job })).json()).status === 'done') break
+      await new Promise(resolve => setTimeout(resolve, 10))
+    }
+  }
+  const exhausted = await call('start', job())
+  assert.equal(exhausted.status, 429)
+  assert.equal((await exhausted.json()).code, 'global_daily_limit')
+  assert.equal((await (await call('status')).json()).remaining, 0)
+  await call('reset', {})
+  assert.equal((await (await call('status')).json()).remaining, 50)
   // Late tokens from cancelled inference cannot revive an answer.
   agent.send(JSON.stringify({ type: 'delta', job: second.job, channel: 'answer', text: 'late token' }))
   assert.equal((await (await call('job', { job: second.job })).json()).text, '')

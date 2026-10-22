@@ -121,8 +121,9 @@ CREATE TABLE IF NOT EXISTS daily_ai_reads (
 CREATE TABLE IF NOT EXISTS daily_ai_live_reads (
   day TEXT NOT NULL,
   ip TEXT NOT NULL,
+  request_no INTEGER NOT NULL CHECK (request_no BETWEEN 1 AND 5),
   question_id TEXT NOT NULL,
   job_id TEXT NOT NULL,
   created_at INTEGER NOT NULL,
-  PRIMARY KEY (day, ip)
+  PRIMARY KEY (day, ip, request_no)
 ) WITHOUT ROWID;

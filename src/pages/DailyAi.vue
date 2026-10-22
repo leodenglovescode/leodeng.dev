@@ -10,7 +10,7 @@ const thinking = ref(''), answer = ref(''), sources = ref([]), phase = ref(''), 
 const selected = computed(() => DAILY_AI_QUESTIONS.find(question => question.id === state.value?.selected))
 let controller = null, refreshTimer = null, disposed = false
 function failure(response, data) {
-  return data?.banned ? t('banned') : response.status === 429 ? t(data?.code === 'traffic_limited' ? 'trafficLimit' : 'limit') : t('unavailable')
+  return data?.banned ? t('banned') : response.status === 429 ? t(data?.code === 'traffic_limited' ? 'trafficLimit' : data?.code === 'global_daily_limit' ? 'globalLimit' : 'limit') : t('unavailable')
 }
 function receive(event) {
   if (event.type === 'snapshot') {
@@ -40,6 +40,7 @@ async function generate(id = null) {
       error.value = failure(response, await response.json().catch(() => null))
       phase.value = 'error'; return
     }
+    if (id) state.value = { ...state.value, remaining: Math.max(0, (state.value?.remaining ?? 5) - 1) }
     if (response.headers.get('content-type')?.startsWith('text/event-stream')) {
       await consumeDailyAiStream(response, receive)
       if (!['done', 'error', 'cancelled'].includes(phase.value)) throw new Error('Stream interrupted')
@@ -88,15 +89,17 @@ onBeforeUnmount(() => { disposed = true; clearInterval(refreshTimer); controller
     <div data-legacy-hide="true" aria-live="polite" class="mb-6">
       <p v-if="loading" class="text-sm font-mono text-muted">{{ t('loading') }}</p>
       <p v-else-if="error" role="status" class="text-sm text-muted">{{ error }}</p>
+      <p v-else-if="state?.globalRemaining === 0" class="text-sm text-muted">{{ t('globalLimit') }}</p>
       <p v-else-if="!state?.ready" class="text-sm text-muted">{{ t('pending') }}</p>
       <p v-else class="text-xs font-mono text-muted">{{ t('batch', { day: state.day, model }) }}</p>
+      <p v-if="state" class="text-xs text-muted mt-3">{{ t('remaining', { count: state.remaining }) }}</p>
     </div>
     <ol class="divide-y divide-fg/10 border-y border-fg/10 mb-10">
       <li v-for="(question, index) in DAILY_AI_QUESTIONS" :key="question.id" class="flex items-center justify-between gap-4 py-5">
         <h2 class="text-base font-medium"><span class="text-muted font-mono mr-3">0{{ index + 1 }}</span>{{ isZh ? question.zh : question.en }}</h2>
-        <button type="button" data-legacy-hide="true" :disabled="!state?.ready || busy || Boolean(state?.selected)"
+        <button type="button" data-legacy-hide="true" :disabled="!state?.ready || busy || state.remaining === 0"
           class="shrink-0 text-sm text-accent border border-accent/30 rounded px-3 py-2 hover:bg-accent/10 disabled:opacity-40 disabled:cursor-not-allowed"
-          @click="generate(question.id)">{{ state?.selected === question.id ? t('selected') : t('choose') }}</button>
+          @click="generate(question.id)">{{ state?.selected === question.id ? t('askAgain') : t('choose') }}</button>
       </li>
     </ol>
     <article v-if="state?.selected || thinking || answer || busy && !loading" data-legacy-hide="true" class="border-l-2 border-accent pl-5">
