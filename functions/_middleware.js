@@ -2,7 +2,7 @@ import { LEGACY_ORIGIN, LEGACY_PREFIX, MODERN_ORIGIN, cleanLegacyPath, isDocumen
 import { onRequest as galleryImage } from './gallery-media/[[path]].js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
 
-const PUBLIC_APIS = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype'])
+const PUBLIC_APIS = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music'])
 
 function redirect(location) {
   return new Response(null, { status: 302, headers: { Location: location, 'Cache-Control': 'no-store', Vary: 'User-Agent, Cookie' } })

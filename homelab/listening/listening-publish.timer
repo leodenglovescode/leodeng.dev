@@ -1,0 +1,8 @@
+[Unit]
+Description=Retry daily listening summary publication
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=60
+[Install]
+WantedBy=timers.target

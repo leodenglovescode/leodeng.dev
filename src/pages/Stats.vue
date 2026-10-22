@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import MusicListeningStats from '../components/MusicListeningStats.vue'
 import GitHubActivity from '../components/GitHubActivity.vue'
 import { useLocale } from '../utils/i18n.js'
 import { statsJson } from '../../lib/monkeyStats.js'
@@ -49,7 +50,7 @@ onMounted(() => {
       <h1 class="text-2xl sm:text-3xl font-semibold">{{ t('title') }}</h1>
       <p class="mt-3 text-sm text-muted leading-relaxed">{{ t('intro') }}</p>
       <nav class="flex flex-wrap gap-4 mt-5 text-sm text-accent" :aria-label="t('sections')">
-        <a href="#coding" class="underline">GitHub</a><a href="#typing" class="underline">Monkeytype</a>
+        <a href="#coding" class="underline">GitHub</a><a href="#typing" class="underline">Monkeytype</a><a href="#music" class="underline">{{ isZh ? '音乐' : 'Music' }}</a>
         <RouterLink :to="localePath('/gallery/planespotting')" class="underline">{{ t('photos') }} ↗</RouterLink>
       </nav>
     </header>
@@ -135,6 +136,7 @@ onMounted(() => {
         </template>
       </div>
     </section>
+    <MusicListeningStats />
   </article>
 </template>
 

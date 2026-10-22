@@ -52,8 +52,13 @@ src/posts/.obsidian/
 token-agent/bin/
 token-agent/.cache/
 
-# Local macOS Apple Music publisher, including its binary and setup material.
-now-playing-agent/
+# macOS publisher source is tracked; generated binaries and build caches stay local.
+now-playing-agent/bin/
+now-playing-agent/.cache/
 
 # Legacy uploads from the former local-only media mode. Never commit.
 .local-admin/
+
+# Python bytecode and local listening databases
+__pycache__/
+*.pyc

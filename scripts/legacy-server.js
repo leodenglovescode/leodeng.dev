@@ -13,7 +13,7 @@ import { legacyMediaKey } from '../lib/legacy-media.js'
 import { lookupLyrics } from '../lib/lyricsProxy.js'
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url))
-const publicApis = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype'])
+const publicApis = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music'])
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8' }
 
 export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_legacy'), fetchUpstream = fetch, cssFile = path.join(projectRoot, 'legacy/legacy.css') } = {}) {

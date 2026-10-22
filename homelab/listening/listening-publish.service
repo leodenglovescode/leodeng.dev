@@ -1,0 +1,15 @@
+[Unit]
+Description=Publish daily listening summary
+After=network-online.target
+[Service]
+Type=oneshot
+User=leodeng
+Group=leodeng
+EnvironmentFile=/etc/homelab-status.env
+StateDirectory=listening-history
+ExecStart=/usr/bin/python3 /usr/local/bin/listening-history.py publish
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes

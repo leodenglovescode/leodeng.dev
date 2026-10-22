@@ -1,0 +1,19 @@
+[Unit]
+Description=Private listening history receiver
+After=network-online.target tailscaled.service
+Wants=network-online.target
+[Service]
+User=leodeng
+Group=leodeng
+EnvironmentFile=/etc/listening-history.env
+StateDirectory=listening-history
+ExecStart=/usr/bin/python3 /usr/local/bin/listening-history.py serve
+Restart=on-failure
+RestartSec=15
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+[Install]
+WantedBy=multi-user.target
