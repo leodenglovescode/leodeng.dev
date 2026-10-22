@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS now_playing_rate (
   last_accepted_at INTEGER NOT NULL
 ) WITHOUT ROWID;
 
--- Daily AI: fixed daily answers, controls, quota and permanent endpoint bans.
+-- Cloud AI chat: controls, five-message IP quota, bans and admin whitelist.
 -- Apply to the existing HOMELAB_DB. Starts disabled until explicitly enabled.
 CREATE TABLE IF NOT EXISTS daily_ai_control (
   singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
@@ -97,33 +97,21 @@ CREATE TABLE IF NOT EXISTS daily_ai_control (
 );
 INSERT OR IGNORE INTO daily_ai_control (singleton) VALUES (1);
 
--- Only the latest complete, validated batch is stored. No partial publication.
-CREATE TABLE IF NOT EXISTS daily_ai_batch (
-  singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
-  day TEXT NOT NULL,
-  model TEXT NOT NULL,
-  answers TEXT NOT NULL,
-  received_at INTEGER NOT NULL
-);
 CREATE TABLE IF NOT EXISTS daily_ai_bans (
   ip TEXT PRIMARY KEY,
   reason TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS daily_ai_bans_created ON daily_ai_bans (created_at DESC, ip);
-CREATE TABLE IF NOT EXISTS daily_ai_reads (
+CREATE TABLE IF NOT EXISTS daily_ai_chat_usage (
   day TEXT NOT NULL,
   ip TEXT NOT NULL,
-  question_id TEXT NOT NULL,
+  slot INTEGER NOT NULL CHECK (slot BETWEEN 1 AND 5),
+  job TEXT NOT NULL,
   created_at INTEGER NOT NULL,
-  PRIMARY KEY (day, ip)
+  PRIMARY KEY (day, ip, slot)
 ) WITHOUT ROWID;
-CREATE TABLE IF NOT EXISTS daily_ai_live_reads (
-  day TEXT NOT NULL,
-  ip TEXT NOT NULL,
-  request_no INTEGER NOT NULL CHECK (request_no BETWEEN 1 AND 5),
-  question_id TEXT NOT NULL,
-  job_id TEXT NOT NULL,
-  created_at INTEGER NOT NULL,
-  PRIMARY KEY (day, ip, request_no)
-) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS daily_ai_whitelist (
+  ip TEXT PRIMARY KEY,
+  created_at INTEGER NOT NULL
+);

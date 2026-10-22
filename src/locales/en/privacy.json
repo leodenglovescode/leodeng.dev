@@ -53,10 +53,11 @@
     },
     {
       "id": "daily-ai",
-      "title": "Daily AI and abuse controls",
+      "title": "AI chat and abuse controls",
       "paragraphs": [
-        "Daily AI offers five fixed questions, answered live by a local model on my homelab. Visitors cannot submit text. Only the fixed question ID, a random job ID and the day reach the homelab relay; IP addresses and user agents do not. The model receives a fixed prompt and public site content. Its thinking output and answer are streamed as generated and may be inaccurate.",
-        "The AI endpoint stores your IP address and chosen question to enforce five generations per Beijing calendar day. The shared limit is 50 generation starts per day, also resetting at midnight Beijing time. Reopening the latest answer does not use a generation. Selection records are pruned after seven days when a new question is accepted. Generated answers and model thinking are retained on Cloudflare for about seven days so the same answer can be reopened; cleanup runs daily. Failed or cancelled generations can be retried. The admin can reset allowances and bans for testing. Malformed AI requests and curl/Python user agents create permanent AI-endpoint bans. A ban stores the IP address, a short reason and a timestamp until I remove it through the admin page. These bans do not block the rest of the website."
+        "AI chat sends your message, up to four recent completed exchanges and selected public site content to DeepSeek. Do not submit personal or sensitive information. The model has no tools, shell access or connection to my homelab. Its displayed thinking and answers are generated text and may be inaccurate.",
+        "A random HttpOnly conversation cookie separates browser conversations. Cloudflare stores up to 20 exchanges per conversation, including thinking and response statistics, until the next Beijing midnight. Each IP can send five messages per Beijing day, with 50 public messages sitewide. Accepted attempts may count even if generation fails. Admin-whitelisted IPs bypass daily caps but still have traffic, concurrency and response-size limits.",
+        "Cloudflare supplies the client IP for quota and abuse checks. Quota records older than seven days are pruned on subsequent chat submissions. Malformed requests and blocked curl or Python user agents can create a permanent IP ban, with the reason and timestamp, until an administrator removes it. Administrators can manage bans and whitelisted IPs, reset limits or disable chat. IP addresses and user agents are not sent to DeepSeek."
       ]
     },
     {

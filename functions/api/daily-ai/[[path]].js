@@ -1,9 +1,9 @@
-import { liveVisitor } from '../../../lib/daily-ai-live.js'
+import { cloudChat, validChatInput } from '../../../lib/cloud-ai-chat.js'
 import { readBoundedJson } from '../../../lib/nowPlaying.js'
-import { DAILY_AI_IDS } from '../../../lib/daily-ai-questions.js'
-import { banIp, clientIp, dailyDay, dailyDb, dailyJson, dailyUnavailable, exactKeys, foreignBrowser } from '../../../lib/daily-ai.js'
+import { banIp, clientIp, dailyDb, dailyJson, dailyUnavailable, foreignBrowser } from '../../../lib/daily-ai.js'
 
-export async function onRequest({ request, env }) {
+export async function onRequest(context) {
+  const { request, env } = context
   try {
     // Refuse cross-site browser requests before creating bans: another site
     // must not be able to ban a visitor by embedding a link, image or form.
@@ -34,20 +34,20 @@ export async function onRequest({ request, env }) {
     if (!['/api/daily-ai', '/api/daily-ai/'].includes(url.pathname) || url.search
         || !['GET', 'POST'].includes(request.method)) return await banIp(db, ip, 'Malformed route, query, or method')
 
-    let id = null
+    let body = null
     if (request.method === 'POST') {
       if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers.get('content-type') || '')
           || request.headers.get('x-daily-ai') !== '1') return await banIp(db, ip, 'Malformed request headers')
-      const parsed = await readBoundedJson(request, 128)
-      if (parsed.error || !exactKeys(parsed.value, ['id']) || !DAILY_AI_IDS.includes(parsed.value.id)) {
-        return await banIp(db, ip, 'Malformed question selection')
+      const parsed = await readBoundedJson(request, 8192)
+      if (parsed.error || !validChatInput(parsed.value)) {
+        return await banIp(db, ip, 'Malformed chat message')
       }
-      id = parsed.value.id
+      body = parsed.value
     }
 
     const control = await db.prepare('SELECT enabled, revision FROM daily_ai_control WHERE singleton = 1').first()
     if (!control?.enabled) return dailyJson({ enabled: false }, 503)
-    const day = dailyDay()
-    return await liveVisitor(request, env, db, ip, id, day, control.revision)
+    const whitelisted = Boolean(await db.prepare('SELECT ip FROM daily_ai_whitelist WHERE ip = ?').bind(ip).first())
+    return await cloudChat(context, db, ip, body, control, whitelisted)
   } catch (error) { return dailyUnavailable(error) }
 }

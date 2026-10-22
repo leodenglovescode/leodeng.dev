@@ -1,5 +1,3 @@
-import { generationStats } from '../../lib/daily-ai-result.js'
-import { dailyDay } from '../../lib/daily-ai.js'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
@@ -7,131 +5,70 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { build } from 'esbuild'
 import * as miniflare from 'miniflare'
-const { Miniflare } = miniflare
+import { dailyDay } from '../../lib/daily-ai.js'
+import { readProviderStream, providerBody, cloudStats } from '../../lib/deepseek-chat.js'
 const compatibleOptions = options => miniflare.convertV4MiniflareOptions?.(options) || options
-import { consumeDailyAiStream } from '../../src/utils/dailyAiStream.js'
 
-const job = (id = 'site') => ({ job: crypto.randomUUID(), id, day: dailyDay(), revision: 1 })
-
-test('real Durable Object streams model deltas, bounds the queue, replays results and resets all counters', async t => {
-  const directory = await mkdtemp(path.join(tmpdir(), 'daily-ai-live-'))
+test('real SQLite coordinator enforces global caps, concurrency, whitelist exemption and cancellation', async t => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'cloud-chat-do-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const bundle = path.join(directory, 'worker.mjs')
   await build({ entryPoints: ['workers/daily-ai-traffic/index.js'], outfile: bundle, bundle: true, format: 'esm', external: ['cloudflare:workers'], platform: 'browser' })
-  const mf = new Miniflare(compatibleOptions({ name: 'test-relay', rootPath: directory, modules: true, script: await readFile(bundle, 'utf8'), compatibilityDate: '2026-10-03',
-    durableObjects: { LIVE_HUB: { className: 'LiveHub', useSQLite: true } },
-    ratelimits: { PER_IP: { namespace_id: '1', simple: { limit: 2, period: 60 } }, OVERALL: { namespace_id: '2', simple: { limit: 30, period: 60 } } },
+  const mf = new miniflare.Miniflare(compatibleOptions({ name: 'test-chat', rootPath: directory, modules: true, script: await readFile(bundle, 'utf8'), compatibilityDate: '2026-10-03',
+    durableObjects: { CHAT_STATE: { className: 'ChatState', useSQLite: true } },
+    ratelimits: { PER_IP: { namespace_id: '1', simple: { limit: 2, period: 60 } }, OVERALL: { namespace_id: '2', simple: { limit: 300, period: 60 } } },
   }))
   t.after(() => mf.dispose())
-  const call = (action, body) => mf.dispatchFetch('http://relay.internal/' + action, {
-    method: body ? 'POST' : 'GET', headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined,
-  })
-  assert.equal((await call('start', job())).status, 503, 'Offline jobs never enqueue')
-  const connected = await mf.dispatchFetch('http://relay.internal/agent', { headers: { Upgrade: 'websocket' } })
-  assert.equal(connected.status, 101)
-  const agent = connected.webSocket
-  agent.accept()
-  t.after(() => agent.close())
-  const messages = []
-  agent.addEventListener('message', event => messages.push(JSON.parse(event.data)))
-  const waitFor = async predicate => {
-    for (let attempt = 0; attempt < 100; attempt++) {
-      if (predicate()) return
-      await new Promise(resolve => setTimeout(resolve, 10))
-    }
-    assert.fail('Timed out waiting for relay event')
-  }
-  const first = job()
-  assert.equal((await call('start', first)).status, 200)
-  await waitFor(() => messages.some(message => message.job === first.job && message.type === 'generate'))
-  const response = await call('stream', { job: first.job })
-  const events = []
-  const finished = consumeDailyAiStream(response, event => events.push(event))
-  await waitFor(() => events.some(event => event.type === 'snapshot'))
-  agent.send(JSON.stringify({ type: 'delta', job: first.job, channel: 'thinking', text: 'Checking public sources.' }))
-  await waitFor(() => events.some(event => event.channel === 'thinking'))
-  assert(!events.some(event => event.status === 'done'), 'Thinking arrives before completion')
-  agent.send(JSON.stringify({ type: 'phase', job: first.job, phase: 'answering' }))
-  await waitFor(() => events.some(event => event.type === 'phase' && event.phase === 'answering'))
-  agent.send(JSON.stringify({ type: 'delta', job: first.job, channel: 'answer', text: 'A live answer. 中文' }))
-  await waitFor(() => events.some(event => event.channel === 'answer'))
-  // Two waiting jobs plus the active one fill the bounded single-GPU queue.
-  const second = job('homelab'), third = job('photography')
-  assert.equal((await call('start', second)).status, 200)
-  assert.equal((await call('start', third)).status, 200)
-  assert.equal((await call('start', job('archive'))).status, 503)
-  assert.equal((await call('start', job('arbitrary-prompt'))).status, 400)
-  agent.send(JSON.stringify({ type: 'done', job: first.job, sources: ['/ai'], stats: { durationMs: 12000, tokens: 160, evalDurationNs: 8000000000, promptTokens: 100, passes: 1, finishReason: 'stop' } }))
-  await finished
-  const replay = []
-  await consumeDailyAiStream(await call('stream', { job: first.job }), event => replay.push(event))
-  assert.equal(replay[0].text, 'A live answer. 中文')
-  assert.equal(replay[0].thinking, 'Checking public sources.')
-  assert.equal(replay[0].status, 'done')
-  assert.deepEqual(replay[0].sources, ['/ai'])
-  assert.equal(replay[0].stats.tokensPerSecond, 20)
-  assert.equal(replay[0].stats.durationMs, 12000)
-  assert.equal(replay[0].phase, 'answering')
-  assert(events.some(event => event.type === 'stats'), 'Real metrics arrive before stream completion')
-  assert.equal((await (await call('job', { job: second.job })).json()).answer, undefined)
-  const limit = () => mf.dispatchFetch('http://relay.internal/', { headers: { 'cf-connecting-ip': '192.0.2.1' } })
+  const call = (action, body) => mf.dispatchFetch('http://private/' + action, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+  const next = () => ({ job: crypto.randomUUID(), session: crypto.randomUUID(), day: dailyDay(), revision: 1, message: 'Hello', whitelisted: false })
+  const finish = turn => call('finish', { ...turn, status: 'done', answer: 'Public answer', thinking: 'Thinking', stats: null, code: null })
+  const a = next(), b = next(), c = next()
+  assert.equal((await call('prepare', a)).status, 200)
+  assert.equal((await call('prepare', { ...next(), session: a.session })).status, 409)
+  assert.equal((await call('prepare', b)).status, 200)
+  assert.equal((await call('prepare', c)).status, 200)
+  assert.equal((await call('prepare', next())).status, 503)
+  for (const turn of [a, b, c]) assert.equal((await finish(turn)).status, 200)
+  assert.equal((await (await call('history', { session: a.session, day: dailyDay() })).json()).turns.length, 1)
+  assert.equal((await (await call('history', { session: crypto.randomUUID(), day: dailyDay() })).json()).turns.length, 0)
+  for (let i = 3; i < 50; i++) { const turn = next(); assert.equal((await call('prepare', turn)).status, 200); await finish(turn) }
+  assert.equal((await call('prepare', next())).status, 429)
+  const white = { ...next(), whitelisted: true }
+  assert.equal((await call('prepare', white)).status, 200)
+  assert.equal((await (await call('status')).json()).globalRemaining, 0)
+  await call('control', { revision: 2, enabled: false, reset: false })
+  assert.equal((await finish(white)).status, 409)
+  assert.equal((await call('prepare', next())).status, 409)
+  await call('control', { revision: 3, enabled: true, reset: true })
+  assert.equal((await (await call('status')).json()).globalRemaining, 50)
+  for (const retired of ['agent', 'start', 'stream', 'job', 'reset']) assert.equal((await call(retired)).status, 404)
+  const limit = () => mf.dispatchFetch('http://private/', { headers: { 'cf-connecting-ip': '192.0.2.1' } })
+  assert.equal((await limit()).status, 204); assert.equal((await limit()).status, 204); assert.equal((await limit()).status, 429)
+  await call('control', { revision: 4, enabled: true, reset: true })
   assert.equal((await limit()).status, 204)
-  assert.equal((await limit()).status, 204)
-  assert.equal((await limit()).status, 429)
-  assert.equal((await call('reset', {})).status, 200)
-  assert.equal((await limit()).status, 204, 'Admin reset changes the traffic counter namespace immediately')
-  assert.equal((await (await call('job', { job: second.job })).json()).status, 'cancelled')
-  assert.equal((await (await call('status')).json()).pending, 0)
-  for (let i = 0; i < 50; i++) {
-    const next = job()
-    const eventsBefore = messages.length
-    assert.equal((await call('start', next)).status, 200)
-    await waitFor(() => messages.slice(eventsBefore).some(event => event.type === 'generate' && event.job === next.job))
-    agent.send(JSON.stringify({ type: 'delta', job: next.job, channel: 'answer', text: 'Answer' }))
-    agent.send(JSON.stringify({ type: 'done', job: next.job, sources: ['/ai'] }))
-    await waitFor(() => messages.length >= eventsBefore + 1)
-    for (let attempt = 0; attempt < 100; attempt++) {
-      if ((await (await call('job', { job: next.job })).json()).status === 'done') break
-      await new Promise(resolve => setTimeout(resolve, 10))
-    }
-  }
-  const exhausted = await call('start', job())
-  assert.equal(exhausted.status, 429)
-  assert.equal((await exhausted.json()).code, 'global_daily_limit')
-  assert.equal((await (await call('status')).json()).remaining, 0)
-  await call('reset', {})
-  assert.equal((await (await call('status')).json()).remaining, 50)
-  const failed = job()
-  await call('start', failed)
-  const failureEvents = []
-  const failureStream = consumeDailyAiStream(await call('stream', { job: failed.job }), event => failureEvents.push(event))
-  agent.send(JSON.stringify({ type: 'error', job: failed.job, code: 'empty_answer', message: 'Never relay raw messages or secrets' }))
-  await failureStream
-  assert.equal(failureEvents.at(-1).code, 'empty_answer')
-  assert(!JSON.stringify(failureEvents).includes('Never relay'))
-  assert.equal((await (await call('job', { job: failed.job })).json()).code, 'empty_answer')
-  // Late tokens from cancelled inference cannot revive an answer.
-  agent.send(JSON.stringify({ type: 'delta', job: second.job, channel: 'answer', text: 'late token' }))
-  assert.equal((await (await call('job', { job: second.job })).json()).text, '')
 })
 
-test('browser stream decoder handles split UTF-8, split frames and incomplete data', async () => {
-  const data = new TextEncoder().encode('data: {"type":"delta","text":"中文"}\n\n')
-  const stream = new ReadableStream({ start(controller) {
-    for (const byte of data) controller.enqueue(Uint8Array.of(byte))
-    controller.close()
-  } })
-  const events = []
-  await consumeDailyAiStream(new Response(stream), event => events.push(event))
-  assert.equal(events[0].text, '中文')
-  await assert.rejects(consumeDailyAiStream(new Response('data: {'), () => {}), /Incomplete/)
+test('provider stream handles split UTF-8 and CRLF, terminal usage and rejects incomplete/tool output', async () => {
+  const frames = [
+    { choices: [{ delta: { reasoning_content: '思考' } }] },
+    { choices: [{ delta: { content: 'Answer' }, finish_reason: 'stop' }], usage: { completion_tokens: 15 } },
+  ].map(c => `data: ${JSON.stringify(c)}\r\n\r\n`).join('') + 'data: [DONE]\r\n\r\n'
+  const bytes = new TextEncoder().encode(frames), parts = []
+  const response = new Response(new ReadableStream({ start(c) { for (const byte of bytes) c.enqueue(Uint8Array.of(byte)); c.close() } }))
+  const result = await readProviderStream(response, (channel, text) => parts.push([channel, text]), new AbortController().signal)
+  assert.deepEqual(parts, [['thinking', '思考'], ['answer', 'Answer']]); assert.equal(result.usage.completion_tokens, 15)
+  for (const text of ['data: [DONE]\n\n', 'data: {"choices":[{"delta":{"tool_calls":[{}]}}]}\n\n']) {
+    await assert.rejects(readProviderStream(new Response(text), () => {}, new AbortController().signal))
+  }
 })
 
-
-test('metrics use real token timings and reject invalid or unknown values', () => {
-  const value = { durationMs: 10000, tokens: 100, evalDurationNs: 5000000000, promptTokens: 200, passes: 2, finishReason: 'stop' }
-  assert.equal(generationStats(value).tokensPerSecond, 20)
-  assert.equal(generationStats({ ...value, evalDurationNs: 0 }).tokensPerSecond, null)
-  assert.equal(generationStats({ ...value, tokens: null }).tokensPerSecond, null)
-  for (const bad of [{ ...value, tokens: -1 }, { ...value, evalDurationNs: Infinity }, { ...value, durationMs: '100' }, { ...value, passes: 3 }]) assert.equal(generationStats(bad), null)
+test('provider request bounds history, disables tools and never replays reasoning', () => {
+  const body = providerBody('Hello', true, Array.from({ length: 20 }, () => ({ message: '你'.repeat(2000), answer: '你'.repeat(10000), thinking: 'SECRET_REASONING' })), 'public')
+  assert.equal(body.model, 'deepseek-flash'); assert.equal(body.tools, undefined)
+  assert.equal(body.max_tokens, 4096); assert.equal(body.reasoning_effort, 'low')
+  assert.ok(new TextEncoder().encode(JSON.stringify(body)).length <= 32768)
+  assert.ok(!JSON.stringify(body).includes('SECRET_REASONING'))
+  assert.equal(providerBody('Hi', false, [], '').max_tokens, 1024)
+  const stats = cloudStats({ completion_tokens: 100, prompt_tokens: 200 }, 0, 1000, 3000, 'stop')
+  assert.equal(stats.tokensPerSecond, 50); assert.equal(stats.durationMs, 3000)
 })

@@ -4,11 +4,11 @@ import worker from '../../workers/daily-ai-traffic/handler.js'
 
 test('private traffic gate canonicalizes identity and fails closed', async () => {
   let calls = 0
-  const env = { LIVE_HUB: { getByName(name) {
-    assert.equal(name, 'superserver-qwen')
+  const env = { CHAT_STATE: { getByName(name) {
+    assert.equal(name, 'deepseek-public-chat')
     return { async fetch(url, options) {
       calls++
-      assert.equal(url, 'https://hub.internal/limit')
+      assert.equal(url, 'https://chat.internal/limit')
       assert.deepEqual(options.headers, { 'cf-connecting-ip': '2001:db8::1' })
       return new Response(null, { status: 429 })
     } }

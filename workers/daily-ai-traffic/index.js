@@ -1,2 +1,2 @@
 export { default } from './handler.js'
-export { LiveHub } from './live-hub.js'
+export { ChatState } from './chat-state.js'

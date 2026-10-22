@@ -367,5 +367,6 @@ removed. The classic site continues to read the main site's public endpoint.
 
 ## Daily AI
 
-The separate Ollama publisher, five fixed questions, kill switch, daily IP allowance,
-and permanent AI-endpoint bans are documented in [DAILY_AI.md](DAILY_AI.md).
+AI chat now runs through the DeepSeek API on Cloudflare, independently of the
+homelab. Setup and removal of the retired local service are documented in
+[DAILY_AI.md](DAILY_AI.md).

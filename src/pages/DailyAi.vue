@@ -1,154 +1,88 @@
 <script setup>
-import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import AiChatReply from '../components/AiChatReply.vue'
 import { DAILY_AI_QUESTIONS } from '../../lib/daily-ai-questions.js'
-import { useLocale } from '../utils/i18n.js'
 import { consumeDailyAiStream } from '../utils/dailyAiStream.js'
-
+import { useLocale } from '../utils/i18n.js'
 const { t, isZh, localePath } = useLocale('daily-ai')
-const state = ref(null), error = ref(''), busy = ref(false), loading = ref(true)
-const thinking = ref(''), answer = ref(''), sources = ref([]), phase = ref(''), model = ref('qwen3.8:27b')
-const stats = ref(null), thinkingOpen = ref(true), thinkingPane = ref(null), followThinking = ref(true), streamCode = ref(null)
-const selected = computed(() => DAILY_AI_QUESTIONS.find(question => question.id === state.value?.selected))
-let controller = null, refreshTimer = null, disposed = false
-function failure(response, data) {
-  return data?.banned ? t('banned') : response.status === 429 ? t(data?.code === 'traffic_limited' ? 'trafficLimit' : data?.code === 'global_daily_limit' ? 'globalLimit' : 'limit') : t('unavailable')
+const state = ref(null), turns = ref([]), input = ref(''), useThinking = ref(true), busy = ref(false), loading = ref(true), error = ref(''), composer = ref(null)
+let controller, timer, disposed = false
+function responseError(response, data) {
+  return t(data?.banned ? 'banned' : data?.code === 'traffic_limited' ? 'trafficLimit' : data?.code === 'global_daily_limit' ? 'globalLimit' : data?.code === 'personal_daily_limit' ? 'limit' : data?.code === 'chat_busy' ? 'chatBusy' : 'unavailable')
 }
-const errorKeys = { empty_answer: 'errorEmptyAnswer', stream_incomplete: 'errorStreamIncomplete',
-  output_limit: 'errorOutputLimit', model_unavailable: 'errorModelUnavailable', generation_timeout: 'errorGenerationTimeout',
-  runner_disconnected: 'errorRunnerDisconnected', runner_reconnected: 'errorRunnerDisconnected',
-  generation_cancelled: 'errorCancelled', controls_changed: 'errorCancelled' }
-function generationError(code) { return t(errorKeys[code] || 'generationFailed') }
-function showAnswerPhase() {
-  if (phase.value !== 'answering') thinkingOpen.value = false
-  phase.value = 'answering'
-}
-function trackThinkingScroll() {
-  const pane = thinkingPane.value
-  if (pane) followThinking.value = pane.scrollHeight - pane.scrollTop - pane.clientHeight < 32
-}
-watch([thinking, thinkingOpen], async () => {
-  await nextTick()
-  if (busy.value && thinkingOpen.value && followThinking.value && thinkingPane.value) {
-    thinkingPane.value.scrollTop = thinkingPane.value.scrollHeight
-  }
-}, { flush: 'post' })
-function receive(event) {
-  if (event.type === 'snapshot') {
-    state.value = { ...state.value, selected: event.id }
-    thinking.value = event.thinking || ''; answer.value = event.text || ''
-    sources.value = event.sources || []; phase.value = event.status === 'generating' ? event.phase || 'thinking' : event.status; model.value = event.model
-    stats.value = event.stats || null; streamCode.value = event.code || null
-    thinkingOpen.value = !answer.value && !['answering', 'done'].includes(phase.value)
-  } else if (event.type === 'delta') {
-    if (event.channel === 'thinking') thinking.value += event.text
-    if (event.channel === 'answer') { showAnswerPhase(); answer.value += event.text }
-  } else if (event.type === 'phase' && event.phase === 'answering') showAnswerPhase()
-  else if (event.type === 'stats') stats.value = event.stats
-  else if (event.type === 'sources') sources.value = event.sources
-  else if (event.type === 'status') { phase.value = event.status; streamCode.value = event.code || null }
-}
-async function generate(id = null) {
-  if (busy.value || disposed) return
-  busy.value = true; error.value = ''; phase.value = 'connecting'
-  if (id) { thinking.value = ''; answer.value = ''; sources.value = []; stats.value = null; streamCode.value = null; thinkingOpen.value = true; followThinking.value = true }
-  controller?.abort(); controller = new AbortController()
-  const timeout = setTimeout(() => controller?.abort(), 11 * 60000)
-  try {
-    const response = await fetch('/api/daily-ai', {
-      method: id ? 'POST' : 'GET',
-      headers: { accept: 'text/event-stream', ...(id ? { 'content-type': 'application/json', 'x-daily-ai': '1' } : {}) },
-      body: id ? JSON.stringify({ id }) : undefined,
-      cache: 'no-store', signal: controller.signal,
-    })
-    if (!response.ok) {
-      error.value = failure(response, await response.json().catch(() => null))
-      phase.value = 'error'; return
-    }
-    if (id) state.value = { ...state.value, remaining: Math.max(0, (state.value?.remaining ?? 5) - 1) }
-    if (response.headers.get('content-type')?.startsWith('text/event-stream')) {
-      await consumeDailyAiStream(response, receive)
-      if (!['done', 'error', 'cancelled'].includes(phase.value)) throw new Error('Stream interrupted')
-      if (phase.value !== 'done') error.value = generationError(streamCode.value)
-    } else { state.value = await response.json(); phase.value = '' }
-  } catch (failure) {
-    if (!disposed) { phase.value = 'error'; error.value = failure.name === 'AbortError' ? t('timeout') : t('generationFailed') }
-  } finally {
-    clearTimeout(timeout); busy.value = false
-    if (['error', 'cancelled'].includes(phase.value) && !disposed) {
-      // Refresh refunds failed jobs server-side and restores the choice buttons.
-      void refresh()
-    }
-  }
-}
-async function refresh() {
-  if (busy.value || disposed) return
-  busy.value = true
-  let reopen = false
+async function refresh(replaceHistory = false) {
+  if (disposed || busy.value) return
   try {
     const response = await fetch('/api/daily-ai', { cache: 'no-store', signal: AbortSignal.timeout(10000) })
     const data = await response.json()
-    if (!response.ok) { state.value = null; error.value = failure(response, data); return }
+    if (!response.ok) { error.value = responseError(response, data); state.value = null; return }
     state.value = data
-    reopen = Boolean(data.selected) && !answer.value && !['error', 'cancelled'].includes(phase.value)
-    if (!data.selected && ['error', 'cancelled'].includes(phase.value)) phase.value = ''
-  } catch {
-    state.value = null; error.value = t('unavailable')
-  } finally { loading.value = false; busy.value = false }
-  if (reopen) void generate()
+    if (replaceHistory) turns.value = data.turns || []
+  } catch { error.value = t('unavailable'); state.value = null }
+  finally { loading.value = false }
 }
-onMounted(() => {
-  void refresh()
-  refreshTimer = setInterval(() => { if (!document.hidden) void refresh() }, 60000)
-})
-onBeforeUnmount(() => { disposed = true; clearInterval(refreshTimer); controller?.abort() })
+async function suggest(question) { input.value = isZh.value ? question.zh : question.en; await nextTick(); composer.value?.focus() }
+async function send() {
+  if (busy.value || !state.value?.ready || !input.value.trim() || !state.value.whitelisted && state.value.remaining === 0) return
+  const message = input.value.trim()
+  input.value = ''; error.value = ''; busy.value = true
+  turns.value.push({ id: crypto.randomUUID(), message, thinking: '', text: '', status: 'running', phase: 'thinking', sources: [], stats: null })
+  const turn = turns.value.at(-1)
+  controller = new AbortController()
+  const deadline = setTimeout(() => controller.abort(), 125000)
+  try {
+    const response = await fetch('/api/daily-ai', { method: 'POST', cache: 'no-store',
+      headers: { 'content-type': 'application/json', 'x-daily-ai': '1', accept: 'text/event-stream' },
+      body: JSON.stringify({ message, thinking: useThinking.value }), signal: controller.signal })
+    if (!response.ok) {
+      error.value = responseError(response, await response.json().catch(() => null)); turns.value.pop(); input.value = message; return
+    }
+    await consumeDailyAiStream(response, event => {
+      if (event.type === 'start') turn.id = event.id
+      if (event.type === 'phase') turn.phase = event.phase
+      if (event.type === 'delta' && event.channel === 'thinking') turn.thinking += event.text
+      if (event.type === 'delta' && event.channel === 'answer') { turn.phase = 'answering'; turn.text += event.text }
+      if (event.type === 'sources') turn.sources = event.sources
+      if (event.type === 'stats') turn.stats = event.stats
+      if (event.type === 'status') { turn.status = event.status; turn.code = event.code }
+    })
+    if (turn.status === 'running') { turn.status = 'error'; turn.code = 'stream_incomplete' }
+  } catch { turn.status = 'error'; turn.code = 'stream_incomplete' }
+  finally {
+    clearTimeout(deadline); busy.value = false
+    if (!disposed) { await refresh(); await nextTick(); composer.value?.focus() }
+  }
+}
+onMounted(() => { void refresh(true); timer = setInterval(() => { if (!document.hidden) void refresh() }, 60000) })
+onBeforeUnmount(() => { disposed = true; clearInterval(timer); controller?.abort() })
 </script>
-
 <template>
   <section class="pt-20 sm:pt-32 pb-20">
     <h1 class="text-2xl sm:text-3xl font-semibold mb-4">{{ t('title') }}</h1>
     <p class="text-muted leading-relaxed mb-3">{{ t('intro') }}</p>
     <p class="text-sm text-muted mb-3">{{ t('policy') }}</p>
-    <p class="text-sm text-muted mb-8">{{ t('aiNotice') }} <RouterLink :to="localePath('/ai')" class="text-accent underline underline-offset-4">{{ t('aiLink') }}</RouterLink></p>
-    <p class="text-xs text-muted mb-8">{{ t('banPolicy') }} <RouterLink :to="localePath('/privacy')" class="text-accent underline underline-offset-4">{{ t('privacy') }}</RouterLink></p>
-    <div data-legacy-hide="true" aria-live="polite" class="mb-6">
-      <p v-if="loading" class="text-sm font-mono text-muted">{{ t('loading') }}</p>
-      <p v-else-if="error" role="status" class="text-sm text-muted">{{ error }}</p>
-      <p v-else-if="state?.globalRemaining === 0" class="text-sm text-muted">{{ t('globalLimit') }}</p>
-      <p v-else-if="!state?.ready" class="text-sm text-muted">{{ t('pending') }}</p>
-      <p v-else class="text-xs font-mono text-muted">{{ t('batch', { day: state.day, model }) }}</p>
-      <p v-if="state" class="text-xs text-muted mt-3">{{ t('remaining', { count: state.remaining }) }}</p>
+    <p class="text-xs text-muted mb-6">{{ t('privacyNotice') }} <RouterLink :to="localePath('/privacy')" class="text-accent underline underline-offset-4">{{ t('privacy') }}</RouterLink></p>
+    <div data-legacy-hide="true">
+      <p v-if="loading" role="status" class="text-sm text-muted mb-5">{{ t('loading') }}</p>
+      <p v-else-if="error" role="status" class="text-sm text-muted mb-5">{{ error }}</p>
+      <p v-else-if="state && !state.configured" class="text-sm text-muted mb-5">{{ t('pending') }}</p>
+      <p v-if="state" class="text-xs font-mono text-muted mb-6">{{ state.whitelisted ? t('unlimited') : t('remaining', { count: state.remaining }) }}</p>
+      <div class="flex flex-wrap gap-2 mb-8" :aria-label="t('suggestions')">
+        <button v-for="question in DAILY_AI_QUESTIONS" :key="question.id" type="button" :disabled="busy" class="text-xs text-accent border border-accent/20 rounded px-3 py-2 hover:bg-accent/10 disabled:opacity-40" @click="suggest(question)">{{ isZh ? question.zh : question.en }}</button>
+      </div>
+      <ol class="space-y-8 mb-8" :aria-label="t('conversation')"><li v-for="turn in turns" :key="turn.id" class="space-y-4">
+        <div class="rounded border border-fg/10 bg-fg/[0.02] p-4"><p class="text-xs font-mono text-muted mb-2">{{ t('you') }}</p><p class="whitespace-pre-wrap break-words leading-relaxed">{{ turn.message }}</p></div>
+        <AiChatReply :turn="turn" />
+      </li></ol>
+      <form class="border-t border-fg/10 pt-5" @submit.prevent="send">
+        <label for="ai-chat-message" class="block text-sm font-medium mb-3">{{ t('messageLabel') }}</label>
+        <textarea id="ai-chat-message" ref="composer" v-model="input" rows="3" maxlength="2000" required :disabled="busy || !state?.ready || !state?.whitelisted && state?.remaining === 0" :placeholder="t('placeholder')" class="w-full resize-y rounded border border-fg/15 bg-transparent px-4 py-3 leading-relaxed focus:border-accent focus:outline-none disabled:opacity-40"></textarea>
+        <div class="flex items-center justify-between gap-4 mt-3">
+          <label class="flex items-center gap-2 text-sm text-muted"><input v-model="useThinking" type="checkbox" :disabled="busy">{{ t('enableThinking') }}</label>
+          <button type="submit" :disabled="busy || !input.trim() || !state?.ready || !state?.whitelisted && state?.remaining === 0" class="bg-accent-strong text-white rounded px-4 py-2 text-sm disabled:opacity-40">{{ t(busy ? 'sending' : 'send') }}</button>
+        </div>
+      </form>
     </div>
-    <ol class="divide-y divide-fg/10 border-y border-fg/10 mb-10">
-      <li v-for="(question, index) in DAILY_AI_QUESTIONS" :key="question.id" class="flex items-center justify-between gap-4 py-5">
-        <h2 class="text-base font-medium"><span class="text-muted font-mono mr-3">0{{ index + 1 }}</span>{{ isZh ? question.zh : question.en }}</h2>
-        <button type="button" data-legacy-hide="true" :disabled="!state?.ready || busy || state.remaining === 0"
-          class="shrink-0 text-sm text-accent border border-accent/30 rounded px-3 py-2 hover:bg-accent/10 disabled:opacity-40 disabled:cursor-not-allowed"
-          @click="generate(question.id)">{{ state?.selected === question.id ? t('askAgain') : t('choose') }}</button>
-      </li>
-    </ol>
-    <article v-if="state?.selected || thinking || answer || busy && !loading" data-legacy-hide="true" class="border-l-2 border-accent pl-5">
-      <h2 v-if="selected" class="text-lg font-semibold mb-4">{{ isZh ? selected.zh : selected.en }}</h2>
-      <dl v-if="phase === 'done' && stats" class="grid grid-cols-3 gap-3 mb-5" :aria-label="t('statsTitle')">
-        <div class="border border-fg/10 rounded px-3 py-3" :title="t('durationNote')"><dt class="text-xs text-muted mb-1">{{ t('duration') }}</dt><dd class="font-mono text-sm">{{ (stats.durationMs / 1000).toFixed(1) }} s</dd></div>
-        <div class="border border-fg/10 rounded px-3 py-3" :title="t('speedNote')"><dt class="text-xs text-muted mb-1">{{ t('speed') }}</dt><dd class="font-mono text-sm">{{ stats.tokensPerSecond == null ? t('notAvailable') : stats.tokensPerSecond.toFixed(1) + ' tok/s' }}</dd></div>
-        <div class="border border-fg/10 rounded px-3 py-3" :title="t('tokensNote')"><dt class="text-xs text-muted mb-1">{{ t('outputTokens') }}</dt><dd class="font-mono text-sm">{{ stats.tokens ?? t('notAvailable') }}</dd></div>
-      </dl>
-      <p v-if="phase === 'done' && stats?.finishReason === 'length'" class="text-sm text-muted mb-4">{{ t('outputTruncated') }}</p>
-      <p v-if="phase" role="status" class="text-xs font-mono text-muted mb-5 flex items-center gap-2">
-        <span v-if="busy" aria-hidden="true" class="size-1.5 rounded-full bg-accent motion-safe:animate-pulse"></span>
-        {{ t(phase === 'done' ? 'complete' : phase === 'queued' ? 'queued' : phase === 'answering' ? 'answering' : ['generating', 'thinking'].includes(phase) ? 'thinking' : phase === 'connecting' ? 'connecting' : 'stopped') }}
-      </p>
-      <details v-if="thinking" :open="thinkingOpen" @toggle="thinkingOpen = $event.target.open" class="mb-6 border border-fg/10 rounded px-4 py-3">
-        <summary class="cursor-pointer text-sm text-muted select-none">{{ t('modelThinking') }}</summary>
-        <p class="text-xs text-muted mt-3 mb-3">{{ t('thinkingNotice') }}</p>
-        <p ref="thinkingPane" lang="en" tabindex="0" @scroll="trackThinkingScroll" class="text-sm text-muted leading-relaxed whitespace-pre-wrap break-words max-h-80 overflow-y-auto">{{ thinking }}</p>
-      </details>
-      <!-- Both output channels are escaped text, never HTML or executable Markdown. -->
-      <div :aria-busy="busy" class="text-muted leading-relaxed whitespace-pre-wrap break-words"><p lang="en">{{ answer }}<span v-if="busy && answer" aria-hidden="true" class="inline-block w-1.5 h-4 bg-accent align-middle ml-1 motion-safe:animate-pulse"></span></p></div>
-      <p v-if="sources.length" class="text-xs font-mono text-muted mt-6 mb-2">{{ t('sources') }}</p>
-      <ul v-if="sources.length" class="text-sm space-y-2"><li v-for="source in sources" :key="source"><RouterLink :to="localePath(source)" class="text-accent underline underline-offset-4">{{ source }}</RouterLink></li></ul>
-      <button v-if="phase === 'error' && state?.selected && !busy" type="button" class="mt-4 text-sm text-accent underline" @click="generate()">{{ t('reconnect') }}</button>
-    </article>
-    <p data-legacy-only="true" hidden><a :href="`https://leodeng.dev${isZh ? '/zh' : ''}/daily?view=modern`" class="hover:text-accent underline underline-offset-4">{{ t('fullSite') }}</a></p>
+    <p data-legacy-only="true" hidden><a :href="`https://leodeng.dev${isZh ? '/zh' : ''}/daily?view=modern`">{{ t('fullSite') }}</a></p>
   </section>
 </template>

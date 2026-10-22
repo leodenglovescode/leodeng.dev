@@ -19,10 +19,10 @@ function readable(node) {
 }
 
 export async function buildDailyAiContext(root, posts, getPost) {
-  const paths = [...new Set(DAILY_AI_QUESTIONS.flatMap(question => question.paths))]
+  const paths = [...new Set(['/', '/about', '/interests', ...DAILY_AI_QUESTIONS.flatMap(question => question.paths)])]
   const pages = {}
   for (const route of paths) {
-    const html = await fs.readFile(path.join(root, 'dist', `${route.slice(1)}.html`), 'utf8')
+    const html = await fs.readFile(path.join(root, 'dist', route === '/' ? 'index.html' : `${route.slice(1)}.html`), 'utf8')
     pages[route] = readable(findMain(parse(html))).replace(/\s+/g, ' ').trim().slice(0, 10000)
   }
   const context = {

@@ -31,8 +31,8 @@
   "durable_objects": {
     "bindings": [
       {
-        "name": "LIVE_HUB",
-        "class_name": "LiveHub"
+        "name": "CHAT_STATE",
+        "class_name": "ChatState"
       }
     ]
   },
@@ -40,6 +40,15 @@
     {
       "tag": "v1-live-hub",
       "new_sqlite_classes": [
+        "LiveHub"
+      ]
+    },
+    {
+      "tag": "v2-cloud-chat",
+      "new_sqlite_classes": [
+        "ChatState"
+      ],
+      "deleted_classes": [
         "LiveHub"
       ]
     }

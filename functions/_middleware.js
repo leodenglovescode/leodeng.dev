@@ -11,6 +11,7 @@ function redirect(location) {
 export async function onRequest(context) {
   const { request, env } = context
   const url = new URL(request.url)
+  if (/^\/api\/internal\/daily-ai(?:-live)?(?:\/|$)/.test(url.pathname)) return new Response('Not found.', { status: 404, headers: { 'Cache-Control': 'no-store' } })
   const legacyHost = url.hostname === new URL(LEGACY_ORIGIN).hostname
   if (!legacyHost) {
     // Opt in only once the custom domain and its certificate are ready.
