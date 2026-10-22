@@ -44,7 +44,7 @@ with opener.open('http://127.0.0.1:11434/api/ps',timeout=10) as response:
         raise SystemExit('Unload active Ollama models before changing the listener.')
 PY
   install -d -m 755 /etc/systemd/system/ollama.service.d
-  cat > /etc/systemd/system/ollama.service.d/daily-ai-loopback.conf <<'CONF'
+  cat > /etc/systemd/system/ollama.service.d/zz-daily-ai-loopback.conf <<'CONF'
 [Service]
 Environment="OLLAMA_HOST=127.0.0.1:11434"
 CONF
@@ -57,6 +57,18 @@ install -m 644 "$source_dir/daily-ai.service" "$source_dir/daily-ai.timer" /etc/
 systemctl daemon-reload
 if [[ "$loopback" == '--loopback' ]]; then
   systemctl restart ollama.service
+  python3 - <<'PY'
+import subprocess,time
+for attempt in range(20):
+    listeners=subprocess.check_output(['ss','-H','-ltn','( sport = :11434 )'],text=True).splitlines()
+    if listeners:
+        if all(line.split()[3]=='127.0.0.1:11434' for line in listeners):
+            break
+        raise SystemExit('Another Ollama override still exposes port 11434. Check systemd drop-ins before enabling the timer.')
+    time.sleep(0.5)
+else:
+    raise SystemExit('Ollama did not start its loopback listener.')
+PY
 fi
 systemctl enable --now daily-ai.timer
 systemctl start daily-ai.service
