@@ -1,5 +1,5 @@
 [Unit]
-Description=Publish daily listening summary
+Description=Publish live listening summary
 After=network-online.target
 [Service]
 Type=oneshot

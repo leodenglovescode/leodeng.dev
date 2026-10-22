@@ -1,7 +1,7 @@
 # Listening history
 
 The Mac writes a durable private outbox before publishing live now-playing
-updates. SuperServer stores cumulative sessions in SQLite. A daily sanitized
+updates. SuperServer stores cumulative sessions in SQLite. A live sanitized summary goes to R2 and a daily
 snapshot goes to D1 and is displayed on both Stats pages. No old listening
 history can be recovered retroactively from the current now-playing endpoint.
 
@@ -47,13 +47,17 @@ backup command/API, including current WAL contents, rather than copying only
 the main file while the service is running. This is the source of truth, and
 raw records are never pruned automatically.
 
-The publisher checks hourly for reliability, but uploads only once per UTC
-day after acknowledgement. Failed pushes retry on the next hourly run. D1
-stores a single bounded summary row; duplicate pushes for the same date do not
-rewrite it. Public results exclude the current UTC day. Rankings cover 7 days,
-30 days and all time; the daily chart covers the last 90 completed UTC days.
-Late offline uploads keep their original dates and are included in the next
-snapshot. All-time figures remain recalculable from local SQLite.
+The publisher checks every minute and uploads changed summaries only. Failed
+pushes retry on the next minute. The existing MEDIA R2 binding stores a single
+small live summary object. D1 receives only the daily snapshot of completed
+UTC days; same-day updates do not rewrite it. The public API reads R2 and falls
+back to D1 during an R2 outage. Both Stats pages poll every minute while visible.
+
+Live results include the current UTC day. Rankings cover 7 days, 30 days and
+all time; the chart covers 90 days including today. The two minute-scale hops
+from Mac to SuperServer and SuperServer to R2, plus the browser poll, mean
+updates normally appear within one to three minutes. Late offline uploads
+retain their original dates and are included in the next changed summary. All-time figures remain recalculable from local SQLite.
 
 ## Mac
 
@@ -114,3 +118,21 @@ python3 -m unittest discover -s homelab/listening -p 'test*.py'
 (cd now-playing-agent && go test -race ./...)
 node --test functions/tests/music-stats.test.js
 ```
+
+
+## Updating an existing daily-only installation
+
+No Mac update or token changes are needed. On SuperServer, from this repo:
+
+```bash
+sudo install -m 755 homelab/listening/listening.py /usr/local/bin/listening-history.py
+sudo install -m 644 homelab/listening/listening-publish.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart listening-publish.timer
+sudo systemctl start listening-publish.service
+```
+
+The receiver may keep running its current version; its ingestion protocol and
+SQLite schema remain compatible. The new publisher creates its own tiny local
+publication-state table automatically. Keep the existing MEDIA binding on the
+Pages project. No additional Cloudflare secrets or bindings are needed.

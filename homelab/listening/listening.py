@@ -20,6 +20,7 @@ def connect(path):
     db.execute('PRAGMA journal_mode=WAL')
     db.execute('CREATE TABLE IF NOT EXISTS listens(id TEXT PRIMARY KEY, payload TEXT NOT NULL)')
     db.execute('CREATE TABLE IF NOT EXISTS publication(name TEXT PRIMARY KEY, day TEXT NOT NULL)')
+    db.execute('CREATE TABLE IF NOT EXISTS live_publication(name TEXT PRIMARY KEY, digest TEXT NOT NULL, sent_at REAL NOT NULL)')
     return db
 
 
@@ -70,8 +71,9 @@ def ingest(db, events):
                        (event['id'], json.dumps(event, separators=(',',':'))))
 
 
-def aggregate(db, today=None):
+def aggregate(db, today=None, include_today=False):
     today = today or dt.datetime.now(dt.timezone.utc).date()
+    if include_today: today += dt.timedelta(days=1)
     events = [json.loads(row[0]) for row in db.execute('SELECT payload FROM listens')]
     result = {'through': (today-dt.timedelta(days=1)).isoformat(), 'ranges': {}, 'daily': []}
     daily = defaultdict(lambda: {'plays':0, 'listenedMs':0})
@@ -109,16 +111,22 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def publish(db):
-    today=dt.datetime.now(dt.timezone.utc).date().isoformat()
-    if db.execute("SELECT day FROM publication WHERE name='music'").fetchone()==(today,): return
+    today=dt.datetime.now(dt.timezone.utc).date()
+    # Live view includes today; the daily D1 fallback covers completed UTC days.
+    value=aggregate(db,today,include_today=True)
+    value['archive']=aggregate(db,today)
+    body=json.dumps(value,separators=(',',':')).encode()
+    digest=hashlib.sha256(body).hexdigest()
+    previous=db.execute("SELECT digest,sent_at FROM live_publication WHERE name='music'").fetchone()
+    now=dt.datetime.now(dt.timezone.utc).timestamp()
+    if previous and (previous[0]==digest or now-previous[1]<50):return
     token=os.environ.get('HOMELAB_TOKEN','')
-    if not token: raise ValueError('HOMELAB_TOKEN is missing')
-    body=json.dumps(aggregate(db),separators=(',',':')).encode()
-    req=urllib.request.Request('https://leodeng.dev/api/stats/music', data=body, headers={'Content-Type':'application/json','Authorization':'Bearer '+token,'User-Agent':'leodeng-listening/1.0'})
-    with urllib.request.build_opener(NoRedirect).open(req, timeout=20) as response:
-        if json.loads(response.read(8192)).get('ok') is not True: raise ValueError('Push not acknowledged')
-    with db: db.execute("INSERT INTO publication VALUES('music',?) ON CONFLICT(name) DO UPDATE SET day=excluded.day",(today,))
-    print('Listening summary pushed')
+    if not token:raise ValueError('HOMELAB_TOKEN is missing')
+    req=urllib.request.Request('https://leodeng.dev/api/stats/music', data=body, headers={'Content-Type':'application/json','Authorization':'Bearer '+token,'User-Agent':'leodeng-listening/1.1'})
+    with urllib.request.build_opener(NoRedirect).open(req,timeout=20) as response:
+        if json.loads(response.read(8192)).get('ok') is not True:raise ValueError('Push not acknowledged')
+    with db:db.execute("INSERT INTO live_publication VALUES('music',?,?) ON CONFLICT(name) DO UPDATE SET digest=excluded.digest,sent_at=excluded.sent_at",(digest,now))
+    print('Live listening summary pushed')
 
 
 def serve(path, token, host, port):

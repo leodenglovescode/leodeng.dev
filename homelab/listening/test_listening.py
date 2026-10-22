@@ -35,7 +35,7 @@ class ListeningTests(unittest.TestCase):
         self.assertNotIn(self.event['id'],json.dumps(result))
         with self.assertRaises(ValueError):m.ingest(self.db,[dict(self.event,artist='Other')])
         self.assertEqual(self.db.execute('SELECT count(*) FROM listens').fetchone()[0],1)
-    def test_daily_publication_once_and_retry_after_failure(self):
+    def test_unchanged_publication_skipped_and_retry_after_failure(self):
         class Response:
             def __enter__(self):return self
             def __exit__(self,*args):pass
@@ -46,6 +46,21 @@ class ListeningTests(unittest.TestCase):
             opener.return_value.open.side_effect=None;opener.return_value.open.return_value=Response()
             m.publish(self.db);m.publish(self.db)
             self.assertEqual(opener.return_value.open.call_count,2)
+            m.ingest(self.db,[self.event])
+            m.publish(self.db)
+            self.assertEqual(opener.return_value.open.call_count,2,'changed summaries still respect the minute throttle')
+            self.db.execute('UPDATE live_publication SET sent_at=sent_at-60')
+            m.publish(self.db)
+            self.assertEqual(opener.return_value.open.call_count,3,'changed history publishes after the throttle')
+    def test_live_includes_today_and_recent_period_bounds(self):
+        m.ingest(self.db,[self.event])
+        result=m.aggregate(self.db,dt.date(2026,10,20),include_today=True)
+        self.assertEqual(result['through'],'2026-10-20')
+        self.assertEqual(result['ranges']['7']['plays'],1)
+        self.assertEqual(result['daily'][-1]['day'],'2026-10-20')
+        self.assertEqual(result['daily'][-1]['listenedMs'],40000)
+        self.assertEqual(m.aggregate(self.db,dt.date(2026,10,27),include_today=True)['ranges']['7']['plays'],0)
+
     def test_short_skip_not_counted_and_today_excluded(self):
         short=dict(self.event,updatedAt=self.event['startedAt']+10000,listenedMs=10000,days={'2026-10-20':10000})
         m.ingest(self.db,[short])

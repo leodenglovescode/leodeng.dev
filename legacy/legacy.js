@@ -124,14 +124,16 @@
       }
       commits.appendChild(list);
     });
-    get('/api/stats/music', function (data) {
+    var musicRange = '30', musicReady = false;
+    function refreshMusic() { get('/api/stats/music', function (data) {
+      if (!data && musicReady) return;
       clear(music);
       if (!data || data.state !== 'ready') { music.appendChild(node('p', zh ? '聆听统计将在开始记录后显示。' : 'Listening stats will appear once history starts coming in.')); return; }
-      music.appendChild(node('p', (zh ? '每日更新，统计截至 ' : 'Updated daily, through ') + data.through + ' (UTC)'));
+      music.appendChild(node('p', (zh ? '约每分钟更新，包含今天，统计截至 ' : 'Updates about every minute, including today, through ') + data.through + ' (UTC)'));
       var select = node('select', ''), labels = zh ? ['近 7 天', '近 30 天', '全部时间'] : ['Last 7 days', 'Last 30 days', 'All time'], keys = ['7','30','all'];
       select.setAttribute('aria-label', zh ? '统计时段' : 'Listening period');
       for (var i=0;i<keys.length;i++) { var option=node('option',labels[i]);option.value=keys[i];select.appendChild(option); }
-      select.value='30';music.appendChild(select);
+      musicReady=true;select.value=musicRange;music.appendChild(select);
       var details=node('div','');music.appendChild(details);
       function render() {
         clear(details);var summary=data.ranges[select.value];
@@ -139,10 +141,12 @@
         var kinds=['artists','albums','tracks'], titles=zh ? ['常听歌手','常听专辑','常听歌曲'] : ['Top artists','Top albums','Top songs'];
         for(var k=0;k<kinds.length;k++) { details.appendChild(node('h3',titles[k]));var rows=[],items=summary[kinds[k]];for(var j=0;j<items.length;j++)rows.push([items[j].name+(items[j].artist ? ' / '+items[j].artist : ''),Math.round(items[j].listenedMs/60000)+' min']);table(details,rows,false); }
       }
-      select.onchange=render;render();
+      select.onchange=function () { musicRange=select.value;render(); };render();
       music.appendChild(node('p',zh ? '听满 30 秒或歌曲时长的一半计为一次播放，以较短者为准。' : 'A play counts after 30 seconds or half the track, whichever comes first.'));
       if(data.stale)music.appendChild(node('p',zh ? '当前显示上次成功更新的数据。' : 'Showing the last successful update.'));
-    });
+    }); }
+    refreshMusic();
+    window.setInterval(function () { if (!document.hidden && document.documentElement.contains(music)) refreshMusic(); }, 60000);
     get('/api/stats/monkeytype', function (data) {
       if (!data) { failure(monkey); return; }
       clear(monkey);

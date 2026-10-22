@@ -1,8 +1,8 @@
 [Unit]
-Description=Retry daily listening summary publication
+Description=Publish changed listening summaries every minute
 [Timer]
-OnCalendar=hourly
+OnCalendar=*-*-* *:*:00
 Persistent=true
-RandomizedDelaySec=60
+AccuracySec=1s
 [Install]
 WantedBy=timers.target

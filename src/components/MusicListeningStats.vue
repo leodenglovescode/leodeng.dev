@@ -1,18 +1,26 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useLocale } from '../utils/i18n.js'
 import { statsJson } from '../../lib/monkeyStats.js'
 const { isZh } = useLocale('stats')
 const data = ref(null), state = ref('loading'), range = ref('30')
 const words = computed(() => isZh.value ? {
- title:'音乐聆听', intro:'来自我的 Mac 的聆听记录，每天更新一次。统计截至前一个 UTC 日。', loading:'正在加载聆听统计…', empty:'开始记录后，音乐统计会显示在这里。', error:'聆听统计暂时不可用。', seven:'近 7 天', month:'近 30 天', all:'全部时间', plays:'播放次数', hours:'聆听时长', artists:'常听歌手', albums:'常听专辑', tracks:'常听歌曲', daily:'最近 90 天的聆听时长', unit:'小时', note:'听满 30 秒或歌曲时长的一半计为一次播放，以较短者为准。', stale:'当前显示上次成功更新的数据。', through:'统计截至', no:'此时间段还没有记录。', minutes:'分钟'
+ title:'音乐聆听', intro:'来自我的 Mac 的聆听记录，大约每分钟更新，包含今天的记录。日期按 UTC 统计。', loading:'正在加载聆听统计…', empty:'开始记录后，音乐统计会显示在这里。', error:'聆听统计暂时不可用。', seven:'近 7 天', month:'近 30 天', all:'全部时间', plays:'播放次数', hours:'聆听时长', artists:'常听歌手', albums:'常听专辑', tracks:'常听歌曲', daily:'最近 90 天的聆听时长', unit:'小时', note:'听满 30 秒或歌曲时长的一半计为一次播放，以较短者为准。', stale:'当前显示上次成功更新的数据。', through:'统计截至', no:'此时间段还没有记录。', minutes:'分钟'
 } : {
- title:'Music listening', intro:'Listening history from my Mac, updated daily through the previous UTC day.', loading:'Loading listening stats...', empty:'My music stats will appear once listening history starts coming in.', error:'Listening stats are temporarily unavailable.', seven:'Last 7 days', month:'Last 30 days', all:'All time', plays:'Counted plays', hours:'Listening time', artists:'Top artists', albums:'Top albums', tracks:'Top songs', daily:'Listening time over the last 90 days', unit:'hours', note:'A play counts after 30 seconds or half the track, whichever comes first.', stale:'Showing the last successful update.', through:'Through', no:'No listening history for this period yet.', minutes:'min'
+ title:'Music listening', intro:'Listening history from my Mac, updated about every minute, including today. Dates use UTC.', loading:'Loading listening stats...', empty:'My music stats will appear once listening history starts coming in.', error:'Listening stats are temporarily unavailable.', seven:'Last 7 days', month:'Last 30 days', all:'All time', plays:'Counted plays', hours:'Listening time', artists:'Top artists', albums:'Top albums', tracks:'Top songs', daily:'Listening time over the last 90 days', unit:'hours', note:'A play counts after 30 seconds or half the track, whichever comes first.', stale:'Showing the last successful update.', through:'Through', no:'No listening history for this period yet.', minutes:'min'
 })
 const summary = computed(() => data.value?.ranges?.[range.value])
 const maxDay = computed(() => Math.max(1, ...(data.value?.daily || []).map(d => d.listenedMs)))
 const rankingMax = kind => Math.max(1, ...(summary.value?.[kind] || []).map(r => r.listenedMs))
-onMounted(async () => { try { data.value = await statsJson('/api/stats/music'); state.value = data.value.state } catch { state.value = 'unavailable' } })
+let timer, mounted = false, pending = false
+async function refresh() {
+  if (pending || document.hidden) return
+  pending = true
+  try { const next = await statsJson('/api/stats/music'); if (mounted) { data.value = next; state.value = next.state } } catch { if (mounted && !data.value) state.value = 'unavailable' }
+  finally { pending = false }
+}
+onMounted(() => { mounted = true; void refresh(); timer = setInterval(refresh, 60000); document.addEventListener('visibilitychange', refresh) })
+onBeforeUnmount(() => { mounted = false; clearInterval(timer); document.removeEventListener('visibilitychange', refresh) })
 </script>
 <template>
   <section id="music" class="music-section">
