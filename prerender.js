@@ -5,6 +5,7 @@ import { localePath } from './src/utils/localePath.js'
 import { aiAuthorshipLabel, usesAiWriting } from './src/utils/aiAuthorship.js'
 import { buildDailyAiContext } from './scripts/build-daily-ai-context.js'
 import { buildLegacySite } from './scripts/build-legacy.js'
+import { buildLlms } from './scripts/build-llms.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -83,7 +84,7 @@ function localizeRoute(route, locale) {
 }
 
 async function prerender() {
-  const { render, getAllPosts, getPost, collections } = await import('./dist-ssr/entry-server.js')
+  const { render, getAllPosts, getPost, getPostMarkdown, collections } = await import('./dist-ssr/entry-server.js')
 
   const templatePath = path.join(__dirname, 'dist/index.html')
   const template = fs.readFileSync(templatePath, 'utf-8')
@@ -182,6 +183,16 @@ async function prerender() {
 
   fs.writeFileSync(path.join(__dirname, 'dist/rss.xml'), rss)
   console.log('✓ Generated rss.xml')
+  await buildLlms(__dirname, {
+    pages: staticRoutes.map(route => ({
+      path: route.path,
+      title: enMeta[route.key]?.title || (route.path === '/' ? 'Home' : route.key),
+      description: enMeta[route.key]?.description,
+    })),
+    posts: getAllPosts(),
+    collections,
+    getPostMarkdown,
+  })
   fs.writeFileSync(path.join(__dirname, 'dist/_site-routes.json'), JSON.stringify(routes))
   await buildDailyAiContext(__dirname, getAllPosts(), getPost)
   await buildLegacySite({ routes, collections })

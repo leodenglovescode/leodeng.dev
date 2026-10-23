@@ -5,7 +5,7 @@ import { renderToString } from 'vue/server-renderer'
 import routes from './router/routes.js'
 import { setLocale } from './utils/i18n.js'
 
-export { getAllPosts, getPost } from './utils/posts.js'
+export { getAllPosts, getPost, getPostMarkdown } from './utils/posts.js'
 export { collections } from './utils/gallery.js'
 
 export async function render(url = '/') {
