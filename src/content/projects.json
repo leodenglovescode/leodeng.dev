@@ -1,6 +1,111 @@
 {
   "projects": [
     {
+      "id": "finstalgia",
+      "title": {
+        "en": "Finstalgia",
+        "zh": "Finstalgia"
+      },
+      "description": {
+        "en": "A lightweight Jellyfin web client that gives older iPads another job. Browse your library, stream video, and pick between modern and retro interfaces. Built for iPad 2 and iOS 9.",
+        "zh": "给旧 iPad 找个新用途的轻量级 Jellyfin 网页客户端。支持浏览媒体库、在线播放视频，还能切换现代和复古界面，专为 iPad 2 和 iOS 9 打造。"
+      },
+      "url": "https://github.com/leodenglovescode/Finstalgia",
+      "linkLabel": {
+        "en": "github",
+        "zh": "GitHub"
+      },
+      "tags": [
+        "python",
+        "jellyfin",
+        "docker",
+        "self-hosting"
+      ],
+      "images": [
+        {
+          "url": "https://media.leodeng.dev/project-finstalgia-modern-0a55227ec1a3.webp",
+          "objectName": "project-finstalgia-modern-0a55227ec1a3.webp",
+          "alt": {
+            "en": "Finstalgia modern library design preview",
+            "zh": "Finstalgia 现代模式媒体库设计预览"
+          }
+        },
+        {
+          "url": "https://media.leodeng.dev/project-finstalgia-retro-17ecad1ebae5.webp",
+          "objectName": "project-finstalgia-retro-17ecad1ebae5.webp",
+          "alt": {
+            "en": "Finstalgia retro library design preview",
+            "zh": "Finstalgia 复古模式媒体库设计预览"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cdscribe",
+      "title": {
+        "en": "CDScribe",
+        "zh": "CDScribe"
+      },
+      "description": {
+        "en": "A native macOS app for turning FLAC albums into audio CDs with automatic CD-Text. Drag in an album, review the metadata, and burn. Everything runs offline.",
+        "zh": "把 FLAC 专辑刻录成音频 CD 的 macOS 原生应用，自动写入 CD-Text。拖入专辑、检查元数据，再开始刻录，整个流程都能离线完成。"
+      },
+      "url": "https://github.com/leodenglovescode/CDScribe",
+      "linkLabel": {
+        "en": "github",
+        "zh": "GitHub"
+      },
+      "tags": [
+        "swift",
+        "macos",
+        "flac",
+        "audio"
+      ],
+      "images": [
+        {
+          "url": "https://media.leodeng.dev/project-cdscribe-screenshot-1b13fd8f8d05.webp",
+          "objectName": "project-cdscribe-screenshot-1b13fd8f8d05.webp",
+          "alt": {
+            "en": "CDScribe app showing FLAC album import and audio CD burning controls",
+            "zh": "CDScribe 应用中的 FLAC 专辑导入和音频 CD 刻录界面"
+          }
+        }
+      ]
+    },
+    {
+      "id": "zenithtick",
+      "title": {
+        "en": "ZenithTick",
+        "zh": "ZenithTick"
+      },
+      "description": {
+        "en": "A GNSS and PPS timing dashboard for my Raspberry Pi. Shows satellite reception, chrony status, and clock estimates from the Pi in a browser on the local network.",
+        "zh": "给树莓派做的 GNSS 和 PPS 授时仪表盘。在局域网浏览器里查看卫星接收情况、chrony 状态，以及基于树莓派时间的时钟估算。"
+      },
+      "url": "https://github.com/leodenglovescode/ZenithTick",
+      "linkLabel": {
+        "en": "github",
+        "zh": "GitHub"
+      },
+      "tags": [
+        "python",
+        "flask",
+        "raspberry-pi",
+        "gnss",
+        "chrony"
+      ],
+      "images": [
+        {
+          "url": "https://media.leodeng.dev/project-zenithtick-dashboard-8798c486fdc9.webp",
+          "objectName": "project-zenithtick-dashboard-8798c486fdc9.webp",
+          "alt": {
+            "en": "ZenithTick satellite and timing dashboard",
+            "zh": "ZenithTick 卫星与授时仪表盘"
+          }
+        }
+      ]
+    },
+    {
       "id": "llmgps",
       "title": {
         "en": "llmgps",
