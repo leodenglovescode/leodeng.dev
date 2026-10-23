@@ -48,7 +48,7 @@ const pristine = ref('')
 
 /* ---------- local recovery ---------- */
 
-// Everything above commits to GitHub, which means unsaved work only exists in
+// Unsaved work only exists in
 // this tab. A crash, a stray back gesture or a mis-clicked "leave anyway" used
 // to take it with them. The editor buffer is mirrored into localStorage on a
 // debounce and offered back on the next visit.
@@ -314,7 +314,7 @@ async function loadDir(dir) {
 
   const loaded = await Promise.all(
     markdown.map(async (entry) => {
-      const file = await getFile(`${dir}/${entry.name}`)
+      const file = entry.text !== undefined ? {text:entry.text,sha:entry.sha} : await getFile(`${dir}/${entry.name}`)
       const { meta, content } = parseFrontmatter(file?.text || '')
       return {
         dir,
@@ -546,11 +546,8 @@ function commitMessage(d, targetDir) {
   return `${d.dir ? 'content: update' : 'content: add'} post "${title}"`
 }
 
-/**
- * Writes the form to `targetDir`. Moving between directories (publishing a
- * draft, renaming a post) is a create followed by a delete — the GitHub
- * contents API has no move — so it lands as two commits.
- */
+// Production moves and publication happen atomically in D1. Local development
+// retains the file-based editor and its existing create/delete behavior.
 async function saveTo(targetDir) {
   if (saving.value) return false
 
@@ -573,11 +570,12 @@ async function saveTo(targetDir) {
       path: `${targetDir}/${d.slug}.md`,
       base64: encodeBase64(buildMarkdown(d)),
       message: commitMessage(d, targetDir),
-      // A move writes a brand new file, so it must not carry the old sha.
-      sha: moved ? undefined : d.sha || undefined,
+      // Local moves create a new file; D1 moves keep the expected revision.
+      sha: moved && localAdmin.value ? undefined : d.sha || undefined,
+      originalPath: !localAdmin.value && from ? `${from.dir}/${from.slug}.md` : undefined,
     })
 
-    if (from) {
+    if (from && localAdmin.value) {
       await deleteFile({
         path: `${from.dir}/${from.slug}.md`,
         sha: from.sha,
@@ -592,15 +590,15 @@ async function saveTo(targetDir) {
     d.originalSlug = d.slug
     pristine.value = snapshot(d)
     notice.value = targetDir === DRAFTS_DIR
-      ? 'Draft saved. It stays out of the build until you publish it.'
-      : localAdmin.value ? 'Saved to src/posts locally. Commit and push to publish online.' : 'Published. Cloudflare Pages will rebuild in a minute or two.'
+      ? 'Draft saved. Only you can access it until it is published.'
+      : localAdmin.value ? 'Saved locally. Use the live editor to publish online.' : 'Published. The post is live.'
     await loadPosts()
     return true
   } catch (err) {
     // 409 means the file moved under us: someone (or a git push) changed it
     // after this editor loaded its sha.
     if (err.status === 409) {
-      error.value = 'This post changed in the repo since you opened it. Reload the list and reapply your edit.'
+      error.value = 'This post changed since you opened it. Reload the list and reapply your edit.'
     } else {
       handleAuthError(err)
     }
@@ -687,7 +685,7 @@ async function saveNowEvent() {
 
 /** Publishes straight from the list, reusing the editor's validation. */
 async function publishDraft(item) {
-  if (!confirm(`Publish "${item.title}"? ${localAdmin.value ? 'This moves it into src/posts locally.' : 'This commits it to main and rebuilds the site.'}`)) return
+  if (!confirm(`Publish "${item.title}"? ${localAdmin.value ? 'This moves it into src/posts locally.' : 'This publishes it immediately.'}`)) return
   editPost(item)
   if (await saveTo(POSTS_DIR)) {
     form.value = null
@@ -700,7 +698,7 @@ async function publishDraft(item) {
 async function removePost(post) {
   if (!post) return false
   const noun = post.dir === DRAFTS_DIR ? 'draft' : 'post'
-  if (!confirm(`Delete "${post.title}"? ${localAdmin.value ? 'This deletes the local file.' : 'This commits the deletion to main.'}`)) return false
+  if (!confirm(`Delete "${post.title}"? ${localAdmin.value ? 'This deletes the local file.' : 'This removes it from the site. Earlier revisions are retained.'}`)) return false
   error.value = ''
   try {
     await deleteFile({
@@ -1123,12 +1121,8 @@ function displayDate(iso) {
             on this computer. Publishing a draft moves it into <code class="font-mono">{{ POSTS_DIR }}</code> locally.
           </p>
           <p v-else class="text-xs text-muted/90">
-            Publishing commits <code class="font-mono">{{ POSTS_DIR }}/{{ form.slug || 'slug' }}.md</code> to
-            <code class="font-mono">main</code>.
-            <template v-if="!isPublished">
-              Saving a draft commits <code class="font-mono">{{ DRAFTS_DIR }}/{{ form.slug || 'slug' }}.md</code>
-              instead, which the build ignores.
-            </template>
+            Publishing saves directly to the live site. Earlier revisions are retained.
+            <template v-if="!isPublished">Drafts stay private until you publish them.</template>
           </p>
           <button
             v-if="form.originalSlug"

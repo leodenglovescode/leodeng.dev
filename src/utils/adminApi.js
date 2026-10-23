@@ -62,6 +62,9 @@ async function request(path, { method = 'GET', body } = {}) {
   return payload
 }
 
+const databaseContent = path => path === 'src/content/shelf.json' || /^src\/(posts|drafts)(?:\/|$)/.test(path)
+const databaseUrl = path => '/api/content/file?' + new URLSearchParams({path})
+
 function contentsUrl(path) {
   if (!repo) throw new ApiError('Not signed in.', 401)
   const encoded = path.split('/').map(encodeURIComponent).join('/')
@@ -91,7 +94,7 @@ export async function logout() {
 /** Directory listing. A directory that doesn't exist yet reads as empty. */
 export async function listDir(path) {
   try {
-    const entries = await request(`${contentsUrl(path)}?ref=main`)
+    const entries = await request(!localAdmin.value && databaseContent(path) ? '/api/content/list?' + new URLSearchParams({dir:path}) : `${contentsUrl(path)}?ref=main`)
     return Array.isArray(entries) ? entries : []
   } catch (err) {
     if (err.status === 404) return []
@@ -102,6 +105,7 @@ export async function listDir(path) {
 /** Returns `{ text, sha }`, or null if the file isn't there. */
 export async function getFile(path) {
   try {
+    if (!localAdmin.value && databaseContent(path)) return await request(databaseUrl(path))
     const file = await request(`${contentsUrl(path)}?ref=main`)
     return { text: decodeBase64(file.content || ''), sha: file.sha }
   } catch (err) {
@@ -111,7 +115,8 @@ export async function getFile(path) {
 }
 
 /** Create or update a file. Pass `sha` when replacing an existing one. */
-export function putFile({ path, base64, message, sha }) {
+export function putFile({ path, base64, message, sha, originalPath }) {
+  if (!localAdmin.value && databaseContent(path)) return request(databaseUrl(path), {method:'PUT',body:{text:decodeBase64(base64),sha,originalPath}})
   return request(contentsUrl(path), {
     method: 'PUT',
     body: { message, content: base64, branch: 'main', ...(sha ? { sha } : {}) },
@@ -119,6 +124,7 @@ export function putFile({ path, base64, message, sha }) {
 }
 
 export function deleteFile({ path, sha, message }) {
+  if (!localAdmin.value && databaseContent(path)) return request(databaseUrl(path), {method:'DELETE',body:{sha}})
   return request(contentsUrl(path), {
     method: 'DELETE',
     body: { message, sha, branch: 'main' },

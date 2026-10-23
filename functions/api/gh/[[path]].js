@@ -58,6 +58,7 @@ export async function onRequest(context) {
   }
 
   const target = contentPath(ghPath, slug) ?? ''
+  if (target === 'src/content/shelf.json' || READABLE_PREFIXES.some(prefix => target === prefix || target.startsWith(prefix + '/'))) return json({error:'Posts and shelf entries have moved to the content API.'},410,{'Cache-Control':'no-store'})
   const allowed = isWrite
     ? CONTENT_FILES.has(target) || WRITABLE_PREFIXES.some((p) => target.startsWith(p))
     : CONTENT_FILES.has(target)

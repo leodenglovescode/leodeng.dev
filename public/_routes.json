@@ -9,8 +9,6 @@
     "/favicon*",
     "/apple-touch-icon.png",
     "/leo_profilepic.webp",
-    "/rss.xml",
-    "/sitemap.xml",
     "/robots.txt"
   ]
 }

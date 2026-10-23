@@ -1,3 +1,5 @@
+import { refreshPosts } from './utils/posts.js'
+import { refreshShelf } from './utils/shelfContent.js'
 import { createApp, createSSRApp, watch } from 'vue'
 import router from './router/index.js'
 import './style.css'
@@ -62,7 +64,8 @@ watch(locale, () => updateMeta(router.currentRoute.value))
 
 async function mount() {
   const container = document.querySelector('#app')
-  const factory = container?.hasChildNodes() ? createSSRApp : createApp
+  await Promise.all([refreshPosts(), refreshShelf()])
+  const factory = container?.hasChildNodes() && !document.documentElement.hasAttribute('data-live-content') ? createSSRApp : createApp
   const app = factory(App).use(router)
   await router.isReady()
   app.mount(container)

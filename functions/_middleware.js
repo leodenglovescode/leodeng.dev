@@ -1,8 +1,9 @@
+import { liveContentPage } from '../lib/content-pages.js'
 import { LEGACY_ORIGIN, LEGACY_PREFIX, MODERN_ORIGIN, cleanLegacyPath, isDocumentRequest, isLegacyBrowser, modernLink, prefersModern } from '../lib/legacy.js'
 import { onRequest as galleryImage } from './gallery-media/[[path]].js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
 
-const PUBLIC_APIS = new Set(['/api/now', '/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music', '/api/stats/music-artwork'])
+const PUBLIC_APIS = new Set(['/api/now', '/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music', '/api/stats/music-artwork', '/api/content/public/posts', '/api/content/public/shelf'])
 
 function redirect(location) {
   return new Response(null, { status: 302, headers: { Location: location, 'Cache-Control': 'no-store', Vary: 'User-Agent, Cookie' } })
@@ -17,7 +18,7 @@ export async function onRequest(context) {
     // Opt in only once the custom domain and its certificate are ready.
     if (url.origin === MODERN_ORIGIN && isDocumentRequest(request)) {
       if (url.searchParams.get('view') === 'modern') {
-        const original = await context.next()
+        const original = await liveContentPage(context) || await context.next()
         const response = new Response(original.body, original)
         response.headers.append('Set-Cookie', 'site_view=modern; Path=/; Max-Age=2592000; Secure; HttpOnly; SameSite=Lax')
         response.headers.set('Cache-Control', 'no-store')
@@ -32,7 +33,8 @@ export async function onRequest(context) {
         return redirect(destination.href)
       }
     }
-    return context.next()
+    const live = await liveContentPage(context)
+    return live || context.next()
   }
 
   const pathname = cleanLegacyPath(url.pathname)
@@ -68,6 +70,13 @@ export async function onRequest(context) {
     return redirect(destination.href)
   }
 
+  const live = await liveContentPage(context,{classic:true,path:pathname})
+  if(live) {
+    const response=new Response(live.body,live)
+    response.headers.set('X-Legacy-Site','true')
+    response.headers.set('Content-Security-Policy', "default-src 'none'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://lrclib.net https://api.github.com; media-src https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
+    return response
+  }
   const asset = new URL(request.url)
   asset.search = ''
   const isAsset = pathname.startsWith('/_assets/')

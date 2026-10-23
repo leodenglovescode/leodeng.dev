@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AiAuthorship from '../components/AiAuthorship.vue'
-import { getPost, getAllPosts } from '../utils/posts.js'
+import { getPost, getAllPosts, refreshPosts } from '../utils/posts.js'
 import { applyMeta } from '../utils/useMeta.js'
 import { renderMermaid } from '../utils/mermaid.js'
 import { useLocale } from '../utils/i18n.js'
@@ -12,15 +12,15 @@ const router = useRouter()
 const { locale, t, localePath } = useLocale('blog-post')
 
 const post  = computed(() => getPost(route.params.slug))
-const posts = getAllPosts()
+const posts = computed(getAllPosts)
 
 const prev = computed(() => {
-  const i = posts.findIndex(p => p.slug === route.params.slug)
-  return i < posts.length - 1 ? posts[i + 1] : null
+  const i = posts.value.findIndex(p => p.slug === route.params.slug)
+  return i < posts.value.length - 1 ? posts.value[i + 1] : null
 })
 const next = computed(() => {
-  const i = posts.findIndex(p => p.slug === route.params.slug)
-  return i > 0 ? posts[i - 1] : null
+  const i = posts.value.findIndex(p => p.slug === route.params.slug)
+  return i > 0 ? posts.value[i - 1] : null
 })
 
 if (!post.value) router.replace(localePath('/blog'))
@@ -61,9 +61,10 @@ watch([post, locale], ([p]) => {
   if (p) applyMeta({ title: p.title, description: p.description })
 }, { immediate: true })
 
-watch(() => route.params.slug, () => enhanceContent())
+watch(post, () => enhanceContent())
 
 onMounted(() => {
+  refreshPosts()
   window.addEventListener('scroll', onScroll)
   enhanceContent()
 })
@@ -74,7 +75,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
+  <div data-content-blog>
     <!-- Scroll progress bar -->
     <div
       class="fixed top-14 left-0 h-0.5 bg-accent z-40 transition-none"

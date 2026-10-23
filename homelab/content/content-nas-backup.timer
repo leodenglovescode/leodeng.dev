@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily website backup at midnight Beijing time
+[Timer]
+OnCalendar=*-*-* 00:00:00 Asia/Shanghai
+Persistent=true
+Unit=content-nas-backup.service
+[Install]
+WantedBy=timers.target

@@ -37,7 +37,7 @@ const usesTvmaze = computed(() => items.value.some(item => {
 </script>
 
 <template>
-  <section class="pt-20 sm:pt-32 pb-20">
+  <section data-content-shelf class="pt-20 sm:pt-32 pb-20">
     <p class="text-xs font-mono text-muted uppercase tracking-widest mb-3">{{ t('eyebrow') }}</p>
     <h1 class="text-4xl sm:text-5xl font-semibold tracking-tight text-fg mb-4">{{ t('title') }}</h1>
     <p class="text-[15px] text-muted leading-relaxed max-w-lg">{{ t('intro') }}</p>

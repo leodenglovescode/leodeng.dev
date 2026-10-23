@@ -1,0 +1,16 @@
+[Unit]
+Description=Export website content and revisions to local Markdown
+Wants=network-online.target
+After=network-online.target
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/leodeng-content-export
+StateDirectory=leodeng-content
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadOnlyPaths=/etc/leodeng-content-backup

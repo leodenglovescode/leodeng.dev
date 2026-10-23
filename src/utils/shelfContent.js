@@ -10,3 +10,14 @@ if (import.meta.hot) {
     if (module) shelfContent.value = module.default
   })
 }
+
+export async function refreshShelf() {
+  if (typeof window === 'undefined' || import.meta.env.DEV) return
+  try {
+    const response = await fetch('/api/content/public/shelf', {cache:'no-store',signal:AbortSignal.timeout(5000)})
+    if (response.ok) {
+      const data = await response.json()
+      if (Array.isArray(data.items)) shelfContent.value = data
+    }
+  } catch { /* Static snapshot remains usable during an outage. */ }
+}

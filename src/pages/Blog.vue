@@ -1,12 +1,14 @@
 <script setup>
-import { getAllPosts } from '../utils/posts.js'
+import { computed, onMounted } from 'vue'
+import { refreshPosts, getAllPosts } from '../utils/posts.js'
 import { useLocale } from '../utils/i18n.js'
-const posts = getAllPosts()
+const posts = computed(getAllPosts)
+onMounted(refreshPosts)
 const { t, localePath } = useLocale('blog')
 </script>
 
 <template>
-  <section class="pt-20 sm:pt-32 pb-20">
+  <section data-content-blog class="pt-20 sm:pt-32 pb-20">
     <h2 class="text-s font-mono text-muted uppercase tracking-widest mb-2">{{ t('blog') }}</h2>
     <p class="text-xs font-mono text-muted/90 mb-10">{{ t('postsAreWrittenInEnglish') }}</p>
 

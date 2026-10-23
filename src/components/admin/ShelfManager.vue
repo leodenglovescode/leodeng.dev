@@ -152,7 +152,7 @@ async function commit(next, message) {
 }
 function report(err) {
   error.value = [409, 422].includes(err.status)
-    ? 'The shelf changed in the repository. Your edit is kept. Copy any unsaved changes, close the form, reload the shelf, then reapply them.'
+    ? 'The shelf changed since you opened it. Your edit is kept. Copy any unsaved changes, close the form, reload the shelf, then reapply them.'
     : err.status === 401 ? 'Your session expired. Your unsaved edit is kept on this device. Sign in again to save.' : err.message
 }
 async function save() {
@@ -175,7 +175,7 @@ async function save() {
       notice.value = `Added “${item.title.en}”. Ready for the next entry.`
     } else {
       form.value = null
-      notice.value = localAdmin.value ? 'Saved to the local shelf file.' : 'Saved. Cloudflare Pages will rebuild the shelf in a minute or two.'
+      notice.value = localAdmin.value ? 'Saved to the local shelf file.' : 'Saved. The shelf is live.'
     }
   } catch (err) { report(err) }
   finally { saving.value = false }
@@ -191,7 +191,7 @@ async function remove(item) {
   notice.value = ''
   try {
     await commit(items.value.filter(entry => entry.id !== item.id), `content: remove shelf item "${item.title.en}"`)
-    notice.value = localAdmin.value ? 'Removed from the local shelf file.' : 'Removed. The site will rebuild shortly.'
+    notice.value = localAdmin.value ? 'Removed from the local shelf file.' : 'Removed from the live shelf.'
   } catch (err) { report(err) }
   finally { saving.value = false }
 }

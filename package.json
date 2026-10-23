@@ -19,7 +19,8 @@
     "dev:admin": "npm run build:client && npx wrangler pages dev dist --port 8788 --r2 MEDIA",
     "photos:optimize": "node scripts/optimize-photos.js",
     "photos:rename": "node scripts/rename-photos.js",
-    "photos:rename:apply": "node scripts/rename-photos.js --apply"
+    "photos:rename:apply": "node scripts/rename-photos.js --apply",
+    "content:migrate": "node scripts/migrate-content.js"
   },
   "dependencies": {
     "@tresjs/cientos": "^5.9.2",

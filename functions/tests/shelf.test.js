@@ -51,7 +51,7 @@ function context(target = 'src/content/shelf.json', headers = { 'X-Admin': '1' }
   }
 }
 
-test('shelf admin grants only the exact content file and retains auth, CSRF and traversal checks', async t => {
+test('migrated shelf cannot be written through GitHub and retains auth, CSRF and traversal checks', async t => {
   const upstream = []
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (String(url) === 'https://api.github.com/user') return Response.json({ login: 'leodenglovescode' })
@@ -59,8 +59,8 @@ test('shelf admin grants only the exact content file and retains auth, CSRF and 
     assert.equal(options.headers.authorization, 'Bearer test-token')
     return Response.json({ content: { sha: 'saved-sha' } })
   })
-  assert.equal((await onRequest(context())).status, 200)
-  assert.equal(upstream.length, 1)
+  assert.equal((await onRequest(context())).status, 410)
+  assert.equal(upstream.length, 0)
   assert.equal((await onRequest(context('src/content/secret.json'))).status, 403)
   assert.equal((await onRequest(context('src/content/shelf.json/other'))).status, 403)
   assert.equal((await onRequest(context('src/content/../shelf.json'))).status, 400)
@@ -68,7 +68,7 @@ test('shelf admin grants only the exact content file and retains auth, CSRF and 
   const unsigned = context()
   unsigned.request.headers.delete('Cookie')
   assert.equal((await onRequest(unsigned)).status, 401)
-  assert.equal(upstream.length, 1)
+  assert.equal(upstream.length, 0)
 })
 
 test('album duplicate checks normalize IDs and URLs, distinguish entities, and allow same-name albums', () => {

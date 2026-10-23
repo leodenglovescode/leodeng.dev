@@ -1,0 +1,8 @@
+[Unit]
+Description=Keep local website Markdown copies current
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=5min
+Unit=content-export.service
+[Install]
+WantedBy=timers.target

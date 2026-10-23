@@ -16,12 +16,12 @@ const opened = ref(false)
 const shortcut = ref('Ctrl K')
 let previousFocus, previousOverflow
 const paths = ['/', '/about', '/projects', '/gallery', '/stack', '/blog', '/contact', '/now', '/shelf', '/stats', '/spotting', '/homelab', '/tokens', '/daily', '/ai', '/time', '/ip', '/terminal', '/changelog', '/interests', '/pgp', '/feed']
-const posts = getAllPosts()
+const posts = computed(getAllPosts)
 const entries = computed(() => [
   ...paths.map(path => ({ id: path, label: t(`pages.${path === '/' ? 'home' : path.slice(1)}`), kind: t('page'), hint: path, search: path, path })),
   { id: 'light', label: t('light'), kind: t('action'), hint: '☀', search: 'theme light', theme: false },
   { id: 'dark', label: t('dark'), kind: t('action'), hint: '☾', search: 'theme dark', theme: true },
-  ...posts.map(post => ({ id: `post:${post.slug}`, label: post.title, kind: t('post'), hint: post.displayDate, search: `${post.slug} ${post.description || ''}`, path: `/blog/${post.slug}` })),
+  ...posts.value.map(post => ({ id: `post:${post.slug}`, label: post.title, kind: t('post'), hint: post.displayDate, search: `${post.slug} ${post.description || ''}`, path: `/blog/${post.slug}` })),
 ])
 const results = computed(() => {
   const terms = query.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
