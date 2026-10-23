@@ -36,7 +36,7 @@ for relative,digest in json.loads((root/'sha256.json').read_text()).items():
 data=json.loads((root/'export.json').read_text())
 for row in data['revisions']:
     relative='shelf.json' if row['path']=='src/content/shelf.json' else row['path'].removeprefix('src/')
-    if (root/'revisions'/row['revision']/relative).read_text()!=row['raw']:
+    if (root/'revisions'/row['revision']/relative).read_bytes()!=row['raw'].encode('utf-8'):
         raise SystemExit('NAS revision verification failed')
 PY
 mv "$pending" "$complete"

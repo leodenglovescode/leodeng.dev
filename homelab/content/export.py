@@ -68,9 +68,9 @@ def save_export(data, destination):
         target = revisions / row['revision'] / relative
         target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         if target.exists():
-            if target.read_text() != row['raw']: raise ValueError('Revision content changed')
+            if target.read_bytes() != row['raw'].encode('utf-8'): raise ValueError('Revision content changed')
         else:
-            target.write_text(row['raw'])
+            target.write_bytes(row['raw'].encode('utf-8'))
             target.chmod(0o600)
     temporary = Path(tempfile.mkdtemp(prefix='.snapshot-', dir=root))
     try:
@@ -80,7 +80,7 @@ def save_export(data, destination):
             relative = relative_path(row['path'])
             target = temporary / relative
             target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-            target.write_text(row['raw'])
+            target.write_bytes(row['raw'].encode('utf-8'))
             target.chmod(0o600)
             hashes[str(relative)] = hashlib.sha256(row['raw'].encode()).hexdigest()
         (temporary / 'export.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
