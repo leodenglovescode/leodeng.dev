@@ -9,6 +9,7 @@ import GalleryManager from '../components/admin/GalleryManager.vue'
 import MediaManager from '../components/admin/MediaManager.vue'
 import ProjectManager from '../components/admin/ProjectManager.vue'
 import ShelfManager from '../components/admin/ShelfManager.vue'
+import StackManager from '../components/admin/StackManager.vue'
 import { localAdmin, deleteFile, getFile, getSession, listDir, logout, putFile, encodeBase64 } from '../utils/adminApi.js'
 import { parseFrontmatter } from '../utils/posts.js'
 
@@ -35,6 +36,8 @@ const notice = ref('')
 const saving = ref(false)
 const mediaOpen = ref(false)
 const editor = ref(null)
+const stackDirty = ref(false)
+const stackBusy = ref(false)
 const projectDirty = ref(false)
 const shelfDirty = ref(false)
 const galleryDirty = ref(false)
@@ -272,9 +275,9 @@ function warnIfDirty(event) {
 // Covers navigation that stays inside the SPA — the back gesture, the browser's
 // back button, any in-app link. beforeunload never fires for these.
 onBeforeRouteLeave(() => {
-  if (galleryBusy.value) return false
+  if (galleryBusy.value || stackBusy.value) return false
   if (!isDirty.value) return true
-  return confirm('You have unsaved changes. Leave the editor? They stay on this device and are offered back when you return.')
+  return confirm(stackDirty.value ? 'Discard unsaved stack changes and leave the editor?' : 'You have unsaved changes. Leave the editor? They stay on this device and are offered back when you return.')
 })
 
 function signIn() {
@@ -282,6 +285,7 @@ function signIn() {
 }
 
 async function signOut() {
+  if (stackBusy.value) return
   if (isDirty.value && !confirm('You have unsaved changes. Sign out anyway?')) return
   await logout()
   session.value = null
@@ -379,13 +383,14 @@ function snapshot(d) {
   return JSON.stringify([d.slug, d.title, d.description, d.date, d.body, d.aiAuthorship || '', d.aiReason || ''])
 }
 
-const isDirty = computed(() => projectDirty.value || shelfDirty.value || galleryDirty.value || (!!form.value && snapshot(form.value) !== pristine.value))
+const isDirty = computed(() => stackDirty.value || stackBusy.value || projectDirty.value || shelfDirty.value || galleryDirty.value || (!!form.value && snapshot(form.value) !== pristine.value))
 
 function selectTab(nextTab) {
-  if (nextTab === tab.value || galleryBusy.value) return
+  if (nextTab === tab.value || galleryBusy.value || stackBusy.value) return
   if (galleryDirty.value && !confirm('Leave unsaved gallery changes? Metadata can be restored from the Gallery tab.')) return
   if (projectDirty.value && !confirm('Discard unsaved project changes?')) return
   if (shelfDirty.value && !confirm('Leave unsaved shelf changes? They stay on this device and can be restored from the Shelf tab.')) return
+  if (stackDirty.value && !confirm('Discard unsaved stack changes?')) return
   tab.value = nextTab
 }
 
@@ -869,6 +874,7 @@ function displayDate(iso) {
                                 { key: 'now', label: 'Now', count: nowEvents.length },
                                 { key: 'projects', label: 'Projects', count: null },
                                 { key: 'shelf', label: 'Shelf', count: null },
+                                { key: 'stack', label: 'Stack', count: null },
                                 { key: 'gallery', label: 'Gallery', count: null },
                                 { key: 'daily-ai', label: 'Daily AI', count: null }]"
               :key="option.key"
@@ -886,13 +892,13 @@ function displayDate(iso) {
           <div class="ml-auto flex items-center gap-2">
             <button
               type="button"
-              v-if="!['now', 'projects', 'shelf', 'gallery', 'daily-ai'].includes(tab)"
+              v-if="!['now', 'projects', 'shelf', 'gallery', 'daily-ai', 'stack'].includes(tab)"
               class="h-9 px-3 rounded-md border border-fg/10 text-sm text-muted hover:text-fg hover:border-fg/20 transition-colors"
               @click="mediaOpen = true"
             >Media</button>
             <button
               type="button"
-              v-if="!['projects', 'shelf', 'gallery', 'daily-ai'].includes(tab)"
+              v-if="!['projects', 'shelf', 'gallery', 'daily-ai', 'stack'].includes(tab)"
               class="h-9 px-4 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110 transition-colors"
               @click="tab === 'now' ? newNowEvent() : newPost()"
             >{{ tab === 'now' ? 'New event' : 'New post' }}</button>
@@ -901,6 +907,7 @@ function displayDate(iso) {
 
         <DailyAiManager v-if="tab === 'daily-ai'" />
         <GalleryManager v-else-if="tab === 'gallery'" @dirty-change="galleryDirty = $event" @busy-change="galleryBusy = $event" />
+        <StackManager v-else-if="tab === 'stack'" @dirty-change="stackDirty = $event" @busy-change="stackBusy = $event" />
         <ShelfManager v-else-if="tab === 'shelf'" @dirty-change="shelfDirty = $event" />
         <ProjectManager v-else-if="tab === 'projects'" @dirty-change="projectDirty = $event" />
 

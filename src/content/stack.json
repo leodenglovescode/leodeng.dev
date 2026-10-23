@@ -1,0 +1,591 @@
+{
+  "hardware": [
+    {
+      "name": {
+        "en": "Watch",
+        "zh": "手表"
+      },
+      "model": "Apple Watch Series 11",
+      "icon": "watch",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": []
+    },
+    {
+      "name": {
+        "en": "Microphone",
+        "zh": "麦克风"
+      },
+      "model": "Audio-Technica AT2035",
+      "icon": "mic",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "Type",
+            "zh": "类型"
+          },
+          "value": {
+            "en": "Condenser",
+            "zh": "电容式"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Camera",
+        "zh": "相机"
+      },
+      "model": "Canon EOS R6 Mark II",
+      "icon": "camera",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "Lens",
+            "zh": "镜头"
+          },
+          "value": {
+            "en": "RF 70-200mm f/2.8",
+            "zh": "RF 70-200mm f/2.8"
+          }
+        },
+        {
+          "label": {
+            "en": "Lens",
+            "zh": "镜头"
+          },
+          "value": {
+            "en": "EF 24-105mm f/4",
+            "zh": "EF 24-105mm f/4"
+          }
+        },
+        {
+          "label": {
+            "en": "Adapter",
+            "zh": "转接环"
+          },
+          "value": {
+            "en": "RF-EF Connector Ring",
+            "zh": "RF-EF Connector Ring"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Phone",
+        "zh": "手机"
+      },
+      "model": "Google Pixel 9 Pro XL",
+      "icon": "phone",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "CPU",
+            "zh": "CPU"
+          },
+          "value": {
+            "en": "Google Tensor G4",
+            "zh": "Google Tensor G4"
+          }
+        },
+        {
+          "label": {
+            "en": "RAM",
+            "zh": "RAM"
+          },
+          "value": {
+            "en": "16GB",
+            "zh": "16GB"
+          }
+        },
+        {
+          "label": {
+            "en": "Storage",
+            "zh": "存储"
+          },
+          "value": {
+            "en": "256GB",
+            "zh": "256GB"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Laptop",
+        "zh": "笔记本电脑"
+      },
+      "model": "MacBook Pro (Mid-2015)",
+      "icon": "laptop",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "CPU",
+            "zh": "CPU"
+          },
+          "value": {
+            "en": "Intel Core i7-4870HQ",
+            "zh": "Intel Core i7-4870HQ"
+          }
+        },
+        {
+          "label": {
+            "en": "GPU",
+            "zh": "GPU"
+          },
+          "value": {
+            "en": "AMD Radeon R9 M370X / 2GB VRAM",
+            "zh": "AMD Radeon R9 M370X / 2GB VRAM"
+          }
+        },
+        {
+          "label": {
+            "en": "RAM",
+            "zh": "RAM"
+          },
+          "value": {
+            "en": "16GB",
+            "zh": "16GB"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Cyberdeck",
+        "zh": "便携终端"
+      },
+      "model": "ThinkPad E450c",
+      "icon": "laptop",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "CPU",
+            "zh": "CPU"
+          },
+          "value": {
+            "en": "Intel Core i5-4210",
+            "zh": "Intel Core i5-4210"
+          }
+        },
+        {
+          "label": {
+            "en": "GPU",
+            "zh": "GPU"
+          },
+          "value": {
+            "en": "AMD Radeon R9 M370X / 2GB VRAM",
+            "zh": "AMD Radeon R9 M370X / 2GB VRAM"
+          }
+        },
+        {
+          "label": {
+            "en": "RAM",
+            "zh": "RAM"
+          },
+          "value": {
+            "en": "12GB",
+            "zh": "12GB"
+          }
+        },
+        {
+          "label": {
+            "en": "Storage",
+            "zh": "存储"
+          },
+          "value": {
+            "en": "240GB",
+            "zh": "240GB"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Home Assistant Server",
+        "zh": "Home Assistant 服务器"
+      },
+      "model": "ThinkPad E450",
+      "icon": "laptop",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "CPU",
+            "zh": "CPU"
+          },
+          "value": {
+            "en": "Intel Core i5-5200U",
+            "zh": "Intel Core i5-5200U"
+          }
+        },
+        {
+          "label": {
+            "en": "GPU",
+            "zh": "GPU"
+          },
+          "value": {
+            "en": "Intel Integrated Graphics 5500",
+            "zh": "Intel Integrated Graphics 5500"
+          }
+        },
+        {
+          "label": {
+            "en": "RAM",
+            "zh": "RAM"
+          },
+          "value": {
+            "en": "8GB",
+            "zh": "8GB"
+          }
+        },
+        {
+          "label": {
+            "en": "Storage",
+            "zh": "存储"
+          },
+          "value": {
+            "en": "240GB",
+            "zh": "240GB"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Raspberry Pi Server (Watchdog)",
+        "zh": "Raspberry Pi 服务器（看门狗）"
+      },
+      "model": "Raspberry Pi 4 Model B",
+      "icon": "laptop",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "CPU",
+            "zh": "CPU"
+          },
+          "value": {
+            "en": "Broadcom BCM2711",
+            "zh": "Broadcom BCM2711"
+          }
+        },
+        {
+          "label": {
+            "en": "GPU",
+            "zh": "GPU"
+          },
+          "value": {
+            "en": "Broadcom VideoCore VI",
+            "zh": "Broadcom VideoCore VI"
+          }
+        },
+        {
+          "label": {
+            "en": "RAM",
+            "zh": "RAM"
+          },
+          "value": {
+            "en": "2GB",
+            "zh": "2GB"
+          }
+        },
+        {
+          "label": {
+            "en": "Storage",
+            "zh": "存储"
+          },
+          "value": {
+            "en": "32GB",
+            "zh": "32GB"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Desktop",
+        "zh": "台式电脑"
+      },
+      "model": "Custom Built PC",
+      "icon": "desktop",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "CPU",
+            "zh": "CPU"
+          },
+          "value": {
+            "en": "Intel Core i7-14700K",
+            "zh": "Intel Core i7-14700K"
+          }
+        },
+        {
+          "label": {
+            "en": "GPU",
+            "zh": "GPU"
+          },
+          "value": {
+            "en": "NVIDIA GeForce RTX 4070 SUPER · 12GB VRAM",
+            "zh": "NVIDIA GeForce RTX 4070 SUPER · 12GB VRAM"
+          }
+        },
+        {
+          "label": {
+            "en": "RAM",
+            "zh": "RAM"
+          },
+          "value": {
+            "en": "32GB Kingston HyperX DDR5 (2x16GB)",
+            "zh": "32GB Kingston HyperX DDR5 (2x16GB)"
+          }
+        },
+        {
+          "label": {
+            "en": "Storage",
+            "zh": "存储"
+          },
+          "value": {
+            "en": "1TB Kingston KC3000 M.2 + 2TB WD M.2",
+            "zh": "1TB Kingston KC3000 M.2 + 2TB WD M.2"
+          }
+        },
+        {
+          "label": {
+            "en": "Cooling",
+            "zh": "散热"
+          },
+          "value": {
+            "en": "Thermalright 360mm AIO",
+            "zh": "Thermalright 360mm AIO"
+          }
+        }
+      ]
+    }
+  ],
+  "software": [
+    {
+      "name": {
+        "en": "Operating Systems",
+        "zh": "操作系统"
+      },
+      "icon": "layers",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "Desktop PC",
+            "zh": "台式电脑"
+          },
+          "value": {
+            "en": "Windows 11",
+            "zh": "Windows 11"
+          }
+        },
+        {
+          "label": {
+            "en": "Main Server",
+            "zh": "主服务器"
+          },
+          "value": {
+            "en": "Ubuntu 24.04 LTS",
+            "zh": "Ubuntu 24.04 LTS"
+          }
+        },
+        {
+          "label": {
+            "en": "Raspberry Pi Watchdog",
+            "zh": "Raspberry Pi 看门狗"
+          },
+          "value": {
+            "en": "Raspberry Pi OS Lite",
+            "zh": "Raspberry Pi OS Lite"
+          }
+        },
+        {
+          "label": {
+            "en": "Cyberdeck",
+            "zh": "便携终端"
+          },
+          "value": {
+            "en": "Kali Linux + KDE",
+            "zh": "Kali Linux + KDE"
+          }
+        },
+        {
+          "label": {
+            "en": "Home Assistant Server",
+            "zh": "Home Assistant 服务器"
+          },
+          "value": {
+            "en": "Home Assistant OS",
+            "zh": "Home Assistant OS"
+          }
+        },
+        {
+          "label": {
+            "en": "Mac",
+            "zh": "Mac"
+          },
+          "value": {
+            "en": "macOS Sequoia (15) via OCLP",
+            "zh": "macOS Sequoia (15) via OCLP"
+          }
+        },
+        {
+          "label": {
+            "en": "Phone",
+            "zh": "手机"
+          },
+          "value": {
+            "en": "Android 16",
+            "zh": "Android 16"
+          }
+        }
+      ],
+      "tags": []
+    },
+    {
+      "name": {
+        "en": "Coding",
+        "zh": "编程"
+      },
+      "icon": "code",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "IDE",
+            "zh": "IDE"
+          },
+          "value": {
+            "en": "Visual Studio Code",
+            "zh": "Visual Studio Code"
+          }
+        },
+        {
+          "label": {
+            "en": "Terminal Editor",
+            "zh": "终端编辑器"
+          },
+          "value": {
+            "en": "Nano",
+            "zh": "Nano"
+          }
+        }
+      ],
+      "tags": []
+    },
+    {
+      "name": {
+        "en": "Backend",
+        "zh": "后端"
+      },
+      "icon": "cpu",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [],
+      "tags": [
+        "Node.js",
+        "Python (FastAPI)"
+      ]
+    },
+    {
+      "name": {
+        "en": "Databases",
+        "zh": "数据库"
+      },
+      "icon": "database",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [],
+      "tags": [
+        "PostgreSQL",
+        "MySQL"
+      ]
+    },
+    {
+      "name": {
+        "en": "Browsers",
+        "zh": "浏览器"
+      },
+      "icon": "globe",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [],
+      "tags": [
+        "Chrome",
+        "Firefox"
+      ]
+    },
+    {
+      "name": {
+        "en": "Services",
+        "zh": "服务"
+      },
+      "icon": "cloud",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "Cloudflare",
+            "zh": "Cloudflare"
+          },
+          "value": {
+            "en": "Static hosting for leodeng.dev",
+            "zh": "为 leodeng.dev 提供静态托管"
+          }
+        }
+      ],
+      "tags": []
+    }
+  ]
+}

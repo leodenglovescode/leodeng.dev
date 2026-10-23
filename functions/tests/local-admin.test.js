@@ -123,3 +123,20 @@ test('local gallery metadata is validated and uses revision checks', async t => 
   assert.equal((await request(target, { method: 'PUT', body: { content: content(JSON.stringify(gallery)), sha: read.body.sha } })).status, 400)
   assert.equal((await request(target, { method: 'DELETE', body: { sha: read.body.sha } })).status, 405)
 })
+
+test('local stack edits round-trip with validation, conflict detection and deletion protection', async t => {
+  const { root, request, file, content } = await fixture(t)
+  const target = file('src/content/stack.json')
+  const stack = JSON.parse(await readFile(new URL('../../src/content/stack.json', import.meta.url), 'utf8'))
+  assert.equal((await request(target, { method: 'PUT', body: { content: content(JSON.stringify(stack)) } })).status, 201)
+  const current = (await request(target)).body
+  stack.hardware[0].description = { en: 'My daily watch.', zh: '日常佩戴的手表。' }
+  const body = { sha: current.sha, content: content(JSON.stringify(stack)) }
+  assert.equal((await request(target, { method: 'PUT', body })).status, 200)
+  assert.equal((await request(target, { method: 'PUT', body })).status, 409)
+  const updated = (await request(target)).body
+  assert.deepEqual(JSON.parse(Buffer.from(updated.content, 'base64')), stack)
+  assert.equal((await request(target, { method: 'DELETE', body: { sha: updated.sha } })).status, 405)
+  assert.equal((await request(target, { method: 'PUT', body: { sha: updated.sha, content: content('{}') } })).status, 400)
+  assert.deepEqual(JSON.parse(await readFile(path.join(root, 'src/content/stack.json'), 'utf8')), stack)
+})

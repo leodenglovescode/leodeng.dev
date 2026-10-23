@@ -1,4 +1,5 @@
 // Vite development middleware only. Never import this from src/ or functions/.
+import { STACK_PATH, validateStack } from '../lib/stack-validation.js'
 import { GALLERY_PATH, validateGalleryManifest } from '../lib/gallery-validation.js'
 import { createHash, randomUUID } from 'node:crypto'
 import { lstat, mkdir, readFile, readdir, realpath, rename, unlink, writeFile } from 'node:fs/promises'
@@ -9,7 +10,7 @@ import { EnvHttpProxyAgent, fetch as nodeFetch } from 'undici'
 import { createShelfCatalogSearch, searchShelfCatalog } from '../lib/shelf-search.js'
 
 const REPO = 'local/workspace'
-const CONTENT = new Set([GALLERY_PATH, 'src/content/now.json', 'src/content/projects.json', 'src/content/shelf.json'])
+const CONTENT = new Set([GALLERY_PATH, 'src/content/now.json', 'src/content/projects.json', 'src/content/shelf.json', STACK_PATH])
 const POST = /^src\/(posts|drafts)\/[a-zA-Z0-9][a-zA-Z0-9._-]*\.md$/
 const MEDIA = /^[a-z0-9][a-z0-9._-]{0,127}$/
 
@@ -131,6 +132,7 @@ export async function createLocalAdminMiddleware(projectRoot, { media = createR2
         const current = await optionalRead(file)
         if (current ? data.sha !== sha(current) : !!data.sha) throw fail(409, 'The local file changed. Reload before saving.')
         if (target === GALLERY_PATH && req.method === 'DELETE') throw fail(405, 'The gallery manifest cannot be deleted.')
+        if (target === STACK_PATH && req.method === 'DELETE') throw fail(405, 'The stack file cannot be deleted.')
         if (req.method === 'DELETE') {
           if (!current) throw fail(404, 'File not found.')
           await unlink(file)
@@ -142,6 +144,9 @@ export async function createLocalAdminMiddleware(projectRoot, { media = createR2
         }
         if (target === GALLERY_PATH) {
           try { validateGalleryManifest(JSON.parse(bytes.toString('utf8'))) } catch (error) { throw fail(400, error.message) }
+        }
+        if (target === STACK_PATH) {
+          try { validateStack(JSON.parse(bytes.toString('utf8'))) } catch (error) { throw fail(400, error.message) }
         }
         await atomicWrite(file, bytes)
         return json(res, { content: { path: target, sha: sha(bytes) } }, current ? 200 : 201)

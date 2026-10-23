@@ -9,6 +9,7 @@
 //      page can't rewrite build config or workflows.
 //   2. Writes require an `X-Admin` header. A cross-site form can't set custom
 //      headers without a CORS preflight, which this endpoint never approves.
+import { STACK_PATH, validateStack } from '../../../lib/stack-validation.js'
 import { GALLERY_PATH, validateGalleryManifest } from '../../../lib/gallery-validation.js'
 import { json, repoSlug, requireSession, USER_AGENT } from '../../../lib/auth.js'
 
@@ -18,7 +19,7 @@ const WRITABLE_PREFIXES = ['src/posts/', 'src/drafts/']
 const READABLE_PREFIXES = ['src/posts', 'src/drafts']
 // Structured site content is build-time JSON, so grant exact files rather
 // than the whole directory.
-const CONTENT_FILES = new Set([GALLERY_PATH, 'src/content/now.json', 'src/content/projects.json', 'src/content/shelf.json'])
+const CONTENT_FILES = new Set([GALLERY_PATH, 'src/content/now.json', 'src/content/projects.json', 'src/content/shelf.json', STACK_PATH])
 
 function decodePath(params) {
   const parts = Array.isArray(params.path) ? params.path : [params.path]
@@ -79,6 +80,15 @@ export async function onRequest(context) {
       const bytes = Uint8Array.from(atob(incoming.content), c => c.charCodeAt(0))
       validateGalleryManifest(JSON.parse(new TextDecoder().decode(bytes)))
     } catch (error) { return json({ error: error.message || 'Invalid gallery content.' }, 400) }
+  }
+  if (target === STACK_PATH && isWrite) {
+    if (method !== 'PUT') return json({ error: 'The stack file cannot be deleted.' }, 405)
+    try {
+      const incoming = JSON.parse(body)
+      if (typeof incoming.content !== 'string' || incoming.content.length > 4 * 1024 * 1024) throw new Error('Invalid stack content.')
+      const bytes = Uint8Array.from(atob(incoming.content), c => c.charCodeAt(0))
+      validateStack(JSON.parse(new TextDecoder().decode(bytes)))
+    } catch (error) { return json({ error: error.message || 'Invalid stack content.' }, 400) }
   }
   const upstream = await fetch(url, {
     method,
