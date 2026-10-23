@@ -62,3 +62,8 @@ now-playing-agent/.cache/
 # Python bytecode and local listening databases
 __pycache__/
 *.pyc
+
+# Keep private admin operating guides out of this public repository.
+/docs/gallery-admin.md
+/docs/shelf.md
+/docs/private/
