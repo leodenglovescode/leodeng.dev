@@ -37,7 +37,8 @@
   "sections": "Stack sections",
   "computers": "Computers & devices",
   "gear": "Camera, audio & everyday gear",
-  "computersDescription": "The machines I use, with their specs in one place.",
+  "computersDescription": "The machines I use. Open the specs for a closer look.",
   "gearDescription": "The rest of my setup, with the details that matter for each piece.",
-  "softwareDescription": "Operating systems, development tools and services."
+  "softwareDescription": "Operating systems, development tools and services.",
+  "specs": "Specs"
 }

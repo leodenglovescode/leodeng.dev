@@ -40,12 +40,17 @@ const software = stack.software
             <h3 class="font-semibold text-fg leading-snug">{{ device.model }}</h3>
             <p v-if="label(device.description)" class="text-sm text-muted leading-relaxed mt-2">{{ label(device.description) }}</p>
           </header>
-          <dl v-if="device.rows.length" class="details-list">
-            <div v-for="(row, rowIndex) in device.rows" :key="rowIndex" class="detail-row">
-              <dt>{{ label(row.label) }}</dt>
-              <dd>{{ label(row.value) }}</dd>
-            </div>
-          </dl>
+          <details v-if="device.rows.length" class="device-specs">
+            <summary :aria-label="`${device.model}: ${t('specs')} · ${device.rows.length}`">
+              {{ t('specs') }} <span class="text-muted/70 font-mono text-xs">· {{ device.rows.length }}</span>
+            </summary>
+            <dl class="details-list mt-3">
+              <div v-for="(row, rowIndex) in device.rows" :key="rowIndex" class="detail-row">
+                <dt>{{ label(row.label) }}</dt>
+                <dd>{{ label(row.value) }}</dd>
+              </div>
+            </dl>
+          </details>
         </article>
       </div>
     </section>
@@ -55,7 +60,7 @@ const software = stack.software
         <h2 id="gear-title">{{ t('gear') }}</h2>
         <p>{{ t('gearDescription') }}</p>
       </div>
-      <div class="grid sm:grid-cols-2 gap-4">
+      <div class="grid sm:grid-cols-2 gap-4 items-start">
         <article v-for="(device, index) in gear" :key="index" class="stack-card">
           <header class="mb-4">
             <div class="flex items-center gap-2 text-accent mb-2">
@@ -65,12 +70,17 @@ const software = stack.software
             <h3 class="font-semibold text-fg leading-snug">{{ device.model }}</h3>
           </header>
           <p v-if="label(device.description)" class="text-sm text-muted leading-relaxed mb-4">{{ label(device.description) }}</p>
-          <dl v-if="device.rows.length" class="details-list">
-            <div v-for="(row, rowIndex) in device.rows" :key="rowIndex" class="detail-row">
-              <dt>{{ label(row.label) }}</dt>
-              <dd>{{ label(row.value) }}</dd>
-            </div>
-          </dl>
+          <details v-if="device.rows.length" class="device-specs">
+            <summary :aria-label="`${device.model}: ${t('specs')} · ${device.rows.length}`">
+              {{ t('specs') }} <span class="text-muted/70 font-mono text-xs">· {{ device.rows.length }}</span>
+            </summary>
+            <dl class="details-list mt-3">
+              <div v-for="(row, rowIndex) in device.rows" :key="rowIndex" class="detail-row">
+                <dt>{{ label(row.label) }}</dt>
+                <dd>{{ label(row.value) }}</dd>
+              </div>
+            </dl>
+          </details>
         </article>
       </div>
     </section>
@@ -109,7 +119,13 @@ const software = stack.software
 .section-heading { @apply mb-5; }
 .section-heading h2 { @apply text-lg font-semibold text-fg tracking-tight; }
 .section-heading p { @apply text-sm text-muted leading-relaxed mt-1; }
-.device-row { @apply grid gap-5 py-6 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-8; }
+.device-row { @apply grid gap-3 py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-8; }
+.device-specs { @apply min-w-0; }
+.device-specs summary { @apply flex items-center gap-2 min-h-11 w-fit cursor-pointer rounded-sm text-sm text-muted hover:text-accent; list-style: none; }
+.device-specs summary::-webkit-details-marker { display: none; }
+.device-specs summary::before { content: ''; width: 0.4rem; height: 0.4rem; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); margin-right: 0.25rem; }
+.device-specs[open] summary::before { transform: rotate(45deg); }
+.device-specs summary:focus-visible { @apply outline-2 outline-accent outline-offset-4; }
 .stack-card { @apply min-w-0 rounded-lg border border-fg/10 p-5; }
 .details-list { @apply min-w-0 space-y-2.5; }
 .detail-row { @apply grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm leading-relaxed; }
