@@ -102,6 +102,8 @@ test('renderers preserve classic styling, escaped metadata, Markdown, diagrams a
   assert.match(contentRss(posts),/中文 &amp; test/)
   const diagram=publishedPosts([{path:post,raw:markdown()+'\n```mermaid\ngraph TD\nA-->B\n```'}])
   assert.match(blogHtml(diagram,'hello',{classic:true}),/<svg/)
+  const image=publishedPosts([{path:post,raw:markdown()+'\n![Existing image](https://media.leodeng.dev/csgo-ct-funny.webp)'}])
+  assert.match(blogHtml(image,'hello',{classic:true}),/src="\/_assets\/media\/[a-f0-9]{64}\.jpg"/)
   assert(!classicShelf({items:[]}).includes('<script'))
 })
 
