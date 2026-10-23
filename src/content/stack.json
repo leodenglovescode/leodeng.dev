@@ -135,6 +135,174 @@
     },
     {
       "name": {
+        "en": "Printer",
+        "zh": "打印机"
+      },
+      "model": "Epson L8180",
+      "icon": "printer",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [],
+      "group": "gear"
+    },
+    {
+      "name": {
+        "en": "VR headset",
+        "zh": "VR 头显"
+      },
+      "model": "Oculus Quest (1st generation)",
+      "icon": "vr",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [],
+      "group": "gear"
+    },
+    {
+      "name": {
+        "en": "Router",
+        "zh": "路由器"
+      },
+      "model": "Xiaomi AX3000T",
+      "icon": "router",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "CPU",
+            "zh": "CPU"
+          },
+          "value": {
+            "en": "Dual-core · 1.3GHz",
+            "zh": "双核 · 1.3GHz"
+          }
+        },
+        {
+          "label": {
+            "en": "RAM",
+            "zh": "RAM"
+          },
+          "value": {
+            "en": "256MB",
+            "zh": "256MB"
+          }
+        },
+        {
+          "label": {
+            "en": "Flash",
+            "zh": "闪存"
+          },
+          "value": {
+            "en": "128MB NAND",
+            "zh": "128MB NAND"
+          }
+        },
+        {
+          "label": {
+            "en": "Ethernet",
+            "zh": "网口"
+          },
+          "value": {
+            "en": "4 × 1GbE WAN/LAN",
+            "zh": "4 × 1GbE WAN/LAN"
+          }
+        },
+        {
+          "label": {
+            "en": "Wi-Fi",
+            "zh": "Wi-Fi"
+          },
+          "value": {
+            "en": "Wi-Fi 6 · 2.4GHz + 5GHz · 2×2",
+            "zh": "Wi-Fi 6 · 2.4GHz + 5GHz · 2×2"
+          }
+        },
+        {
+          "label": {
+            "en": "PHY rates",
+            "zh": "理论速率"
+          },
+          "value": {
+            "en": "574 + 2402Mbps (theoretical)",
+            "zh": "574 + 2402Mbps（理论值）"
+          }
+        },
+        {
+          "label": {
+            "en": "Firmware",
+            "zh": "固件"
+          },
+          "value": {
+            "en": "OpenWrt",
+            "zh": "OpenWrt"
+          }
+        }
+      ],
+      "group": "gear"
+    },
+    {
+      "name": {
+        "en": "Wi-Fi bridge",
+        "zh": "Wi-Fi 网桥"
+      },
+      "model": "Huawei BE3 Pro",
+      "icon": "router",
+      "description": {
+        "en": "Handles Wi-Fi-only traffic.",
+        "zh": "仅处理 Wi-Fi 流量。"
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "Version",
+            "zh": "版本"
+          },
+          "value": {
+            "en": "Gigabit Ethernet version",
+            "zh": "千兆网口版"
+          }
+        },
+        {
+          "label": {
+            "en": "Ethernet",
+            "zh": "网口"
+          },
+          "value": {
+            "en": "4 × 1GbE WAN/LAN",
+            "zh": "4 × 1GbE WAN/LAN"
+          }
+        },
+        {
+          "label": {
+            "en": "Wi-Fi",
+            "zh": "Wi-Fi"
+          },
+          "value": {
+            "en": "Wi-Fi 7 · 2.4GHz + 5GHz · 2×2",
+            "zh": "Wi-Fi 7 · 2.4GHz + 5GHz · 2×2"
+          }
+        },
+        {
+          "label": {
+            "en": "PHY rates",
+            "zh": "理论速率"
+          },
+          "value": {
+            "en": "688 + 2882Mbps (theoretical)",
+            "zh": "688 + 2882Mbps（理论值）"
+          }
+        }
+      ],
+      "group": "gear"
+    },
+    {
+      "name": {
         "en": "Phone",
         "zh": "手机"
       },
@@ -173,6 +341,51 @@
           "value": {
             "en": "256GB",
             "zh": "256GB"
+          }
+        }
+      ],
+      "group": "computers"
+    },
+    {
+      "name": {
+        "en": "Tablet",
+        "zh": "平板电脑"
+      },
+      "model": "iPad 2 (A1395)",
+      "icon": "tablet",
+      "description": {
+        "en": "",
+        "zh": ""
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "Storage",
+            "zh": "存储"
+          },
+          "value": {
+            "en": "16GB",
+            "zh": "16GB"
+          }
+        },
+        {
+          "label": {
+            "en": "Connectivity",
+            "zh": "连接"
+          },
+          "value": {
+            "en": "Wi-Fi only",
+            "zh": "仅 Wi-Fi"
+          }
+        },
+        {
+          "label": {
+            "en": "Color",
+            "zh": "颜色"
+          },
+          "value": {
+            "en": "White",
+            "zh": "白色"
           }
         }
       ],
@@ -534,6 +747,16 @@
           "value": {
             "en": "Android 16",
             "zh": "Android 16"
+          }
+        },
+        {
+          "label": {
+            "en": "Xiaomi AX3000T",
+            "zh": "Xiaomi AX3000T"
+          },
+          "value": {
+            "en": "OpenWrt",
+            "zh": "OpenWrt"
           }
         }
       ],

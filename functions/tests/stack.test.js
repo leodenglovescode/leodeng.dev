@@ -9,7 +9,7 @@ const stack = JSON.parse(await readFile(new URL('../../src/content/stack.json', 
 
 test('stack migration preserves devices and translations, and invalid edits are rejected', () => {
   assert.equal(validateStack(stack), stack)
-  assert.equal(stack.hardware.length, 11)
+  assert.equal(stack.hardware.length, 16)
   assert.equal(stack.software.length, 6)
   assert.equal(stack.hardware.find(item => item.model === 'Custom Built PC').rows.length, 5)
   assert.equal(stackText({ en: 'Camera', zh: '相机' }, 'zh'), '相机')
