@@ -32,5 +32,12 @@
   "stack": "Stack",
   "myTechStackIsAMixOf": "My tech stack is a mix of personal preference, performance, and nostalgia. Here is a peek at what I am currently using.",
   "hardware": "Hardware",
-  "software": "Software"
+  "software": "Software",
+  "pageTitle": "What I use",
+  "sections": "Stack sections",
+  "computers": "Computers & devices",
+  "gear": "Camera, audio & everyday gear",
+  "computersDescription": "The machines I use, with their specs in one place.",
+  "gearDescription": "The rest of my setup, with the details that matter for each piece.",
+  "softwareDescription": "Operating systems, development tools and services."
 }

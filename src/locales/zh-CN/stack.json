@@ -32,5 +32,12 @@
   "stack": "设备与工具",
   "myTechStackIsAMixOf": "我选设备和软件时，会在个人习惯、性能和一点怀旧之间找平衡。下面这些就是我目前在用的东西。",
   "hardware": "硬件",
-  "software": "软件"
+  "software": "软件",
+  "pageTitle": "我在用什么",
+  "sections": "设备与工具分区",
+  "computers": "电脑与移动设备",
+  "gear": "摄影、音频与日常装备",
+  "computersDescription": "我在用的电脑与设备，以及它们的配置。",
+  "gearDescription": "其他常用装备，以及各自值得记录的细节。",
+  "softwareDescription": "操作系统、开发工具与在线服务。"
 }

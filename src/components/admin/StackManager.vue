@@ -36,7 +36,7 @@ onBeforeUnmount(() => { emit('dirty-change', false); emit('busy-change', false) 
 const blankText = () => ({ en: '', zh: '' })
 function addEntry() {
   const item = { name: blankText(), icon: section.value === 'hardware' ? 'desktop' : 'code', description: blankText(), rows: [] }
-  if (section.value === 'hardware') item.model = ''
+  if (section.value === 'hardware') { item.model = ''; item.group = 'computers' }
   else item.tags = []
   data.value[section.value].push(item)
 }
@@ -103,6 +103,12 @@ function reset() {
             <button type="button" class="stack-button" :disabled="index === data[section].length - 1" @click="move(data[section], index, 1)">Move down</button>
             <button type="button" class="stack-button ml-auto" @click="removeEntry(index)">Remove entry</button>
           </div>
+          <label v-if="section === 'hardware'" class="block text-sm text-muted">Display group
+            <select :value="item.group || (['desktop', 'laptop', 'phone', 'cpu'].includes(item.icon) ? 'computers' : 'gear')" class="stack-input" @change="item.group = $event.target.value">
+              <option value="computers">Computers and devices</option>
+              <option value="gear">Camera, audio and everyday gear</option>
+            </select>
+          </label>
           <StackTextField v-model="item.name" :label="section === 'hardware' ? 'Device category' : 'Group name'" />
           <label v-if="section === 'hardware'" class="block text-sm text-muted">Model<input v-model="item.model" class="stack-input" /></label>
           <label class="block text-sm text-muted">Icon<select v-model="item.icon" class="stack-input"><option v-for="icon in STACK_ICON_NAMES" :key="icon" :value="icon">{{ icon }}</option></select></label>

@@ -17,6 +17,7 @@ test('stack migration preserves devices and translations, and invalid edits are 
   for (const change of [
     data => { data.hardware[0].name.en = '' },
     data => { data.hardware[0].icon = 'unknown' },
+    data => { data.hardware[0].group = 'unknown' },
     data => { data.hardware[0].model = '' },
     data => { data.hardware[0].rows = [{ label: { en: 'CPU', zh: '' }, value: { en: '', zh: '' } }] },
     data => { data.software[0].tags = [''] },

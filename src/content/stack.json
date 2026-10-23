@@ -11,7 +11,8 @@
         "en": "",
         "zh": ""
       },
-      "rows": []
+      "rows": [],
+      "group": "gear"
     },
     {
       "name": {
@@ -35,7 +36,8 @@
             "zh": "电容式"
           }
         }
-      ]
+      ],
+      "group": "gear"
     },
     {
       "name": {
@@ -79,7 +81,8 @@
             "zh": "RF-EF Connector Ring"
           }
         }
-      ]
+      ],
+      "group": "gear"
     },
     {
       "name": {
@@ -123,7 +126,8 @@
             "zh": "256GB"
           }
         }
-      ]
+      ],
+      "group": "computers"
     },
     {
       "name": {
@@ -167,7 +171,8 @@
             "zh": "16GB"
           }
         }
-      ]
+      ],
+      "group": "computers"
     },
     {
       "name": {
@@ -221,7 +226,8 @@
             "zh": "240GB"
           }
         }
-      ]
+      ],
+      "group": "computers"
     },
     {
       "name": {
@@ -275,7 +281,8 @@
             "zh": "240GB"
           }
         }
-      ]
+      ],
+      "group": "computers"
     },
     {
       "name": {
@@ -329,7 +336,8 @@
             "zh": "32GB"
           }
         }
-      ]
+      ],
+      "group": "computers"
     },
     {
       "name": {
@@ -393,7 +401,8 @@
             "zh": "Thermalright 360mm AIO"
           }
         }
-      ]
+      ],
+      "group": "computers"
     }
   ],
   "software": [
