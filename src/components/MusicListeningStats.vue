@@ -58,7 +58,7 @@ onBeforeUnmount(() => { mounted = false; clearInterval(timer); document.removeEv
           </ol>
         </section>
       </div>
-      <p class="text-xs text-muted mt-6">{{ isZh ? '图片来源：' : 'Artwork: ' }}<a href="https://www.theaudiodb.com" class="underline" target="_blank" rel="noopener noreferrer">TheAudioDB</a>. {{ isZh ? '点击图片查看来源。' : 'Select an image to view its source.' }}</p>
+      <p class="text-xs text-muted mt-6">{{ isZh ? '图片来源：' : 'Artwork: ' }}<a href="https://www.theaudiodb.com" class="underline" target="_blank" rel="noopener noreferrer">TheAudioDB</a> &amp; <a href="https://coverartarchive.org" class="underline" target="_blank" rel="noopener noreferrer">Cover Art Archive</a>. {{ isZh ? '点击图片查看来源。' : 'Select an image to view its source.' }}</p>
       <p class="text-xs text-muted mt-3">{{ words.through }} {{ data.through }} (UTC). <span v-if="data.stale">{{ words.stale }}</span></p>
     </template>
   </section>

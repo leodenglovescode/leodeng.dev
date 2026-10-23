@@ -23,7 +23,7 @@ onBeforeUnmount(()=>{generation++;observer?.disconnect()})
 </script>
 <template>
   <span ref="element" class="music-artwork" :class="{ 'artist-photo':kind === 'artists' }">
-    <a v-if="artwork && !failed" :href="artwork.source" target="_blank" rel="noopener noreferrer" :aria-label="`${name}: artwork from TheAudioDB`" title="Artwork: TheAudioDB">
+    <a v-if="artwork && !failed" :href="artwork.source" target="_blank" rel="noopener noreferrer" :aria-label="`${name}: artwork from ${artwork.provider}`" :title="`Artwork: ${artwork.provider}`">
       <img :src="artwork.image" alt="" width="48" height="48" loading="lazy" decoding="async" referrerpolicy="no-referrer" @error="failed=true">
     </a>
     <span v-else class="artwork-placeholder" aria-hidden="true">{{ initial }}</span>

@@ -107,7 +107,9 @@
     var job = artworkQueue.shift();
     get('/api/stats/music-artwork?' + job.key, function (data) {
       var value = data && data.artwork;
-      if (!value || !/^https:\/\/(?:www|r2)\.theaudiodb\.com\/images\/media\/(?:artist|album)\//.test(value.image) || !/^https:\/\/www\.theaudiodb\.com\/(?:artist|album)\/\d+$/.test(value.source)) value = null;
+      var tadb = value && /^https:\/\/(?:www|r2)\.theaudiodb\.com\/images\/media\/(?:artist|album)\//.test(value.image) && /^https:\/\/www\.theaudiodb\.com\/(?:artist|album)\/\d+$/.test(value.source);
+      var cover = value && /^https:\/\/coverartarchive\.org\/release-group\/([a-f0-9-]{36})\/front-250$/.exec(value.image);
+      if (!tadb && !(cover && value.source === 'https://musicbrainz.org/release-group/' + cover[1])) value = null;
       artworkCache[job.key] = value;
       for (var i=0;i<job.targets.length;i++) showArtwork(job.targets[i], value);
       window.setTimeout(function () { artworkBusy = false; nextArtwork(); }, 2100);
@@ -116,13 +118,13 @@
   function showArtwork(target, value) {
     if (!value || !document.documentElement.contains(target)) return;
     var link = node('a',''), image = document.createElement('img');
-    link.href=value.source;link.title='Artwork: TheAudioDB';link.target='_blank';link.rel='noopener noreferrer';
+    link.href=value.source;link.title='Artwork: '+value.provider;link.target='_blank';link.rel='noopener noreferrer';
     image.alt='';image.width=40;image.height=40;image.setAttribute('referrerpolicy','no-referrer');
     image.onerror=function () { if(link.parentNode) link.parentNode.removeChild(link); };
     image.src=value.image;link.appendChild(image);target.appendChild(link);
   }
   function classicArtwork(target, kind, item) {
-    var key='kind='+encodeURIComponent(kind)+'&name='+encodeURIComponent(item.name)+'&artist='+encodeURIComponent(kind==='artists'?'':item.artist);
+    var key='v=2&kind='+encodeURIComponent(kind)+'&name='+encodeURIComponent(item.name)+'&artist='+encodeURIComponent(kind==='artists'?'':item.artist);
     if (Object.prototype.hasOwnProperty.call(artworkCache,key)) { showArtwork(target,artworkCache[key]); return; }
     for(var i=0;i<artworkQueue.length;i++) if(artworkQueue[i].key===key) { artworkQueue[i].targets.push(target);return; }
     artworkQueue.push({key:key,targets:[target]});nextArtwork();
@@ -174,7 +176,7 @@
         }
       }
       select.onchange=function () { musicRange=select.value;render(); };render();
-      var credit=node('a','TheAudioDB');credit.href='https://www.theaudiodb.com';music.appendChild(node('p',zh?'图片来源：':'Artwork: '));music.lastChild.appendChild(credit);
+      var credit=node('a','TheAudioDB');credit.href='https://www.theaudiodb.com';music.appendChild(node('p',zh?'图片来源：':'Artwork: '));music.lastChild.appendChild(credit);music.lastChild.appendChild(document.createTextNode(' / '));var caa=node('a','Cover Art Archive');caa.href='https://coverartarchive.org';music.lastChild.appendChild(caa);
       music.appendChild(node('p',zh ? '听满 30 秒或歌曲时长的一半计为一次播放，以较短者为准。' : 'A play counts after 30 seconds or half the track, whichever comes first.'));
       if(data.stale)music.appendChild(node('p',zh ? '当前显示上次成功更新的数据。' : 'Showing the last successful update.'));
     }); }

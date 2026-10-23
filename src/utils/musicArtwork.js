@@ -5,7 +5,7 @@ import { validArtwork } from '../../lib/musicArtwork.js'
 const requests = new Map()
 let queue = Promise.resolve(), nextLookup = 0
 export function musicArtwork(kind, name, artist = '') {
-  const query = new URLSearchParams({ kind, name, artist: kind === 'artists' ? '' : artist })
+  const query = new URLSearchParams({ v:'2', kind, name, artist: kind === 'artists' ? '' : artist })
   const key = query.toString()
   if (!requests.has(key)) {
     const pending = statsJson('/api/stats/music-artwork?' + key + '&cached=1').then(cached => {

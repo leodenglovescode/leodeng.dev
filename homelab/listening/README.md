@@ -139,14 +139,15 @@ Pages project. No additional Cloudflare secrets or bindings are needed.
 
 ## Ranking artwork
 
-Artist photos and album covers are looked up through TheAudioDB's documented
-public v1 API (free key `123`). The website resolves only artists/albums already
+Artist photos and most album covers use TheAudioDB's documented public v1
+API (free key `123`). Known ambiguous albums use verified MusicBrainz
+release-group IDs and Cover Art Archive instead. The website resolves only artists/albums already
 in its public rankings. Artist and album identities must match; standard deluxe/remaster edition
 labels may use the original cover, while meaningful color labels remain
 distinct. Ambiguous results keep a placeholder. No publisher, receiver, or Mac changes are needed.
 
 Only image URLs and source-page links are cached in R2, under
-`stats/artwork/v1/`, for 30 days. Genuine misses are cached for a day; temporary
+`stats/artwork/v2/`, for 30 days. Genuine misses are cached for a day; temporary
 API errors are not persisted. Browsers reuse cached metadata immediately and
 space cold lookups to respect the provider's free rate limit. Images are small
 provider-hosted thumbnails, loaded lazily with source links and attribution.
@@ -155,3 +156,11 @@ API access does not change the underlying images' copyright or license.
 
 Provider documentation: https://www.theaudiodb.com/free_music_api
 Terms: https://www.theaudiodb.com/docs_terms_of_use.php
+
+Ambiguous album identities are listed in `lib/musicArtworkAlbums.js`, with
+verified source links and explicit library-title aliases. For Weezer, Blue
+(1994) and Green (2001) have separate release-group IDs. A plain `Weezer`
+without enough information does not get a guessed cover. This also avoids a
+TheAudioDB record whose metadata described 1994 but supplied a Green cover.
+Artwork cache version 2 discards earlier matches and misses; browser queries
+carry the version so cached incorrect responses are bypassed after a reload.
