@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import assert from 'node:assert/strict'
 import fs from 'node:fs/promises'
 import test from 'node:test'
@@ -49,4 +50,17 @@ test('unsupported diagrams keep their source, and diagrams cannot embed active o
   const tree = parseFragment(svg)
   for (const tag of ['script', 'style', 'image', 'foreignObject', 'a']) assert.equal(collect(tree, tag).length, 0)
   assert.doesNotMatch(svg, /(?:fill|stroke)="url\(https?:/)
+})
+
+
+test('classic diagrams render with Worker globals and no Node global alias', () => {
+  const result = execFileSync(process.execPath, ['--input-type=module', '-e', `
+    delete globalThis.global
+    globalThis.self = globalThis
+    const { classicDiagramSvg } = await import('./scripts/legacy-diagrams.js')
+    const svg = classicDiagramSvg('flowchart TD\\nA[New post] --> B[Classic SVG]', 'worker-check')
+    if (!svg.includes('<svg') || globalThis.self !== globalThis) process.exit(1)
+    console.log('passed')
+  `], { cwd: process.cwd(), encoding: 'utf8' })
+  assert.match(result, /passed/)
 })

@@ -1,5 +1,6 @@
 // Build-only rendering. The classic browser receives SVG 1.1 geometry and text,
 // not a diagram runtime, web fonts, HTML labels, or CSS custom properties.
+import './legacy-diagram-environment.js'
 import { renderMermaidSVG } from 'beautiful-mermaid'
 import { parseFragment, serialize } from 'parse5'
 
