@@ -80,7 +80,8 @@ export function renderLegacyDiagrams(html, zh = false) {
       try {
         const svg = classicDiagramSvg(text(source), id, zh ? '图表' : 'Diagram')
         rendered = `<figure class="legacy-diagram"><div class="legacy-diagram-canvas" tabindex="0" role="region" aria-label="${zh ? '图表，可横向滚动' : 'Diagram, scroll sideways to explore'}">${svg}</div><figcaption>${zh ? '横向滚动查看完整图表。' : 'Scroll sideways to explore the full diagram.'}</figcaption></figure>`
-      } catch {
+      } catch (error) {
+        console.warn('legacy_diagram_render_failed', String(error?.message || error))
         rendered = `<p class="note">${zh ? '此图表暂时只能显示源代码。' : 'This diagram is available as source text below.'}</p>`
       }
       node.childNodes = parseFragment(`${rendered}<details class="legacy-diagram-source"><summary>${zh ? '图表源代码' : 'Diagram source'}</summary><pre class="mermaid-source"><code>${escape(text(source))}</code></pre></details>`).childNodes
