@@ -51,7 +51,7 @@ onBeforeUnmount(() => { mounted = false; clearInterval(timer); document.removeEv
           <ol v-else class="space-y-4">
             <li v-for="(item,index) in summary[kind]" :key="index" class="text-sm">
               <div class="flex gap-3">
-                <MusicArtwork v-if="kind !== 'tracks'" :kind="kind" :name="item.name" :artist="item.artist" />
+                <MusicArtwork v-if="kind !== 'tracks'" :kind="kind" :name="item.name" :artist="item.artist" :evidence="JSON.stringify([item.sampleTracks || [], item.catalogMatch || null])" />
                 <div class="min-w-0 flex-1"><div class="flex justify-between gap-3"><span class="min-w-0 break-words">{{ item.name }}<small v-if="item.artist" class="block text-muted">{{ item.artist }}</small></span><span class="text-xs text-muted whitespace-nowrap">{{ (item.listenedMs/60000).toFixed(0) }} {{ words.minutes }}</span></div>
               <div class="music-bar"><span :style="{ width: `${item.listenedMs/rankingMax(kind)*100}%` }"></span></div></div></div>
             </li>

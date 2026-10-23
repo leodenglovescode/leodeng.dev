@@ -11,6 +11,7 @@ From this repository on SuperServer:
 
 ```bash
 sudo install -m 755 homelab/listening/listening.py /usr/local/bin/listening-history.py
+sudo install -m 644 homelab/listening/listening_musicbrainz.py /usr/local/bin/listening_musicbrainz.py
 sudo install -m 644 homelab/listening/listening-history.service /etc/systemd/system/
 sudo install -m 644 homelab/listening/listening-publish.{service,timer} /etc/systemd/system/
 sudoedit /etc/listening-history.env
@@ -126,6 +127,7 @@ No Mac update or token changes are needed. On SuperServer, from this repo:
 
 ```bash
 sudo install -m 755 homelab/listening/listening.py /usr/local/bin/listening-history.py
+sudo install -m 644 homelab/listening/listening_musicbrainz.py /usr/local/bin/listening_musicbrainz.py
 sudo install -m 644 homelab/listening/listening-publish.{service,timer} /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl restart listening-publish.timer
@@ -139,28 +141,46 @@ Pages project. No additional Cloudflare secrets or bindings are needed.
 
 ## Ranking artwork
 
-Artist photos and most album covers use TheAudioDB's documented public v1
-API (free key `123`). Known ambiguous albums use verified MusicBrainz
-release-group IDs and Cover Art Archive instead. The website resolves only artists/albums already
-in its public rankings. Artist and album identities must match; standard deluxe/remaster edition
-labels may use the original cover, while meaningful color labels remain
-distinct. Ambiguous results keep a placeholder. No publisher, receiver, or Mac changes are needed.
+Album covers are identified from the songs actually observed in each album,
+for every artist. The publisher includes up to five representative played
+tracks per ranked album. Its local resolver searches MusicBrainz recordings,
+checks artist and track titles, and intersects the release groups containing
+those songs. Only a single consistent album identity produces a cover.
+Ambiguous, conflicting, incomplete, or unavailable catalog results remain
+unpictured. Color/edition labels are extra metadata, never artist-specific
+rules. Featured-artist and remaster labels are normalized; live and remix
+versions remain distinct.
 
-Only image URLs and source-page links are cached in R2, under
-`stats/artwork/v2/`, for 30 days. Genuine misses are cached for a day; temporary
-API errors are not persisted. Browsers reuse cached metadata immediately and
-space cold lookups to respect the provider's free rate limit. Images are small
-provider-hosted thumbnails, loaded lazily with source links and attribution.
-The stats remain usable when the provider or an image is unavailable. Public
-API access does not change the underlying images' copyright or license.
+Matches and recording searches are cached in local SQLite. Requests identify
+this application and run at most once every 1.1 seconds, with a 25-second budget
+per publication run. Previously completed searches are reused on subsequent
+runs, so new albums can resolve progressively without blocking the listening
+stats. Raw records remain local; public snapshots carry only the bounded
+representative song list and the resulting catalog identity.
 
-Provider documentation: https://www.theaudiodb.com/free_music_api
-Terms: https://www.theaudiodb.com/docs_terms_of_use.php
+Cover Art Archive serves album thumbnails by the resolved MusicBrainz
+release-group ID. Artist photos still use TheAudioDB's public v1 API (free key
+`123`). R2 caches image URLs and source links under `stats/artwork/v3/`; images
+are not committed or rehosted. The album cache key includes its song evidence
+and verified identity, and browser requests are versioned when that evidence
+changes. Old name-only results and per-band overrides are not used.
 
-Ambiguous album identities are listed in `lib/musicArtworkAlbums.js`, with
-verified source links and explicit library-title aliases. For Weezer, Blue
-(1994) and Green (2001) have separate release-group IDs. A plain `Weezer`
-without enough information does not get a guessed cover. This also avoids a
-TheAudioDB record whose metadata described 1994 but supplied a Green cover.
-Artwork cache version 2 discards earlier matches and misses; browser queries
-carry the version so cached incorrect responses are bypassed after a reload.
+Public API access does not change the underlying images' copyright or license.
+Provider documentation: https://musicbrainz.org/doc/MusicBrainz_API and
+https://www.theaudiodb.com/free_music_api
+
+## Updating to song-verified album covers
+
+No Mac update or token changes are needed: existing sessions already contain
+the song, album, and artist. On SuperServer, from this repository:
+
+```bash
+sudo install -m 755 homelab/listening/listening.py /usr/local/bin/listening-history.py
+sudo install -m 644 homelab/listening/listening_musicbrainz.py /usr/local/bin/listening_musicbrainz.py
+sudo systemctl start listening-publish.service
+```
+
+The minute timer is unchanged. The publisher creates its small local catalog
+cache tables automatically. Existing history can be resolved without replaying
+songs. If the catalog cannot distinguish albums, the page shows a placeholder
+instead of falling back to a first name-search result.

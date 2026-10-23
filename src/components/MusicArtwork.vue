@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { musicArtwork } from '../utils/musicArtwork.js'
-const props = defineProps({ kind:String, name:String, artist:{type:String,default:''} })
+const props = defineProps({ kind:String, name:String, artist:{type:String,default:''}, evidence:{type:String,default:''} })
 const artwork=ref(null), failed=ref(false), visible=ref(false), element=ref(null)
 const initial=computed(() => (props.name || '?').slice(0,1).toUpperCase())
 let observer, generation=0
@@ -9,10 +9,10 @@ async function load() {
   if (!visible.value) return
   const current=++generation
   artwork.value=null;failed.value=false
-  const result=await musicArtwork(props.kind,props.name,props.artist)
+  const result=await musicArtwork(props.kind,props.name,props.artist,props.evidence)
   if(current===generation) artwork.value=result
 }
-watch(() => [props.kind,props.name,props.artist],load)
+watch(() => [props.kind,props.name,props.artist,props.evidence],load)
 onMounted(() => {
   if ('IntersectionObserver' in window) {
     observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){visible.value=true;observer.disconnect();void load()}},{rootMargin:'100px'})

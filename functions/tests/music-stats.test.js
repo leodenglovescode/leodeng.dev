@@ -24,7 +24,7 @@ test('invalid summaries and oversized requests are rejected',async()=>{
  assert.throws(()=>musicSummary({...summary,daily:[...summary.daily,...summary.daily]}))
  assert.throws(()=>musicSummary({...summary,ranges:{...summary.ranges,all:{...period,plays:-1}}}))
  const env={HOMELAB_DB:database(),HOMELAB_TOKEN:'secret',MEDIA:bucket()}
- assert.equal((await onRequest({env,request:request('POST',{extra:'x'.repeat(200001)},'secret')})).status,413)
+ assert.equal((await onRequest({env,request:request('POST',{extra:'x'.repeat(1000001)},'secret')})).status,413)
  assert.equal((await onRequest({env,request:request('POST',{...summary,through:'2999-01-01'},'secret')})).status,400)
 })
 

@@ -9,7 +9,7 @@ export async function onRequest({ request, env }) {
   if (request.method === 'POST') {
     if (!env.HOMELAB_TOKEN) return reply({ error: 'Ingest not configured' }, 503)
     if (!await verifyNowPlayingRequest(request, { NOW_PLAYING_TOKEN: env.HOMELAB_TOKEN })) return reply({ error: 'Unauthorized' }, 401)
-    const parsed = await readBoundedJson(request, 200000)
+    const parsed = await readBoundedJson(request, 1000000)
     if (parsed.error) return parsed.error
     let value, archive
     try {
@@ -31,7 +31,7 @@ export async function onRequest({ request, env }) {
   }
   try {
     const object = await env.MEDIA?.get(LIVE_KEY)
-    if (object && object.size <= 100000) {
+    if (object && object.size <= 500000) {
       const live = JSON.parse(await object.text())
       if (!Number.isSafeInteger(live.updatedAt)) throw new Error('Invalid timestamp')
       return reply({ state: 'ready', ...musicSummary(live), updatedAt: live.updatedAt, live: true, stale: Date.now()-live.updatedAt > 24*3600000 })

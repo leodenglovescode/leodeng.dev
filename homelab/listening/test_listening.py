@@ -21,6 +21,7 @@ class ListeningTests(unittest.TestCase):
         self.assertEqual(result['ranges']['7']['plays'],1)
         self.assertEqual(result['ranges']['all']['listenedMs'],40000)
         self.assertEqual(result['ranges']['all']['artists'][0]['name'],'Artist')
+        self.assertEqual(result['ranges']['all']['albums'][0]['sampleTracks'],['Song'])
         newer=dict(self.event,updatedAt=self.event['updatedAt']+10000,listenedMs=50000,days={'2026-10-20':50000})
         m.ingest(self.db,[newer]);m.ingest(self.db,[self.event])
         self.assertEqual(m.aggregate(self.db,dt.date(2026,10,21))['ranges']['all']['listenedMs'],50000)
@@ -40,7 +41,7 @@ class ListeningTests(unittest.TestCase):
             def __enter__(self):return self
             def __exit__(self,*args):pass
             def read(self,n):return b'{"ok":true}'
-        with patch.dict(m.os.environ,{'HOMELAB_TOKEN':'test-token'}),patch.object(m.urllib.request,'build_opener') as opener:
+        with patch.dict(m.os.environ,{'HOMELAB_TOKEN':'test-token'}),patch('listening_musicbrainz.enrich_album_artwork'),patch.object(m.urllib.request,'build_opener') as opener:
             opener.return_value.open.side_effect=OSError('offline')
             with self.assertRaises(OSError):m.publish(self.db)
             opener.return_value.open.side_effect=None;opener.return_value.open.return_value=Response()

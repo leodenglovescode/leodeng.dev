@@ -105,7 +105,7 @@
     if (artworkBusy || !artworkQueue.length) return;
     artworkBusy = true;
     var job = artworkQueue.shift();
-    get('/api/stats/music-artwork?' + job.key, function (data) {
+    get('/api/stats/music-artwork?' + job.query, function (data) {
       var value = data && data.artwork;
       var tadb = value && /^https:\/\/(?:www|r2)\.theaudiodb\.com\/images\/media\/(?:artist|album)\//.test(value.image) && /^https:\/\/www\.theaudiodb\.com\/(?:artist|album)\/\d+$/.test(value.source);
       var cover = value && /^https:\/\/coverartarchive\.org\/release-group\/([a-f0-9-]{36})\/front-250$/.exec(value.image);
@@ -124,10 +124,14 @@
     image.src=value.image;link.appendChild(image);target.appendChild(link);
   }
   function classicArtwork(target, kind, item) {
-    var key='v=2&kind='+encodeURIComponent(kind)+'&name='+encodeURIComponent(item.name)+'&artist='+encodeURIComponent(kind==='artists'?'':item.artist);
+    var query='v=3&kind='+encodeURIComponent(kind)+'&name='+encodeURIComponent(item.name)+'&artist='+encodeURIComponent(kind==='artists'?'':item.artist);
+    var evidence=JSON.stringify([item.sampleTracks||[],item.catalogMatch||null]), hash=0;
+    for(var e=0;e<evidence.length;e++) hash=((hash<<5)-hash+evidence.charCodeAt(e))|0;
+    query+='&e='+('00000000'+(hash>>>0).toString(16)).slice(-8);
+    var key=query+'|'+evidence;
     if (Object.prototype.hasOwnProperty.call(artworkCache,key)) { showArtwork(target,artworkCache[key]); return; }
     for(var i=0;i<artworkQueue.length;i++) if(artworkQueue[i].key===key) { artworkQueue[i].targets.push(target);return; }
-    artworkQueue.push({key:key,targets:[target]});nextArtwork();
+    artworkQueue.push({key:key,query:query,targets:[target]});nextArtwork();
   }
   function setupStats(element) {
     clear(element);

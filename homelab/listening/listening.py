@@ -98,6 +98,13 @@ def aggregate(db, today=None, include_today=False):
                 buckets[kind][key]['plays']+=plays; buckets[kind][key]['listenedMs']+=duration
         for kind, entries in buckets.items():
             totals[kind] = [dict(name=key[0],artist=key[1] if len(key)>1 else '',**values) for key,values in sorted(entries.items(),key=lambda item:(-item[1]['listenedMs'],-item[1]['plays'],item[0]))[:10]]
+        for album in totals['albums']:
+            songs = defaultdict(int)
+            for event in events:
+                if event['album'] == album['name'] and event['artist'] == album['artist']:
+                    duration = sum(v for d,v in event['days'].items() if cutoff <= d < today.isoformat())
+                    if duration and len(event['title']) <= 200: songs[event['title']] += duration
+            album['sampleTracks'] = [title for title, duration in sorted(songs.items(), key=lambda item: (-item[1], item[0]))[:5]]
         result['ranges'][label]=totals
     first=today-dt.timedelta(days=90)
     for offset in range(90):
@@ -115,6 +122,8 @@ def publish(db):
     # Live view includes today; the daily D1 fallback covers completed UTC days.
     value=aggregate(db,today,include_today=True)
     value['archive']=aggregate(db,today)
+    from listening_musicbrainz import enrich_album_artwork
+    enrich_album_artwork(db, [value, value['archive']])
     body=json.dumps(value,separators=(',',':')).encode()
     digest=hashlib.sha256(body).hexdigest()
     previous=db.execute("SELECT digest,sent_at FROM live_publication WHERE name='music'").fetchone()
