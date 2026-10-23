@@ -148,7 +148,7 @@ export async function buildLegacySite({ routes, collections }) {
   await fs.mkdir(path.join(output, '_assets'), { recursive: true })
   for (const name of ['legacy.css', 'legacy.js']) await fs.copyFile(path.join(root, 'legacy', name), path.join(output, '_assets', name))
   const runtimeVersion = createHash('sha256').update(await fs.readFile(path.join(root, 'legacy/legacy.js'))).digest('hex').slice(0, 12)
-  const navigation = ['home', 'about', 'projects', 'gallery', 'blog', 'contact', 'now', 'shelf', 'interests', 'stack', 'stats', 'homelab', 'tokens', 'daily', 'ai', 'time', 'ip', 'terminal', 'changelog', 'feed', 'pgp']
+  const navigation = ['home', 'about', 'projects', 'gallery', 'blog', 'contact', 'now', 'shelf', 'interests', 'stack', 'stats', 'homelab', 'tokens', 'daily', 'ai', 'time', 'ip', 'terminal', 'changelog', 'api-docs', 'feed', 'pgp']
   const css = (await fs.readFile(path.join(root, 'legacy/legacy.css'), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim()
   const localeRoute = (base, locale) => locale === 'zh' ? `/zh${base === '/' ? '' : base}` : base
   function shell(route, content, extra = '') {

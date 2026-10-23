@@ -1,4 +1,5 @@
 {
+  "api-docs": { "title": "API 文档", "description": "供智能体和小型集成使用的公开 JSON 接口。" },
   "daily": {"title": "AI 聊天", "description": "与 DeepSeek Flash 聊聊 Leo 的项目、文章、摄影和网站。"},
   "ai": {"title": "AI 使用说明", "description": "我如何使用 LLM 编写代码和文章，以及博客上的 AI 标签代表什么。"},
   "stats": {"title": "个人统计", "description": "记录我花时间做的事情：写代码和练习打字。"},

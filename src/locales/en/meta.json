@@ -1,4 +1,5 @@
 {
+  "api-docs": { "title": "API docs", "description": "Public JSON endpoints for agents and small integrations." },
   "daily": {"title": "AI chat", "description": "Chat with DeepSeek Flash about Leo’s projects, writing, photography and website."},
   "ai": {"title": "AI", "description": "How I use LLMs for code and writing, and what the AI labels on my blog mean."},
   "stats": {"title": "Stats", "description": "A few numbers from the things I spend time doing: writing code and practicing typing."},

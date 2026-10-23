@@ -16,6 +16,7 @@ const staticRoutes = [
   { path: '/about', key: 'about' },
   { path: '/projects', key: 'projects' },
   { path: '/gallery', key: 'gallery' },
+  { path: '/api-docs', key: 'api-docs' },
   { path: '/now', key: 'now' },
   { path: '/shelf', key: 'shelf' },
   { path: '/stats', key: 'stats' },

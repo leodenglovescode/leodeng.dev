@@ -10,10 +10,11 @@ import { spawnSync } from 'node:child_process'
 import { cleanLegacyPath, MODERN_ORIGIN } from '../lib/legacy.js'
 import { galleryMediaKey } from '../lib/gallery-media.js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
+import { nowResponse } from '../lib/now-api.js'
 import { lookupLyrics } from '../lib/lyricsProxy.js'
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url))
-const publicApis = new Set(['/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music', '/api/stats/music-artwork'])
+const publicApis = new Set(['/api/now', '/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music', '/api/stats/music-artwork'])
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8' }
 
 export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_legacy'), fetchUpstream = fetch, cssFile = path.join(projectRoot, 'legacy/legacy.css') } = {}) {
@@ -51,6 +52,7 @@ export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_
     if (!pathname) return new Response('Invalid path.', { status: 400 })
     if (pathname.startsWith('/api/')) {
       if (!publicApis.has(pathname)) return new Response('Not found.', { status: 404 })
+      if (pathname === '/api/now') return nowResponse(request, JSON.parse(await fs.readFile(path.join(projectRoot, 'src/content/now.json'), 'utf8')))
       if (pathname === '/api/lyrics') return lookupLyrics(request, fetchUpstream)
       try {
         const upstream = await fetchUpstream(`${MODERN_ORIGIN}${pathname}${['/api/lyrics','/api/stats/music-artwork'].includes(pathname) ? url.search : ''}`, { signal: AbortSignal.timeout(8000), redirect: 'error', headers: { Accept: 'application/json' } })
