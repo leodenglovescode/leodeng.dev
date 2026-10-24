@@ -1,6 +1,30 @@
 {
-  "updatedAt": "2026-10-04T22:46:35+08:00",
+  "updatedAt": "2026-10-24T13:13:19+08:00",
   "events": [
+    {
+      "id": "ipad-2-home-assistant",
+      "title": { "en": "iPad 2 + Home Assistant", "zh": "iPad 2 + Home Assistant" },
+      "status": "active",
+      "startedAt": "",
+      "updatedAt": "2026-10-24T13:13:19+08:00",
+      "finishedAt": "",
+      "details": {
+        "en": "Working on compatibility between my iPad 2 and my Home Assistant server.",
+        "zh": "正在折腾 iPad 2 与家里 Home Assistant 服务器的兼容性。"
+      }
+    },
+    {
+      "id": "cyberdeck",
+      "title": { "en": "Cyberdeck", "zh": "Cyberdeck" },
+      "status": "active",
+      "startedAt": "",
+      "updatedAt": "2026-10-24T13:13:19+08:00",
+      "finishedAt": "",
+      "details": {
+        "en": "Configuring my cyberdeck.",
+        "zh": "正在配置我的 cyberdeck。"
+      }
+    },
     {
       "id": "planespotting-gallery",
       "title": { "en": "Planespotting Gallery", "zh": "拍机相册" },
