@@ -102,10 +102,12 @@ export async function putObject(creds, bucket, key, body, {
   contentType = 'application/octet-stream',
   cacheControl = 'public, max-age=31536000, immutable',
   preventOverwrite = false,
+  originalName,
 } = {}) {
   const response = await r2Request(creds, bucket, { method: 'PUT', key, body, headers: {
     'cache-control': cacheControl,
     'content-type': contentType,
+    ...(originalName ? { 'x-amz-meta-originalname': encodeURIComponent(originalName) } : {}),
     ...(preventOverwrite ? { 'if-none-match': '*' } : {}),
   } })
   await response.arrayBuffer()
@@ -126,12 +128,30 @@ const unescapeXml = text => text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos
 
 /** List the flat media namespace; gallery collections are nested separately. */
 export async function listObjects(creds, bucket) {
-  const response = await r2Request(creds, bucket, { method: 'GET', query: { 'list-type': '2', 'max-keys': '500', delimiter: '/' } })
-  const xml = await response.text()
-  if (!xml.includes('<ListBucketResult')) throw new Error('Invalid R2 listing response.')
-  return [...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)].map(([, entry]) => ({
-    key: unescapeXml(xmlValue(entry, 'Key')),
-    size: Number(xmlValue(entry, 'Size')),
-    uploaded: xmlValue(entry, 'LastModified'),
-  }))
+  const objects = []
+  let cursor
+  do {
+    const response = await r2Request(creds, bucket, { method: 'GET', query: {
+      'list-type': '2', 'max-keys': '500', delimiter: '/', ...(cursor ? { 'continuation-token': cursor } : {}),
+    } })
+    const xml = await response.text()
+    if (!xml.includes('<ListBucketResult')) throw new Error('Invalid R2 listing response.')
+    objects.push(...[...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)].map(([, entry]) => ({
+      key: unescapeXml(xmlValue(entry, 'Key')),
+      size: Number(xmlValue(entry, 'Size')),
+      uploaded: xmlValue(entry, 'LastModified'),
+    })))
+    const next = unescapeXml(xmlValue(xml, 'NextContinuationToken'))
+    if (xmlValue(xml, 'IsTruncated') === 'true' && (!next || next === cursor)) throw new Error('Incomplete R2 listing response.')
+    cursor = xmlValue(xml, 'IsTruncated') === 'true' ? next : undefined
+  } while (cursor)
+  return objects
+}
+
+export async function originalObjectName(creds, bucket, key) {
+  const response = await r2Request(creds, bucket, { method: 'HEAD', key })
+  const name = response.headers.get('x-amz-meta-originalname')
+  if (!name) return key
+  // Both upload paths encode names so Unicode and percent signs survive S3 headers.
+  try { return decodeURIComponent(name) } catch { return name }
 }

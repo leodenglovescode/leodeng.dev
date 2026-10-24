@@ -39,3 +39,39 @@ test('local R2 store returns publishable URLs, omits nested keys and maps collis
   assert.deepEqual(listing.files.map(file => file.url), ['https://media.leodeng.dev/photo.png'])
   await assert.rejects(store.put('existing.png', Buffer.from('abc'), 'image/png'), error => error.status === 409 && !error.message.includes('private details'))
 })
+
+test('S3 listings follow continuation tokens so new files cannot disappear beyond 500 objects', async t => {
+  const calls = []
+  t.mock.method(globalThis, 'fetch', async url => {
+    calls.push(url)
+    return new Response(url.includes('continuation-token=')
+      ? '<ListBucketResult><IsTruncated>false</IsTruncated><Contents><Key>z.jpg</Key><Size>8</Size></Contents></ListBucketResult>'
+      : '<ListBucketResult><IsTruncated>true</IsTruncated><NextContinuationToken>next+page&amp;1</NextContinuationToken><Contents><Key>a.jpg</Key><Size>3</Size></Contents></ListBucketResult>')
+  })
+  const objects = await listObjects(credentials, 'media')
+  assert.deepEqual(objects.map(object => object.key), ['a.jpg', 'z.jpg'])
+  assert.match(calls[1], /continuation-token=next%2Bpage%261/)
+})
+
+test('local uploads retain original Unicode names across a fresh listing and cache unchanged metadata', async t => {
+  const env = { R2_ACCOUNT_ID: credentials.accountId, R2_ACCESS_KEY_ID: credentials.accessKeyId, R2_SECRET_ACCESS_KEY: credentials.secretAccessKey }
+  const name = '假期 100% [1].JPG'
+  let heads = 0
+  t.mock.method(globalThis, 'fetch', async (url, init) => {
+    if (init.method === 'PUT') {
+      assert.equal(init.headers['x-amz-meta-originalname'], encodeURIComponent(name))
+      return new Response(null)
+    }
+    if (init.method === 'HEAD') {
+      heads++
+      return new Response(null, { headers: { 'x-amz-meta-originalname': encodeURIComponent(name) } })
+    }
+    return new Response('<ListBucketResult><Contents><Key>file.jpg</Key><Size>3</Size><LastModified>2026-10-24</LastModified></Contents></ListBucketResult>')
+  })
+  const uploaded = await createR2MediaStore(env).put('file.jpg', Buffer.from('abc'), 'image/jpeg', name)
+  assert.equal(uploaded.originalName, name)
+  const reopened = createR2MediaStore(env)
+  assert.equal((await reopened.list()).files[0].originalName, name)
+  assert.equal((await reopened.list()).files[0].originalName, name)
+  assert.equal(heads, 1)
+})

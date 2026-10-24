@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import UploadProgress from './UploadProgress.vue'
 import { useUploadProgress } from '../../utils/uploadProgress.js'
+import { matchesMedia, mediaMarkdown, sortMedia } from '../../utils/mediaLibrary.js'
 import { deleteMedia, listMedia, putMedia } from '../../utils/adminApi.js'
 
 // A Worker request body tops out at 100 MB on the free plan, and the whole
@@ -28,21 +29,28 @@ const dragging = ref(false)
 const query = ref('')
 const fileInput = ref(null)
 const copied = ref('')
+const order = ref('newest')
+const recentNames = ref([])
+const recentOnly = ref(false)
+const insertAfterUpload = ref(false)
+const library = ref(null)
+const recentUploads = computed(() => recentNames.value.map(name => files.value.find(file => file.name === name)).filter(Boolean))
 
 const IMAGE = /\.(png|jpe?g|gif|webp|avif|svg)$/i
 const VIDEO = /\.(mp4|webm|mov)$/i
 
-const visible = computed(() => {
-  const q = query.value.trim().toLowerCase()
-  return files.value.filter((f) => !q || f.name.toLowerCase().includes(q))
-})
+const visible = computed(() => sortMedia(files.value.filter(file =>
+  matchesMedia(file, query.value) && (!recentOnly.value || recentNames.value.includes(file.name)),
+), order.value))
 
-function markdownFor(file) {
-  if (VIDEO.test(file.name)) {
-    return `<video src="${file.url}" controls preload="metadata" playsinline class="w-full rounded-lg"></video>\n`
-  }
-  const alt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')
-  return `![${alt}](${file.url})\n`
+function insertFiles(items) {
+  if (!items.length) return
+  emit('insert', { markdown: items.map(mediaMarkdown).join('\n') })
+}
+
+function chooseUpload(insert) {
+  insertAfterUpload.value = insert
+  fileInput.value?.click()
 }
 
 async function load() {
@@ -62,7 +70,11 @@ async function load() {
 watch(
   () => props.open,
   (isOpen) => {
-    if (isOpen) load()
+    if (isOpen) {
+      query.value = ''
+      recentOnly.value = false
+      load()
+    }
   },
   { immediate: true },
 )
@@ -73,7 +85,7 @@ function safeName(name) {
   const base = (dot > 0 ? name.slice(0, dot) : name)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'file'
+    .replace(/^-+|-+$/g, '').slice(0, 100) || 'file'
   const ext = (dot > 0 ? name.slice(dot) : '').toLowerCase()
 
   let candidate = `${base}${ext}`
@@ -117,9 +129,19 @@ function browserCanDecode(file) {
 async function upload(list) {
   const chosen = Array.from(list || [])
   if (busy.value || !chosen.length) return
+  if (loading.value) {
+    error.value = 'Please wait for the media library to finish loading, then try again.'
+    return
+  }
 
   busy.value = true
   error.value = ''
+  const uploaded = []
+  recentNames.value = []
+  query.value = ''
+  recentOnly.value = false
+  order.value = 'newest'
+  if (library.value) library.value.scrollTop = 0
   try {
     for (const [index, file] of chosen.entries()) {
       uploadState.prepare(file, index + 1, chosen.length)
@@ -136,11 +158,15 @@ async function upload(list) {
       }
 
       const name = safeName(file.name)
-      await putMedia(name, file, { onProgress: uploadState.update })
-      // Reflect it immediately so the next filename check sees it.
-      await load()
+      const stored = await putMedia(name, file, { onProgress: uploadState.update })
+      const entry = { ...stored, name, originalName: file.name, size: file.size, uploaded: stored.uploaded || new Date().toISOString() }
+      files.value = [entry, ...files.value.filter(item => item.name !== name)]
+      recentNames.value.push(name)
+      if (library.value) library.value.scrollTop = 0
+      uploaded.push(entry)
     }
     uploadState.complete()
+    if (insertAfterUpload.value && props.insertable) insertFiles(uploaded)
   } catch (err) {
     uploadState.fail()
     error.value = err.message
@@ -151,7 +177,7 @@ async function upload(list) {
 }
 
 async function remove(file) {
-  if (!confirm(`Delete ${file.name}? This is immediate and can't be undone.`)) return
+  if (!confirm(`Delete ${file.originalName || file.name}? This is immediate and can't be undone.`)) return
   busy.value = true
   error.value = ''
   try {
@@ -178,6 +204,7 @@ async function copyPath(file) {
 
 function onDrop(event) {
   dragging.value = false
+  insertAfterUpload.value = false
   upload(event.dataTransfer?.files)
 }
 
@@ -192,7 +219,7 @@ function humanSize(bytes) {
   <div
     v-if="open"
     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-6"
-    @click.self="emit('close')"
+    @click.self="!busy && emit('close')"
   >
     <div
       class="w-full sm:max-w-3xl max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl border border-fg/10 bg-bg shadow-2xl"
@@ -207,18 +234,24 @@ function humanSize(bytes) {
           type="button"
           class="ml-auto text-muted hover:text-fg transition-colors text-lg leading-none px-1"
           aria-label="Close"
+          :disabled="busy"
           @click="emit('close')"
         >×</button>
       </header>
 
-      <div class="flex items-center gap-2 px-5 py-3 border-b border-fg/10">
+      <div class="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-fg/10">
         <input
           v-model="query"
           type="search"
-          placeholder="Filter…"
+          placeholder="Search filenames…"
+          aria-label="Search media filenames"
           class="flex-1 min-w-0 h-9 px-3 rounded-md bg-surface border border-fg/10 text-sm text-fg
                  outline-none focus:border-accent/50 placeholder:text-muted/90"
         />
+        <select v-model="order" aria-label="Sort media" class="h-9 px-2 rounded-md bg-surface border border-fg/10 text-sm text-fg">
+          <option value="newest">Newest first</option>
+          <option value="name">Filename</option>
+        </select>
         <input
           ref="fileInput"
           type="file"
@@ -229,11 +262,28 @@ function humanSize(bytes) {
         />
         <button
           type="button"
-          :disabled="busy"
+          :disabled="busy || loading"
           class="h-9 px-3 rounded-md bg-accent-strong text-white text-sm font-medium hover:brightness-110
                  disabled:opacity-50 transition-colors shrink-0"
-          @click="fileInput?.click()"
+          @click="chooseUpload(false)"
         >{{ ['preparing', 'uploading', 'saving'].includes(uploadState.progress.phase) ? 'Uploading…' : 'Upload' }}</button>
+        <button
+          v-if="insertable"
+          type="button"
+          :disabled="busy || loading"
+          class="h-9 px-3 rounded-md border border-accent/40 text-accent text-sm font-medium disabled:opacity-50"
+          @click="chooseUpload(true)"
+        >Upload and insert</button>
+      </div>
+
+      <div v-if="recentUploads.length" class="mx-5 mt-3 flex flex-wrap items-center gap-3 text-xs" role="status">
+        <span class="text-muted">{{ recentUploads.length }} uploaded</span>
+        <button type="button" class="text-accent hover:underline" @click="recentOnly = !recentOnly; query = ''">
+          {{ recentOnly ? 'Show all media' : 'Show just uploaded' }}
+        </button>
+        <button v-if="insertable" type="button" :disabled="busy" class="text-accent hover:underline disabled:opacity-50" @click="insertFiles(recentUploads)">
+          Insert uploaded {{ recentUploads.length === 1 ? 'file' : 'files' }}
+        </button>
       </div>
 
       <p v-if="error" class="mx-5 mt-3 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
@@ -241,7 +291,7 @@ function humanSize(bytes) {
       </p>
       <UploadProgress :progress="uploadState.progress" class="mx-5 mt-3" />
 
-      <div class="flex-1 overflow-y-auto p-5" :class="dragging && 'ring-2 ring-inset ring-accent/50'">
+      <div ref="library" class="flex-1 overflow-y-auto p-5" :class="dragging && 'ring-2 ring-inset ring-accent/50'">
         <p v-if="loading" class="text-sm text-muted">Loading…</p>
 
         <div v-else-if="!visible.length" class="py-12 text-center">
@@ -259,14 +309,15 @@ function humanSize(bytes) {
           >
             <button
               type="button"
-              class="block aspect-video bg-fg/5 overflow-hidden w-full"
+              class="block aspect-video bg-fg/5 overflow-hidden w-full disabled:opacity-50"
+              :disabled="busy"
               :title="insertable ? 'Insert into the post' : 'Copy URL'"
-              @click="insertable ? emit('insert', { markdown: markdownFor(file) }) : copyPath(file)"
+              @click="insertable ? insertFiles([file]) : copyPath(file)"
             >
               <img
                 v-if="IMAGE.test(file.name)"
                 :src="file.url"
-                :alt="file.name"
+                :alt="file.originalName || file.name"
                 loading="lazy"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -284,7 +335,9 @@ function humanSize(bytes) {
             </button>
 
             <figcaption class="p-2 flex flex-col gap-1.5">
-              <span class="text-xs font-mono text-fg truncate" :title="file.name">{{ file.name }}</span>
+              <span v-if="recentNames.includes(file.name)" class="text-xs text-accent">Just uploaded</span>
+              <span class="text-xs font-mono text-fg truncate" :title="file.originalName || file.name">{{ file.originalName || file.name }}</span>
+              <button v-if="insertable" type="button" :disabled="busy" class="text-xs text-accent text-left hover:underline disabled:opacity-50" @click="insertFiles([file])">Insert into post</button>
               <div class="flex items-center gap-2 text-xs text-muted/90">
                 <span>{{ humanSize(file.size) }}</span>
                 <button type="button" class="ml-auto hover:text-fg transition-colors" @click="copyPath(file)">
@@ -301,7 +354,7 @@ function humanSize(bytes) {
 
       <footer class="px-5 py-3 border-t border-fg/10 text-xs text-muted/90">
         {{ insertable ? 'Click a thumbnail to insert it.' : 'Click a thumbnail to copy its URL.' }}
-        Uploads go straight to the live R2 bucket. There is no commit, and deletes cannot be undone.
+        Uploads are saved immediately. Deletes cannot be undone.
       </footer>
     </div>
   </div>

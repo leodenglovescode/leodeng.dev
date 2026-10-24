@@ -94,8 +94,12 @@ export async function createLocalAdminMiddleware(projectRoot, { media = createR2
         const key = segments(url, '/api/media/')
         if (!MEDIA.test(key)) throw fail(400, 'Malformed media name.')
         if (req.method === 'PUT') {
+          let originalName
+          try { originalName = decodeURIComponent(req.headers['x-original-filename'] || key) }
+          catch { throw fail(400, 'Invalid original filename.') }
+          if (originalName.length > 512 || /[\x00-\x1f\x7f]/.test(originalName)) throw fail(400, 'Invalid original filename.')
           const bytes = await body(req, 95 * 1024 * 1024)
-          return json(res, await media.put(key, bytes, req.headers['content-type'] || 'application/octet-stream'), 201)
+          return json(res, await media.put(key, bytes, req.headers['content-type'] || 'application/octet-stream', originalName), 201)
         }
         if (req.method === 'DELETE') return json(res, await media.delete(key))
         throw fail(405, 'Method not allowed.')

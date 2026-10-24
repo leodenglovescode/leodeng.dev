@@ -37,6 +37,12 @@ function keyFrom(params) {
   return SAFE_KEY.test(key) && key.length <= 128 ? key : null
 }
 
+function originalNameFor(object) {
+  const value = object.customMetadata?.originalname
+  if (!value) return object.key
+  try { return decodeURIComponent(value) } catch { return value }
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context
 
@@ -61,15 +67,22 @@ export async function onRequest(context) {
   const base = publicBase(env)
 
   if (method === 'GET') {
-    const listed = await bucket.list({ limit: 500 })
-    const files = listed.objects
+    const objects = []
+    let cursor
+    do {
+      const listed = await bucket.list({ limit: 500, delimiter: '/', include: ['customMetadata'], ...(cursor ? { cursor } : {}) })
+      objects.push(...listed.objects)
+      cursor = listed.truncated ? listed.cursor : undefined
+    } while (cursor)
+    const files = objects
       .map((o) => ({
         name: o.key,
+        originalName: originalNameFor(o),
         size: o.size,
         uploaded: o.uploaded,
         url: `${base}/${o.key}`,
       }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => new Date(b.uploaded) - new Date(a.uploaded) || a.name.localeCompare(b.name))
     return json({ base, files })
   }
 
@@ -79,7 +92,16 @@ export async function onRequest(context) {
   if (method === 'PUT') {
     // Streamed straight through rather than base64'd like the GitHub path —
     // no 33% inflation, and the Worker never holds the whole file in memory.
-    await bucket.put(key, request.body, {
+    let originalName = key
+    try {
+      originalName = decodeURIComponent(request.headers.get('X-Original-Filename') || key)
+    } catch {
+      return json({ error: 'Invalid original filename.' }, 400)
+    }
+    if (originalName.length > 512 || /[\x00-\x1f\x7f]/.test(originalName)) return json({ error: 'Invalid original filename.' }, 400)
+    const stored = await bucket.put(key, request.body, {
+      onlyIf: { etagDoesNotMatch: '*' },
+      customMetadata: { originalname: encodeURIComponent(originalName) },
       httpMetadata: {
         contentType: request.headers.get('content-type') || 'application/octet-stream',
         // Immutable because uploads never reuse a name: safeName() suffixes a
@@ -87,7 +109,8 @@ export async function onRequest(context) {
         cacheControl: 'public, max-age=31536000, immutable',
       },
     })
-    return json({ name: key, url: `${base}/${key}` }, 201)
+    if (!stored) return json({ error: 'A file with this name already exists. Please try again.' }, 409)
+    return json({ name: key, originalName, size: stored.size, uploaded: stored.uploaded, url: `${base}/${key}` }, 201)
   }
 
   if (method === 'DELETE') {

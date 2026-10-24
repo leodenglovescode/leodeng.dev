@@ -154,6 +154,7 @@ export function putMedia(name, file, { onProgress = () => {} } = {}) {
     xhr.open('PUT', `/api/media/${encodeURIComponent(name)}`)
     xhr.responseType = 'json'
     xhr.setRequestHeader('X-Admin', '1')
+    xhr.setRequestHeader('X-Original-Filename', encodeURIComponent(file.name))
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
     xhr.upload.onprogress = event => onProgress({ phase: 'uploading', loaded: event.loaded, total: event.lengthComputable ? event.total : file.size })
     // Sending all bytes to our server isn't completion: R2 must confirm storage.
