@@ -1,0 +1,4 @@
+<network-security-config>
+    <!-- Dynamic private server addresses are validated by Endpoint before any request. -->
+    <base-config cleartextTrafficPermitted="true"><trust-anchors><certificates src="system" /></trust-anchors></base-config>
+</network-security-config>

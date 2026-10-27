@@ -5,6 +5,7 @@ import datetime as dt
 import hashlib
 import hmac
 import json
+import logging
 import os
 from pathlib import Path
 import re
@@ -138,6 +139,28 @@ def publish(db):
     print('Live listening summary pushed')
 
 
+def bind_listeners(addresses, port, handler, servers, unavailable):
+    """Retry missing interfaces without disturbing listeners already serving."""
+    for address in addresses:
+        if address in servers:
+            continue
+        try:
+            server = ThreadingHTTPServer((address, port), handler)
+        except OSError as error:
+            if address not in unavailable:
+                logging.warning('Listening address %s:%s unavailable (errno %s); retrying', address, port, error.errno)
+                unavailable.add(address)
+            continue
+        try:
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+        except Exception:
+            server.server_close()
+            raise
+        servers[address] = server
+        unavailable.discard(address)
+        logging.warning('Listening receiver bound to %s:%s', address, port)
+
+
 def serve(path, token, host, port):
     if len(token)<32: raise ValueError('LISTENING_TOKEN must contain at least 32 characters')
     class Handler(BaseHTTPRequestHandler):
@@ -157,18 +180,19 @@ def serve(path, token, host, port):
             except (ValueError,TypeError,AttributeError,OverflowError):return self.respond(400,{'error':'Invalid listening batch'})
             except (sqlite3.Error,OSError):return self.respond(503,{'error':'Storage unavailable'})
             return self.respond(200,{'ok':True})
-    servers=[]
-    for address in host.split(','):
-        try:
-            server=ThreadingHTTPServer((address,port),Handler)
-        except OSError:
-            continue
-        servers.append(server)
-        threading.Thread(target=server.serve_forever,daemon=True).start()
-    if not servers: raise ValueError('No listening address available')
-    try: threading.Event().wait()
+    addresses = list(dict.fromkeys(address.strip() for address in host.split(',') if address.strip()))
+    if not addresses:
+        raise ValueError('No listening address configured')
+    servers, unavailable = {}, set()
+    stop = threading.Event()
+    try:
+        while True:
+            bind_listeners(addresses, port, Handler, servers, unavailable)
+            stop.wait(10)
     finally:
-        for server in servers: server.shutdown(); server.server_close()
+        for server in servers.values():
+            server.shutdown()
+            server.server_close()
 
 
 if __name__=='__main__':

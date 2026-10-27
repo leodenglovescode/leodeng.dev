@@ -1,10 +1,11 @@
 import datetime as dt
+import errno
 import importlib.util
 import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 spec=importlib.util.spec_from_file_location('listening',Path(__file__).with_name('listening.py'))
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
@@ -15,6 +16,42 @@ class ListeningTests(unittest.TestCase):
         start=int(dt.datetime(2026,10,20,12,tzinfo=dt.timezone.utc).timestamp()*1000)
         self.event=dict(id='a'*32,title='Song',artist='Artist',album='Album',durationMs=180000,startedAt=start,updatedAt=start+40000,listenedMs=40000,days={'2026-10-20':40000})
     def tearDown(self):self.db.close();self.tmp.cleanup()
+    def test_late_interface_is_retried_without_rebinding_healthy_listener(self):
+        private, lan = '192.0.2.2', '192.0.2.61'
+        private_server, lan_server = Mock(), Mock()
+        servers, unavailable = {}, set()
+        with patch.object(m, 'ThreadingHTTPServer') as factory, patch.object(m.threading, 'Thread') as thread:
+            factory.side_effect = [OSError(errno.EADDRNOTAVAIL, 'Interface not ready'), lan_server, private_server]
+            with self.assertLogs(level='WARNING'):
+                m.bind_listeners([private, lan], 8791, object, servers, unavailable)
+            self.assertEqual(servers, {lan: lan_server})
+            self.assertEqual(unavailable, {private})
+            with self.assertLogs(level='WARNING'):
+                m.bind_listeners([private, lan], 8791, object, servers, unavailable)
+            self.assertEqual(servers, {lan: lan_server, private: private_server})
+            self.assertFalse(unavailable)
+            m.bind_listeners([private, lan], 8791, object, servers, unavailable)
+            self.assertEqual(factory.call_count, 3)
+            self.assertEqual(thread.return_value.start.call_count, 2)
+            lan_server.shutdown.assert_not_called()
+
+    def test_no_interfaces_at_boot_keeps_retrying_without_wildcard_binding(self):
+        servers, unavailable = {}, set()
+        with patch.object(m, 'ThreadingHTTPServer') as factory, patch.object(m.threading, 'Thread'):
+            factory.side_effect = OSError(errno.EADDRNOTAVAIL, 'Interface not ready')
+            with self.assertLogs(level='WARNING'):
+                m.bind_listeners(['private-address'], 8791, object, servers, unavailable)
+            self.assertFalse(servers)
+            self.assertEqual(unavailable, {'private-address'})
+            recovered = Mock()
+            factory.side_effect = None
+            factory.return_value = recovered
+            with self.assertLogs(level='WARNING'):
+                m.bind_listeners(['private-address'], 8791, object, servers, unavailable)
+            self.assertEqual(servers, {'private-address': recovered})
+            self.assertFalse(unavailable)
+            self.assertEqual([call.args[0] for call in factory.call_args_list], [('private-address', 8791)] * 2)
+
     def test_dedup_backfill_and_ranges(self):
         for _ in range(3):m.ingest(self.db,[self.event])
         result=m.aggregate(self.db,dt.date(2026,10,21))
