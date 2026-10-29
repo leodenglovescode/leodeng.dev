@@ -2,6 +2,7 @@ import { liveContentPage } from '../lib/content-pages.js'
 import { LEGACY_ORIGIN, LEGACY_PREFIX, MODERN_ORIGIN, cleanLegacyPath, isDocumentRequest, isLegacyBrowser, modernLink, prefersModern } from '../lib/legacy.js'
 import { onRequest as galleryImage } from './gallery-media/[[path]].js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
+import { ipTextResponse } from '../lib/visitor-ip.js'
 
 const PUBLIC_APIS = new Set(['/api/now', '/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music', '/api/stats/music-artwork', '/api/content/public/posts', '/api/content/public/shelf'])
 
@@ -12,6 +13,7 @@ function redirect(location) {
 export async function onRequest(context) {
   const { request, env } = context
   const url = new URL(request.url)
+  if (url.hostname === 'check.leodeng.dev') return ipTextResponse(request)
   if (/^\/api\/internal\/daily-ai(?:-live)?(?:\/|$)/.test(url.pathname)) return new Response('Not found.', { status: 404, headers: { 'Cache-Control': 'no-store' } })
   const legacyHost = url.hostname === new URL(LEGACY_ORIGIN).hostname
   if (!legacyHost) {

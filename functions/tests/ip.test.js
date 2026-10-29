@@ -3,12 +3,38 @@ import test from 'node:test'
 import { onRequest } from '../api/ip.js'
 import { parseConnectionTrace, useVisitor } from '../../src/utils/visitor.js'
 import { compactUserAgent } from '../../src/utils/userAgent.js'
+import { onRequest as middleware } from '../_middleware.js'
 
 const request = (address, cf = {}, options = {}) => {
   const value = new Request('https://leodeng.dev/api/ip', { headers: { 'CF-Connecting-IP': address, Cookie: 'private=secret' }, ...options })
   Object.defineProperty(value, 'cf', { value: cf })
   return value
 }
+
+test('check subdomain returns only the current visitor IP without entering the site', async () => {
+  const check = (headers = {}, path = '/', method = 'GET') => middleware({
+    request: new Request(`https://check.leodeng.dev${path}`, { method, headers }),
+    next() { throw new Error('IP checks must not enter the site') },
+  })
+  for (const ip of ['203.0.113.9', '203.0.113.10', '2001:db8::42']) {
+    const response = await check({ 'CF-Connecting-IP': ip })
+    assert.equal(response.status, 200)
+    assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8')
+    assert.equal(response.headers.get('cache-control'), 'private, no-store')
+    assert.equal(await response.text(), `${ip}\n`)
+  }
+  assert.equal(await (await check({ 'CF-Connecting-IP': '240.1.2.3', 'CF-Connecting-IPv6': '2001:db8::1' })).text(), '2001:db8::1\n')
+  const head = await check({ 'CF-Connecting-IP': '203.0.113.9' }, '/', 'HEAD')
+  assert.equal(head.status, 200)
+  assert.equal(await head.text(), '')
+  assert.equal((await check({ 'X-Forwarded-For': '203.0.113.9' })).status, 503)
+  assert.equal((await check({ 'CF-Connecting-IP': 'invalid' })).status, 503)
+  assert.equal((await check({}, '/admin')).status, 404)
+  assert.equal((await check({}, '/?target=example.com')).status, 400)
+  const post = await check({}, '/', 'POST')
+  assert.equal(post.status, 405)
+  assert.equal(post.headers.get('allow'), 'GET, HEAD')
+})
 
 test('returns only visitor metadata without fetching or exposing unrelated fields', async t => {
   t.mock.method(globalThis, 'fetch', () => { throw new Error('No upstream requests allowed') })
