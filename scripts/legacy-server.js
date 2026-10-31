@@ -11,13 +11,15 @@ import { cleanLegacyPath, MODERN_ORIGIN } from '../lib/legacy.js'
 import { galleryMediaKey } from '../lib/gallery-media.js'
 import { legacyMediaKey } from '../lib/legacy-media.js'
 import { nowResponse } from '../lib/now-api.js'
-import { lookupLyrics } from '../lib/lyricsProxy.js'
+import { lookupLyrics, localLyricsSource } from '../lib/lyricsProxy.js'
+
+import { loadLyricsEnvironment } from './lyrics-config.js'
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url))
 const publicApis = new Set(['/api/now', '/api/now-playing', '/api/homelab', '/api/tokens', '/api/time', '/api/ip', '/api/lyrics', '/api/stats/monkeytype', '/api/stats/music', '/api/stats/music-artwork'])
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8' }
 
-export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_legacy'), fetchUpstream = fetch, cssFile = path.join(projectRoot, 'legacy/legacy.css') } = {}) {
+export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_legacy'), fetchUpstream = fetch, lyricsEnv = {}, cssFile = path.join(projectRoot, 'legacy/legacy.css') } = {}) {
   const cache = new Map()
   let cachedBytes = 0
   const maxCacheBytes = 16 * 1024 * 1024
@@ -53,7 +55,7 @@ export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_
     if (pathname.startsWith('/api/')) {
       if (!publicApis.has(pathname)) return new Response('Not found.', { status: 404 })
       if (pathname === '/api/now') return nowResponse(request, JSON.parse(await fs.readFile(path.join(projectRoot, 'src/content/now.json'), 'utf8')))
-      if (pathname === '/api/lyrics') return lookupLyrics(request, fetchUpstream)
+      if (pathname === '/api/lyrics') return lookupLyrics(request, fetchUpstream, { local: localLyricsSource(lyricsEnv, { allowLocalHttp: true }) })
       try {
         const upstream = await fetchUpstream(`${MODERN_ORIGIN}${pathname}${['/api/lyrics','/api/stats/music-artwork'].includes(pathname) ? url.search : ''}`, { signal: AbortSignal.timeout(8000), redirect: 'error', headers: { Accept: 'application/json' } })
         if (![200, 204].includes(upstream.status)) return new Response('Live reading unavailable.', { status: 503 })
@@ -103,8 +105,9 @@ export function createLegacyPreview({ directory = path.join(projectRoot, 'dist/_
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { EnvHttpProxyAgent, fetch: upstreamFetch } = await import('undici')
+  const { Agent, EnvHttpProxyAgent, fetch: upstreamFetch } = await import('undici')
   const dispatcher = new EnvHttpProxyAgent()
+  const direct = new Agent()
   const { buildLegacySite } = await import('./build-legacy.js')
   try { await fs.access(path.join(projectRoot, 'dist/_site-routes.json')) } catch {
     const result = spawnSync('npm', ['run', 'build'], { cwd: projectRoot, stdio: 'inherit' })
@@ -113,7 +116,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { collections } = await import('../dist-ssr/entry-server.js')
   const routes = JSON.parse(await fs.readFile(path.join(projectRoot, 'dist/_site-routes.json'), 'utf8'))
   await buildLegacySite({ routes, collections })
-  const respond = createLegacyPreview({ fetchUpstream: (url, options) => upstreamFetch(url, { ...options, dispatcher }) })
+  const respond = createLegacyPreview({ lyricsEnv: loadLyricsEnvironment(projectRoot), fetchUpstream: (url, options) => upstreamFetch(url, { ...options, dispatcher: ['localhost', '127.0.0.1', '[::1]'].includes(new URL(url).hostname) ? direct : dispatcher }) })
   const port = Number(process.env.LEGACY_PORT || 5176)
   const server = http.createServer(async (incoming, outgoing) => {
     try {
@@ -127,7 +130,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       outgoing.writeHead(response.status, headers); outgoing.end(bytes)
     } catch { outgoing.writeHead(500, { 'Content-Type': 'text/plain' }); outgoing.end('Preview unavailable. Rebuild the classic edition.'); }
   })
-  server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? `Port ${port} is in use. Stop the other server, or set LEGACY_PORT to another port.` : 'Could not start the classic preview.'); process.exitCode = 1; void dispatcher.close() })
+  server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? `Port ${port} is in use. Stop the other server, or set LEGACY_PORT to another port.` : 'Could not start the classic preview.'); process.exitCode = 1; void Promise.allSettled([dispatcher.close(), direct.close()]) })
   server.listen(port, '0.0.0.0', () => {
     console.log(`\nClassic edition: http://localhost:${port}/`)
     try { for (const [name, entries] of Object.entries(os.networkInterfaces())) for (const address of entries || []) if (address.family === 'IPv4' && !address.internal && !/^(?:docker|br-|veth|virbr|tailscale|headscale|tun|tap)/.test(name) && !address.address.startsWith('169.254.')) console.log(`iPad / LAN:     http://${address.address}:${port}/`) } catch { console.log(`iPad / LAN: http://YOUR-COMPUTER-IP:${port}/`) }

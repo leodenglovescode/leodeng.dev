@@ -129,8 +129,8 @@ test('player uses server time when the device clock is wrong, and hides stale pl
 test('temporary lyric failures retry the same song and show the recovered lyrics', () => {
   const app = harness('now-playing')
   app.pending('/api/now-playing').respond(track(app.now()))
-  app.pending('/api/lyrics').respond(null, { status: 503 })
-  app.pending('https://lrclib.net/api/get').respond(null, { status: 429, headers: { 'retry-after': '60' } })
+  app.pending('/api/lyrics').respond(null, { status: 503, headers: { 'retry-after': '60' } })
+  assert.equal(app.pending('https://lrclib.net/api/get'), undefined)
   assert.match(app.find('player-lyric-status')[0].textContent, /Retrying/)
   // Keep playback alive while observing the upstream retry delay.
   for (let i = 0; i < 29; i++) {
@@ -144,20 +144,19 @@ test('temporary lyric failures retry the same song and show the recovered lyrics
   assert.equal(app.find('player-lyric-status')[0].getAttribute('hidden'), 'hidden')
 })
 
-test('classic player falls back to browser CORS when the edge is rate limited, and cancels stale requests', () => {
+test('classic player uses only the website lyrics boundary and cancels stale requests', () => {
   const app = harness('now-playing')
   app.pending('/api/now-playing').respond(track(app.now()))
-  app.pending('/api/lyrics').respond(null, { status: 503 })
-  app.pending('https://lrclib.net/api/get').respond({ duration: 180, syncedLyrics: '[00:00]Browser lyric' })
-  assert.equal(app.find('lyric-active')[0].textContent, 'Browser lyric')
+  app.pending('/api/lyrics').respond({ duration: 180, syncedLyrics: '[00:00]Local lyric' })
+  assert.equal(app.find('lyric-active')[0].textContent, 'Local lyric')
   app.advance(2000)
   app.pending('/api/now-playing').respond(track(app.now(), { title: 'Next' }))
-  app.pending('/api/lyrics').respond(null, { status: 503 })
-  const late = app.pending('https://lrclib.net/api/get')
+  const late = app.pending('/api/lyrics')
   app.advance(2000)
   app.pending('/api/now-playing').respond(track(app.now(), { title: 'Third' }))
   assert.equal(late.aborted, true)
   late.respond({ duration: 180, syncedLyrics: '[00:00]Wrong track' })
+  assert.equal(app.pending('https://lrclib.net/api/get'), undefined)
   assert.equal(app.find('player-lyrics')[0].getAttribute('hidden'), 'hidden')
 })
 

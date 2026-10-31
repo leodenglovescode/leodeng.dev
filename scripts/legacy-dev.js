@@ -1,14 +1,16 @@
-import { EnvHttpProxyAgent, fetch as upstreamFetch } from 'undici'
+import { Agent, EnvHttpProxyAgent, fetch as upstreamFetch } from 'undici'
+import { loadLyricsEnvironment } from './lyrics-config.js'
 import { createLegacyPreview } from './legacy-server.js'
 
-export function legacyPreviewPlugin({ fetchUpstream } = {}) {
+export function legacyPreviewPlugin({ fetchUpstream, lyricsEnv } = {}) {
   return {
     name: 'legacy-preview',
     apply: 'serve',
     configureServer(server) {
       const dispatcher = fetchUpstream ? null : new EnvHttpProxyAgent()
-      const respond = createLegacyPreview({ directory: `${server.config.root}/dist/_legacy`, fetchUpstream: fetchUpstream || ((url, options) => upstreamFetch(url, { ...options, dispatcher })) })
-      if (dispatcher) server.httpServer?.once('close', () => { void dispatcher.close() })
+      const direct = fetchUpstream ? null : new Agent()
+      const respond = createLegacyPreview({ directory: `${server.config.root}/dist/_legacy`, lyricsEnv: lyricsEnv || (fetchUpstream ? {} : loadLyricsEnvironment(server.config.root)), fetchUpstream: fetchUpstream || ((url, options) => upstreamFetch(url, { ...options, dispatcher: ['localhost', '127.0.0.1', '[::1]'].includes(new URL(url).hostname) ? direct : dispatcher })) })
+      if (dispatcher) server.httpServer?.once('close', () => { void Promise.allSettled([dispatcher.close(), direct.close()]) })
       server.middlewares.use(async (request, response, next) => {
         const pathname = new URL(request.url, 'http://localhost').pathname
         // The classic script uses same-origin API URLs even under /_legacy/.

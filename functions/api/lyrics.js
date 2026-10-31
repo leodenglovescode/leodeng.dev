@@ -1,11 +1,14 @@
-import { lookupLyrics } from '../../lib/lyricsProxy.js'
+import { lookupLyrics, lyricsQuery, localLyricsSource } from '../../lib/lyricsProxy.js'
 
 export async function onRequest(context) {
   const { request } = context
-  if (request.method !== 'GET') return lookupLyrics(request)
+  const parsed = lyricsQuery(request)
+  if (parsed instanceof Response) return parsed
   const cache = globalThis.caches?.default
   // Public, sanitized responses only. Cookies do not affect the lookup.
-  const key = new Request(request.url, { method: 'GET' })
+  const cacheUrl = new URL('/__lyrics_cache/v2', request.url)
+  cacheUrl.search = parsed.query.toString()
+  const key = new Request(cacheUrl, { method: 'GET' })
   if (cache) {
     try {
       const hit = await cache.match(key)
@@ -16,12 +19,12 @@ export async function onRequest(context) {
       }
     } catch { /* A cache failure must not prevent the lookup. */ }
   }
-  const response = await lookupLyrics(request)
+  const response = await lookupLyrics(request, fetch, { local: localLyricsSource(context.env) })
   if (cache && context.waitUntil && (response.status === 200 || response.status === 503)) {
     const copy = response.clone()
     // Briefly cache upstream failures internally, so page visits do not
     // repeatedly hit an already rate-limited upstream. Browsers see no-store.
-    if (copy.status === 503) copy.headers.set('Cache-Control', `public, max-age=${response.headers.get('Retry-After') || 30}`)
+    if (copy.status === 503) copy.headers.set('Cache-Control', `public, max-age=${Math.min(60, Number(response.headers.get('Retry-After')) || 30)}`)
     context.waitUntil(cache.put(key, copy).catch(() => {}))
   }
   return response

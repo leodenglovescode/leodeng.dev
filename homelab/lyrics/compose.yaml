@@ -1,0 +1,22 @@
+services:
+  lyrics-gateway:
+    image: python:3.13-slim
+    command: ["python3", "-B", "/app/gateway.py"]
+    restart: unless-stopped
+    user: "65532:65532"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 0.5
+    ports: ["127.0.0.1:3310:3310"]
+    volumes: ["./gateway.py:/app/gateway.py:ro"]
+    env_file: ["${LYRICS_GATEWAY_ENV_FILE:?Set a private environment file}"]
+    environment:
+      LYRICS_GATEWAY_HOST: "0.0.0.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "2"

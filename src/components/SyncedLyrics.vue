@@ -19,31 +19,41 @@ watch(signature, async (_, __, onCleanup) => {
     lines.value = cached.lines
     return
   }
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 8000)
+  let controller, timeout, retry
   let cancelled = false
-  onCleanup(() => { cancelled = true; controller.abort(); clearTimeout(timeout) })
+  onCleanup(() => { cancelled = true; controller?.abort(); clearTimeout(timeout); clearTimeout(retry) })
   const track = props.track
   const query = new URLSearchParams({ track_name: track.title, artist_name: track.artist, duration: String(track.durationMs / 1000) })
   if (track.album) query.set('album_name', track.album)
-  try {
-    const response = await fetch(`https://lrclib.net/api/get?${query}`, { signal: controller.signal, headers: { Accept: 'application/json' }, credentials: 'omit', referrerPolicy: 'no-referrer' })
-    if (!response.ok && response.status !== 404) return
-    const result = response.ok ? await response.json() : null
+  function retryLater(response) {
     if (cancelled) return
-    // Reject different edits of a recording even if their titles match.
-    const parsed = result && !result.instrumental && Number.isFinite(result.duration)
-      && Math.abs(result.duration * 1000 - track.durationMs) <= 2000
-      ? parseSyncedLyrics(result.syncedLyrics) : []
-    lines.value = parsed.some(line => line.text) ? parsed : []
-    cache.delete(key)
-    cache.set(key, { lines: lines.value, expiresAt: Date.now() + (lines.value.length ? 86_400_000 : 600_000) })
-    if (cache.size > 20) cache.delete(cache.keys().next().value)
-  } catch {
-    // Lyrics are optional; playback and artwork continue when lookup fails.
-  } finally {
-    clearTimeout(timeout)
+    const value = response?.headers.get('Retry-After')
+    const seconds = value && (/^\d+$/.test(value) ? Number(value) : (Date.parse(value) - Date.now()) / 1000)
+    retry = setTimeout(load, Math.min(2147483647, Math.max(30000, Number.isFinite(seconds) ? seconds * 1000 : 30000)))
   }
+  async function load() {
+    if (cancelled || typeof document === 'undefined') return
+    if (document.hidden) { retryLater(); return }
+    controller = new AbortController()
+    timeout = setTimeout(() => controller.abort(), 8000)
+    try {
+      const response = await fetch(`/api/lyrics?${query}`, { signal: controller.signal, headers: { Accept: 'application/json' }, credentials: 'omit', referrerPolicy: 'no-referrer' })
+      if (!response.ok) { retryLater(response); return }
+      const result = await response.json()
+      if (cancelled) return
+      const parsed = result && !result.instrumental && Number.isFinite(result.duration)
+        && Math.abs(result.duration * 1000 - track.durationMs) <= 2000
+        ? parseSyncedLyrics(result.syncedLyrics) : []
+      lines.value = parsed.some(line => line.text) ? parsed : []
+      cache.delete(key)
+      cache.set(key, { lines: lines.value, expiresAt: Date.now() + (lines.value.length ? 86_400_000 : 600_000) })
+      if (cache.size > 20) cache.delete(cache.keys().next().value)
+    } catch {
+      // Optional lyrics do not interrupt playback. One bounded retry timer per track.
+      retryLater()
+    } finally { clearTimeout(timeout) }
+  }
+  await load()
 }, { immediate: true })
 </script>
 

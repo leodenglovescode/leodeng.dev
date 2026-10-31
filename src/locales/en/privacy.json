@@ -47,7 +47,7 @@
       "id": "external",
       "title": "Other external services",
       "paragraphs": [
-        "Depending on the page, your browser may request Google Fonts, public data from GitHub, lyrics from LRCLIB, or cover art from external providers such as Cover Art Archive. Those providers receive connection information when your browser contacts them. Links to other websites take you to services with their own privacy practices.",
+        "Depending on the page, your browser may request Google Fonts, public data from GitHub, or cover art from external providers such as Cover Art Archive. Those providers receive connection information when your browser contacts them. Lyrics are retrieved server-side from a self-hosted mirror, with public LRCLIB as a fallback; your browser requests lyrics from this website. Links to other websites take you to services with their own privacy practices.",
         "The site’s own browser storage supports the features described above. I have not added advertising trackers to the site’s application code."
       ]
     },

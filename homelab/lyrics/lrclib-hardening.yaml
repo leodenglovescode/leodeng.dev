@@ -1,0 +1,7 @@
+services:
+  lrclib:
+    read_only: true
+    cap_drop: [ALL]
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid,nodev
+    pids_limit: 128
