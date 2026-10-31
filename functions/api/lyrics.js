@@ -1,9 +1,13 @@
 import { lookupLyrics, lyricsQuery, localLyricsSource } from '../../lib/lyricsProxy.js'
+import { lyricsLimiter } from '../../lib/lyricsLimits.js'
 
 export async function onRequest(context) {
   const { request } = context
   const parsed = lyricsQuery(request)
   if (parsed instanceof Response) return parsed
+  const limiter = await lyricsLimiter(request, context.env)
+  const limited = await limiter.check('request')
+  if (limited) return limited
   const cache = globalThis.caches?.default
   // Public, sanitized responses only. Cookies do not affect the lookup.
   const cacheUrl = new URL('/__lyrics_cache/v2', request.url)
@@ -19,6 +23,8 @@ export async function onRequest(context) {
       }
     } catch { /* A cache failure must not prevent the lookup. */ }
   }
+  const upstreamLimited = await limiter.check('upstream')
+  if (upstreamLimited) return upstreamLimited
   const response = await lookupLyrics(request, fetch, { local: localLyricsSource(context.env) })
   if (cache && context.waitUntil && (response.status === 200 || response.status === 503)) {
     const copy = response.clone()

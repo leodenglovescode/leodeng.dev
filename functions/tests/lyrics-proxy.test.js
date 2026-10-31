@@ -4,8 +4,9 @@ import { lookupLyrics, localLyricsSource } from '../../lib/lyricsProxy.js'
 import { onRequest } from '../api/lyrics.js'
 import { createLegacyPreview } from '../../scripts/legacy-server.js'
 
+const limiterEnv = { LYRICS_IP_HASH_KEY: 'x'.repeat(32), LYRICS_TRAFFIC: { idFromName: name => name, get: () => ({ fetch: async () => new Response(null, { status: 204 }) }) } }
 const query = '?track_name=Song&artist_name=Artist&album_name=Album&duration=180'
-const request = (search = query, method = 'GET') => new Request(`https://old.leodeng.dev/api/lyrics${search}`, { method, headers: { cookie: 'private=session', authorization: 'Bearer private' } })
+const request = (search = query, method = 'GET') => new Request(`https://old.leodeng.dev/api/lyrics${search}`, { method, headers: { cookie: 'private=session', authorization: 'Bearer private', 'CF-Connecting-IP': '192.0.2.1' } })
 
 test('public lyrics lookup is fixed-origin, strips credentials and returns only matching synced lyrics', async () => {
   const response = await lookupLyrics(request(), async (url, options) => {
@@ -65,7 +66,7 @@ test('edge cache shares sanitized responses and backs off after rate limiting', 
     match: async key => store.get(key.url)?.clone(),
     put: async (key, response) => { assert.equal(key.headers.get('cookie'), null); store.set(key.url, response.clone()) },
   } }
-  const context = { request: request(), waitUntil: task => tasks.push(task) }
+  const context = { request: request(), env: limiterEnv, waitUntil: task => tasks.push(task) }
   try {
     globalThis.fetch = async () => { calls++; return Response.json({ duration: 180, syncedLyrics: '[00:00]Cached' }) }
     assert.equal((await onRequest(context)).status, 200)
@@ -162,10 +163,10 @@ test('equivalent public queries share an edge cache key, and invalid queries can
   globalThis.caches = { default: { match: async key => store.get(key.url)?.clone(), put: async (key, response) => store.set(key.url, response.clone()) } }
   try {
     globalThis.fetch = async () => { calls++; return Response.json({ duration: 180, syncedLyrics: '[00:00]Cached' }) }
-    await onRequest({ request: request(), waitUntil: p => tasks.push(p) })
+    await onRequest({ request: request(), env: limiterEnv, waitUntil: p => tasks.push(p) })
     await Promise.all(tasks)
     const second = request('?duration=180.0&album_name=Album&artist_name=Artist&track_name=%20Song%20')
-    assert.equal((await onRequest({ request: second })).status, 200)
+    assert.equal((await onRequest({ request: second, env: limiterEnv })).status, 200)
     assert.equal(calls, 1)
     assert.equal((await onRequest({ request: request(query + '&url=anything') })).status, 400)
     assert.equal(calls, 1)
