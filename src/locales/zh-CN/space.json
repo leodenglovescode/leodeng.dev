@@ -1,0 +1,13 @@
+{
+  "title": "太空护照",
+  "intro": "我的太空任务船票和证书。",
+  "collection": "太空纪念品",
+  "tiltHint": "移动鼠标，倾斜船票",
+  "touchHint": "左右滑动浏览",
+  "previous": "上一件纪念品",
+  "next": "下一件纪念品",
+  "inspect": "查看纪念品",
+  "close": "关闭",
+  "original": "打开原图",
+  "imageError": "图片加载失败。请尝试打开下方的原图。"
+}

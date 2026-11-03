@@ -1,0 +1,13 @@
+{
+  "title": "Space Passport",
+  "intro": "My space mission tickets and certificates.",
+  "collection": "Space keepsakes",
+  "tiltHint": "Move your mouse to tilt",
+  "touchHint": "Swipe to browse",
+  "previous": "Previous keepsake",
+  "next": "Next keepsake",
+  "inspect": "Inspect keepsake",
+  "close": "Close",
+  "original": "Open original image",
+  "imageError": "The image could not load. Try opening the original below."
+}

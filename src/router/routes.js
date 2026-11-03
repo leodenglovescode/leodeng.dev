@@ -37,6 +37,7 @@ const publicRoutes = [
   { path: '/gallery/:slug', component: GalleryCollection, meta: routeMeta('gallery') },
   { path: '/api-docs', component: () => import('../pages/ApiDocs.vue'), meta: routeMeta('api-docs') },
   { path: '/now', component: Now, meta: routeMeta('now') },
+  { path: '/space', component: () => import('../pages/Space.vue'), meta: routeMeta('space') },
   { path: '/shelf', component: () => import('../pages/Shelf.vue'), meta: routeMeta('shelf') },
   { path: '/stats', component: () => import('../pages/Stats.vue'), meta: routeMeta('stats') },
   { path: '/spotting', component: Spotting, meta: routeMeta('spotting') },
