@@ -56,7 +56,6 @@ const socialLinks = [
     <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
       <!-- Deliberately footer-only: side pages worth finding, not worth a nav slot. -->
       <RouterLink :to="localePath('/now')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('now') }}</RouterLink>
-      <RouterLink :to="localePath('/space')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('space') }}</RouterLink>
       <RouterLink :to="localePath('/shelf')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('shelf') }}</RouterLink>
       <RouterLink :to="localePath('/stats')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('stats') }}</RouterLink>
       <RouterLink :to="localePath('/homelab')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('homelab') }}</RouterLink>
@@ -70,6 +69,7 @@ const socialLinks = [
       <RouterLink :to="localePath('/pgp')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">PGP</RouterLink>
       <RouterLink :to="localePath('/privacy')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('privacy') }}</RouterLink>
       <RouterLink :to="localePath('/api-docs')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('apiDocs') }}</RouterLink>
+      <RouterLink :to="localePath('/space')" class="text-xs font-mono text-muted/90 hover:text-fg transition-colors">{{ t('space') }}</RouterLink>
       <div class="flex items-center gap-4">
         <template v-for="link in socialLinks" :key="link.label">
           <RouterLink

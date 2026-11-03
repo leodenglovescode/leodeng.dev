@@ -51,5 +51,5 @@
     "description": "A look at the public IP, network, and connection details Cloudflare sees when you visit my site."
   },
   "shelf": {"title": "Shelf", "description": "Movies and TV shows I've watched, and albums I like."},
-  "space": {"title": "Space Passport", "description": "My space mission tickets and certificates."}
+  "space": {"title": "Space Passport", "description": "Boarding passes obtained from NASA."}
 }
