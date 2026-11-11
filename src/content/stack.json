@@ -548,6 +548,81 @@
     },
     {
       "name": {
+        "en": "NAS",
+        "zh": "网络存储"
+      },
+      "model": "UGREEN DH2100E",
+      "icon": "database",
+      "description": {
+        "en": "Custom modified to run Debian 13 with Linux kernel 4.9.",
+        "zh": "经过自定义改装，运行 Debian 13 和 Linux 4.9 内核。"
+      },
+      "rows": [
+        {
+          "label": {
+            "en": "CPU",
+            "zh": "CPU"
+          },
+          "value": {
+            "en": "Realtek RTD1296 · Quad-core",
+            "zh": "Realtek RTD1296 · 四核"
+          }
+        },
+        {
+          "label": {
+            "en": "RAM",
+            "zh": "RAM"
+          },
+          "value": {
+            "en": "2GB",
+            "zh": "2GB"
+          }
+        },
+        {
+          "label": {
+            "en": "Drives",
+            "zh": "硬盘"
+          },
+          "value": {
+            "en": "2 × Seagate IronWolf 4TB",
+            "zh": "2 × Seagate IronWolf 4TB"
+          }
+        },
+        {
+          "label": {
+            "en": "Array",
+            "zh": "阵列"
+          },
+          "value": {
+            "en": "RAID 1",
+            "zh": "RAID 1"
+          }
+        },
+        {
+          "label": {
+            "en": "OS",
+            "zh": "操作系统"
+          },
+          "value": {
+            "en": "Debian 13",
+            "zh": "Debian 13"
+          }
+        },
+        {
+          "label": {
+            "en": "Kernel",
+            "zh": "内核"
+          },
+          "value": {
+            "en": "Linux 4.9",
+            "zh": "Linux 4.9"
+          }
+        }
+      ],
+      "group": "computers"
+    },
+    {
+      "name": {
         "en": "Raspberry Pi Server (Watchdog)",
         "zh": "Raspberry Pi 服务器（看门狗）"
       },
@@ -697,6 +772,16 @@
           "value": {
             "en": "Ubuntu 24.04 LTS",
             "zh": "Ubuntu 24.04 LTS"
+          }
+        },
+        {
+          "label": {
+            "en": "NAS",
+            "zh": "网络存储"
+          },
+          "value": {
+            "en": "Debian 13 + Linux kernel 4.9 (custom modified)",
+            "zh": "Debian 13 + Linux 4.9 内核（自定义改装）"
           }
         },
         {
