@@ -2,11 +2,32 @@ import datetime
 import json
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from clock import ClockApplication, TokenBucket, satellite_counts, tracking_is_healthy
 
 
 class ClockTests(unittest.TestCase):
+    def test_partial_sky_reports_preserve_counts_without_refreshing_age(self):
+        app = ClockApplication()
+        connection = MagicMock()
+        stream = connection.makefile.return_value.__enter__.return_value
+        stream.readline.side_effect = [
+            json.dumps({'class': 'SKY', 'satellites': [
+                {'PRN': 5, 'used': True}, {'PRN': 6, 'used': False},
+            ]}).encode() + b'\n',
+            b'{"class":"SKY","hdop":1.06}\n',
+            b'{"class":"SKY","hdop":1.06}\n',
+            RuntimeError('end test stream'),
+        ]
+        with patch('clock.socket.create_connection') as connect, \
+                patch('clock.time.monotonic', return_value=100) as monotonic:
+            connect.return_value.__enter__.return_value = connection
+            with self.assertRaisesRegex(RuntimeError, 'end test stream'):
+                app.observe_satellites()
+        self.assertEqual(app.satellites, {'used': 1, 'visible': 2})
+        self.assertEqual(app.satellites_at, 100)
+        monotonic.assert_called_once()
+
     def test_satellites_are_deduplicated_and_location_is_discarded(self):
         report = {'class': 'SKY', 'lat': 31, 'lon': 121, 'satellites': [
             {'gnssid': 0, 'svid': 1, 'sigid': 1, 'used': False, 'az': 100, 'el': 40},

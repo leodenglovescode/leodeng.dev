@@ -88,6 +88,10 @@ class ClockApplication:
                             if not isinstance(report, dict) or report.get('class') != 'SKY':
                                 continue
                             counts = satellite_counts(report)
+                            # gpsd interleaves DOP-only SKY reports with full views.
+                            # Only a complete view refreshes counts and their age.
+                            if counts is None:
+                                continue
                             with self.health_lock:
                                 self.satellites = counts
                                 self.satellites_at = time.monotonic()
