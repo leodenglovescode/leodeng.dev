@@ -1,0 +1,21 @@
+[Unit]
+Description=Music Assistant device playback monitor
+After=network-online.target listening-history.service
+Wants=network-online.target
+
+[Service]
+User=leodeng
+Group=leodeng
+EnvironmentFile=/etc/music-assistant-monitor.env
+ExecStart=/usr/bin/python3 /usr/local/lib/leodeng-music/music_assistant_monitor.py
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/listening-history
+
+[Install]
+WantedBy=multi-user.target

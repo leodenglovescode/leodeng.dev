@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLocale } from '../utils/i18n.js'
 import SyncedLyrics from './SyncedLyrics.vue'
+import { playbackSources } from '../utils/nowPlaying.js'
 
 const { t } = useLocale('common')
 
@@ -10,8 +11,11 @@ const PLAYING_POLL_INTERVAL_MS = 2_000
 const REQUEST_TIMEOUT_MS = 5_000
 const STALE_AFTER_MS = 35_000
 
-const nowPlaying = ref(null)
+const sources = ref([])
+const selectedId = ref('')
 const progressClock = ref(0)
+const activeSources = computed(() => sources.value.filter(source => source.expiresAt >= progressClock.value))
+const nowPlaying = computed(() => activeSources.value.find(source => source.id === selectedId.value) || activeSources.value[0] || null)
 const artworkFailed = ref(false)
 const artworkUrl = computed(() => {
   try {
@@ -47,18 +51,6 @@ function formatTime(milliseconds) {
   return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
 }
 
-function validPayload(payload) {
-  return payload?.playing === true
-    && typeof payload.title === 'string'
-    && payload.title.length > 0
-    && typeof payload.artist === 'string'
-    && payload.artist.length > 0
-    && Number.isFinite(payload.durationMs)
-    && payload.durationMs > 0
-    && Number.isFinite(payload.positionMs)
-    && Number.isFinite(payload.observedAt)
-}
-
 async function refreshNowPlaying() {
   if (stopped) return
   window.clearTimeout(pollTimer)
@@ -76,7 +68,7 @@ async function refreshNowPlaying() {
 
     if (response.status === 204) {
       lastSuccessfulFetchAt = Date.now()
-      nowPlaying.value = null
+      sources.value = []
       return
     }
 
@@ -84,32 +76,18 @@ async function refreshNowPlaying() {
 
     const payload = await response.json()
     lastSuccessfulFetchAt = Date.now()
-    if (!validPayload(payload)) {
-      nowPlaying.value = null
-      return
-    }
-
     const responseDate = Date.parse(response.headers.get('date') ?? '')
     const serverNow = Number.isFinite(responseDate)
       ? responseDate
       : Number(payload.serverNow) || payload.observedAt
-    const ageAtResponse = Math.min(STALE_AFTER_MS, Math.max(0, serverNow - payload.observedAt))
     const syncedAt = performance.now()
-
-    nowPlaying.value = {
-      title: payload.title,
-      artist: payload.artist,
-      album: typeof payload.album === 'string' ? payload.album : '',
-      artworkUrl: typeof payload.artworkUrl === 'string' ? payload.artworkUrl : '',
-      durationMs: payload.durationMs,
-      syncedPositionMs: Math.min(payload.durationMs, Math.max(0, payload.positionMs + ageAtResponse)),
-      syncedAt,
-    }
+    sources.value = playbackSources(payload, serverNow, syncedAt)
+    if (!sources.value.some(source => source.id === selectedId.value)) selectedId.value = sources.value[0]?.id || ''
     progressClock.value = syncedAt
   } catch (error) {
     if (error.name !== 'AbortError' || controller === activeRequest) {
       if (!lastSuccessfulFetchAt || Date.now() - lastSuccessfulFetchAt > STALE_AFTER_MS) {
-        nowPlaying.value = null
+        sources.value = []
       }
     }
   } finally {
@@ -146,15 +124,25 @@ onBeforeUnmount(() => {
     <aside
       v-if="nowPlaying"
       class="mx-auto w-full max-w-72 rounded-xl bg-fg/[0.035] p-3 sm:max-w-none"
-      :aria-label="t('leoIsNowPlaying')"
+      :aria-label="nowPlaying.device ? t('deviceIsNowPlaying', { device: nowPlaying.device }) : t('leoIsNowPlaying')"
     >
       <p class="mb-2 flex items-center gap-1.5 font-mono text-[11px] text-accent">
         <span class="now-playing-pulse h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
-        {{ t('leoIsNowPlaying') }}
+        <span class="min-w-0 flex-1">{{ nowPlaying.device ? t('deviceIsNowPlaying', { device: nowPlaying.device }) : t('leoIsNowPlaying') }}</span>
+        <span v-if="activeSources.length > 1" class="ml-auto shrink-0 whitespace-nowrap self-start text-muted">{{ t('playingDevices', { count: activeSources.length }) }}</span>
       </p>
+      <div v-if="activeSources.length > 1" class="mb-3 flex flex-wrap gap-1.5" role="group" :aria-label="t('choosePlayingDevice')">
+        <button
+          v-for="source in activeSources" :key="source.id" type="button"
+          :aria-pressed="nowPlaying.id === source.id"
+          class="max-w-full truncate rounded-md border px-2 py-1 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          :class="nowPlaying.id === source.id ? 'border-accent/40 bg-accent/10 text-accent' : 'border-fg/10 text-muted hover:text-fg'"
+          :title="source.device" @click="selectedId = source.id"
+        >{{ source.device || t('musicDevice') }}</button>
+      </div>
       <div class="flex min-w-0 items-start gap-3">
         <div
-          class="now-playing-artwork relative flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-accent-soft text-2xl text-accent"
+          class="now-playing-artwork relative flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-accent/10 text-2xl text-accent"
           aria-hidden="true"
         >
           <img

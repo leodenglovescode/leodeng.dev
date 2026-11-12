@@ -314,6 +314,7 @@
     var content = document.getElementById('now-playing-content');
     var track = null, key = '', lines = [], cache = [], poll = null, ticker = null, request = null, lyricRequest = null, lyricRetry = null, generation = 0, lastSuccess = null;
     var title, artist, album, image, fill, progress, elapsed, total, lyrics, lyricRows, lyricStatus, lastLine = -999;
+    var deviceHeading, deviceSelect, selectedDevice = '';
     var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     function hide() {
       track = null; key = ''; lines = []; generation++;
@@ -380,6 +381,10 @@
     }
     function build() {
       clear(content);
+      deviceHeading = node('p', ''); deviceHeading.className = 'player-device-heading'; content.appendChild(deviceHeading);
+      deviceSelect = node('select', ''); deviceSelect.className = 'player-device-select'; deviceSelect.setAttribute('aria-label', zh ? '选择正在播放的设备' : 'Choose a playing device');
+      deviceSelect.onchange = function () { selectedDevice = deviceSelect.value; if (request) request.abort(); refresh(); };
+      content.appendChild(deviceSelect);
       var info = node('div', ''); info.className = 'player-info';
       image = node('img', ''); image.alt = ''; image.width = 56; image.height = 56; image.setAttribute('hidden', 'hidden');
       image.onerror = function () { image.setAttribute('hidden', 'hidden'); };
@@ -409,10 +414,16 @@
         if (response.status === 204) { lastSuccess = monotonic(); hide(); }
         else if (data) {
           lastSuccess = monotonic();
+          var payloadServerNow = data.serverNow;
+          var devices = Array.isArray(data.sources) ? data.sources.slice(0, 3) : [data];
+          var chosen = devices[0];
+          for (var d = 0; d < devices.length; d++) if (devices[d].id === selectedDevice) chosen = devices[d];
+          data = chosen || {};
+          selectedDevice = data.id || '';
           if (data.playing !== true || typeof data.title !== 'string' || !data.title || typeof data.artist !== 'string' || !data.artist || !finite(data.durationMs) || data.durationMs <= 0 || !finite(data.positionMs) || !finite(data.observedAt)) hide();
           else {
             var responseDate = Date.parse(response.getResponseHeader('date') || '');
-            var serverNow = isFinite(responseDate) ? responseDate : Number(data.serverNow) || data.observedAt;
+            var serverNow = isFinite(responseDate) ? responseDate : Number(payloadServerNow) || data.observedAt;
             var age = Math.max(0, serverNow - data.observedAt);
             if (age > 35000) hide();
             else {
@@ -420,6 +431,14 @@
               var changed = signature !== key;
               track = { title: data.title, artist: data.artist, album: data.album || '', durationMs: data.durationMs, position: Math.max(0, Math.min(data.durationMs, data.positionMs + age)), at: monotonic() };
               if (!title) build();
+              deviceHeading.textContent = data.device ? (zh ? data.device + ' 正在播放' : data.device + ' is now playing') : '';
+              clear(deviceSelect);
+              for (var optionIndex = 0; optionIndex < devices.length; optionIndex++) {
+                var option = node('option', devices[optionIndex].device || (zh ? '音乐' : 'Music'));
+                option.value = devices[optionIndex].id || ''; deviceSelect.appendChild(option);
+              }
+              deviceSelect.value = selectedDevice;
+              if (devices.length > 1) deviceSelect.removeAttribute('hidden'); else deviceSelect.setAttribute('hidden', 'hidden');
               title.textContent = track.title; artist.textContent = track.artist; album.textContent = track.album;
               total.textContent = time(track.durationMs); progress.setAttribute('aria-valuemax', String(Math.round(track.durationMs / 1000)));
               var artwork = typeof data.artworkUrl === 'string' && data.artworkUrl.match(/^https:\/\/media\.leodeng\.dev\/now-playing\/artwork\/([a-f0-9]{64}\.(?:jpg|png))$/);

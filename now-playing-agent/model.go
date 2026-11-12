@@ -23,13 +23,16 @@ type playback struct {
 }
 
 type publishPayload struct {
-	TrackKey   string  `json:"trackKey"`
-	Title      string  `json:"title"`
-	Artist     string  `json:"artist"`
-	Album      *string `json:"album"`
-	DurationMS int64   `json:"durationMs"`
-	PositionMS int64   `json:"positionMs"`
-	ArtworkKey *string `json:"artworkKey"`
+	SourceID    string  `json:"sourceId"`
+	DeviceID    string  `json:"deviceId"`
+	SourceLabel string  `json:"sourceLabel"`
+	TrackKey    string  `json:"trackKey"`
+	Title       string  `json:"title"`
+	Artist      string  `json:"artist"`
+	Album       *string `json:"album"`
+	DurationMS  int64   `json:"durationMs"`
+	PositionMS  int64   `json:"positionMs"`
+	ArtworkKey  *string `json:"artworkKey"`
 }
 
 type artwork struct {

@@ -76,6 +76,8 @@ small, figcaption { color: #59687c; font-size: 11px; }
 #now-playing-content img { width: 56px; height: 56px; float: left; margin: 0 8px 7px 0; border: 1px solid #a2b2c8; }
 #now-playing-content { overflow: hidden; }
 #now-playing-content p { margin: 3px 0; font-size: 11px; }
+#now-playing-content .player-device-heading { font-weight: bold; margin-bottom: 6px; }
+.player-device-select { max-width: 100%; margin-bottom: 7px; font: inherit; }
 #now-playing h2 { font-size: 12px; margin-top: 0; }
 .live-caption { font-size: 11px; color: #59687c; }
 .dashboard .connection-report { padding: 12px; background: #e5e8ec; }

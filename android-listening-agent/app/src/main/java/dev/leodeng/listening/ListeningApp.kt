@@ -110,6 +110,7 @@ class SyncEngine(private val app: ListeningApp) {
         val s = p.sample
         val advance = ((SystemClock.elapsedRealtime() - p.at) * s.speed).toLong()
         val body = JSONObject().put("trackKey", p.key).put("title", s.track.title).put("artist", s.track.artist)
+            .put("sourceId", "android:$deviceId").put("deviceId", "android:$deviceId").put("sourceLabel", c.deviceName)
             .put("album", s.track.album).put("durationMs", s.track.durationMs)
             .put("positionMs", (s.positionMs + advance).coerceIn(0, s.track.durationMs)).put("artworkKey", artwork ?: JSONObject.NULL)
         val response = http.send(c.website, "/api/internal/now-playing", c.nowToken, "POST", body.toString().toByteArray(), "application/json")

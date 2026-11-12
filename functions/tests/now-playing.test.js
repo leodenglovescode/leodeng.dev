@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { createHash, webcrypto } from 'node:crypto'
 import test from 'node:test'
+import { DatabaseSync } from 'node:sqlite'
+import { readFileSync } from 'node:fs'
 
 import { onRequest as publicEndpoint } from '../api/now-playing.js'
 import { onRequest as ingestEndpoint } from '../api/internal/now-playing.js'
@@ -8,79 +10,33 @@ import { onRequest as artworkEndpoint } from '../api/internal/now-playing/artwor
 
 if (!globalThis.crypto) globalThis.crypto = webcrypto
 
-class FakeD1Statement {
-  constructor(database, sql) {
-    this.database = database
-    this.sql = sql
-    this.values = []
-  }
-
-  bind(...values) {
-    this.values = values
-    return this
-  }
-
-  async first() {
-    if (this.sql.includes('FROM now_playing')) return this.database.current
-    throw new Error(`Unexpected first(): ${this.sql}`)
-  }
-
-  async run() {
-    if (this.sql.startsWith('DELETE FROM now_playing')) {
-      const changes = this.database.current ? 1 : 0
-      this.database.current = null
-      return { meta: { changes } }
-    }
-
-    if (this.sql.includes('INSERT INTO now_playing_rate')) {
-      const [now, minimum] = this.values
-      if (this.database.artworkAcceptedAt != null
-          && this.database.artworkAcceptedAt > now - minimum) {
-        return { meta: { changes: 0 } }
-      }
-      this.database.artworkAcceptedAt = now
-      return { meta: { changes: 1 } }
-    }
-
-    if (this.sql.includes('INSERT INTO now_playing')) {
-      const [
-        trackKey,
-        title,
-        artist,
-        album,
-        durationMs,
-        positionMs,
-        artworkKey,
-        now,
-        minimum,
-      ] = this.values
-
-      if (this.database.current && this.database.current.received_at > now - minimum) {
-        return { meta: { changes: 0 } }
-      }
-      this.database.current = {
-        track_key: trackKey,
-        title,
-        artist,
-        album,
-        duration_ms: durationMs,
-        position_ms: positionMs,
-        artwork_key: artworkKey,
-        received_at: now,
-      }
-      return { meta: { changes: 1 } }
-    }
-
-    throw new Error(`Unexpected run(): ${this.sql}`)
-  }
-}
-
 class FakeD1 {
-  current = null
-  artworkAcceptedAt = null
-
+  constructor() {
+    this.db = new DatabaseSync(':memory:')
+    for (const migration of ['0002_now_playing.sql', '0007_now_playing_sources.sql']) {
+      this.db.exec(readFileSync(new URL(`../../homelab/migrations/${migration}`, import.meta.url), 'utf8'))
+    }
+  }
+  get current() { return this.db.prepare('SELECT * FROM now_playing').get() ?? null }
   prepare(sql) {
-    return new FakeD1Statement(this, sql.trim())
+    const statement = this.db.prepare(sql)
+    let values = []
+    const prepared = {
+      bind(...args) { values = args; return prepared },
+      async first() { return statement.get(...values) ?? null },
+      async all() { return { results: statement.all(...values) } },
+      async run() { return { meta: { changes: Number(statement.run(...values).changes) } } },
+    }
+    return prepared
+  }
+  async batch(statements) {
+    this.db.exec('BEGIN')
+    try {
+      const result = []
+      for (const statement of statements) result.push(await statement.run())
+      this.db.exec('COMMIT')
+      return result
+    } catch (error) { this.db.exec('ROLLBACK'); throw error }
   }
 }
 
@@ -147,7 +103,11 @@ test('authenticated metadata is stored and returned by the public endpoint', asy
     ))
     assert.equal(read.status, 200)
     assert.equal(read.headers.get('cache-control'), 'public, max-age=1')
-    assert.deepEqual(await read.json(), {
+    const { sources, id, device, ...primary } = await read.json()
+    assert.equal(device, 'Music')
+    assert.equal(sources.length, 1)
+    assert.equal(sources[0].id, id)
+    assert.deepEqual(primary, {
       playing: true,
       title: 'Dreams',
       artist: 'Fleetwood Mac',
@@ -163,7 +123,7 @@ test('authenticated metadata is stored and returned by the public endpoint', asy
   }
 })
 
-test('metadata writes require the secret and are globally rate limited', async () => {
+test('legacy metadata writes require the secret and retain their own rate limit', async () => {
   const database = new FakeD1()
   const originalNow = Date.now
   let now = 1_800_000_000_000
@@ -323,4 +283,69 @@ test('unsupported methods and media types are rejected', async () => {
     },
   )))
   assert.equal(textWrite.status, 415)
+})
+
+const source = (id, device = id, extra = {}) => ({ ...track, sourceId: id, deviceId: device, sourceLabel: id.split(':')[0], ...extra })
+const readSources = async database => {
+  const response = await publicEndpoint(context(new Request('https://example.test/api/now-playing'), { database }))
+  return response.status === 204 ? [] : (await response.json()).sources
+}
+
+test('three simultaneous publishers keep independent leases, rate limits and clears', async () => {
+  const database = new FakeD1()
+  const original = Date.now
+  let now = 1_800_000_000_000
+  Date.now = () => now
+  try {
+    const devices = [source('mac:one'), source('android:phone'), source('music-assistant:speaker')]
+    const writes = await Promise.all(devices.map(device => ingestEndpoint(context(metadataRequest(device), { database }))))
+    assert.deepEqual(writes.map(response => response.status), [200, 200, 200])
+    assert.equal((await readSources(database)).length, 3)
+    assert.equal((await ingestEndpoint(context(metadataRequest(devices[0]), { database }))).status, 429)
+    await ingestEndpoint(context(metadataRequest(null, 'DELETE'), { database }))
+    assert.equal((await readSources(database)).length, 3, 'old clients cannot erase new devices')
+    const clear = new Request('https://example.test/api/internal/now-playing?sourceId=mac:one', { method: 'DELETE', headers: { authorization: `Bearer ${token}` } })
+    assert.equal((await ingestEndpoint(context(clear, { database }))).status, 204)
+    assert.deepEqual((await readSources(database)).map(device => device.device), ['android', 'music-assistant'])
+    now += 20_000
+    await ingestEndpoint(context(metadataRequest(devices[1]), { database }))
+    now += 11_000
+    assert.deepEqual((await readSources(database)).map(device => device.device), ['android'], 'expiry belongs to each device')
+  } finally { Date.now = original }
+})
+
+test('coordinator deduplicates physical devices, caps cards at three, and keeps order across heartbeats', async () => {
+  const database = new FakeD1()
+  const original = Date.now
+  let now = 1_800_000_000_000
+  Date.now = () => now
+  try {
+    const batch = [source('music-assistant:mac', 'same-mac'), source('mac:one', 'same-mac'),
+      source('music-assistant:a'), source('music-assistant:b'), source('music-assistant:c')]
+    assert.equal((await ingestEndpoint(context(metadataRequest({ sources: batch }), { database }))).status, 200)
+    const before = await readSources(database)
+    assert.equal(before.length, 3)
+    assert.equal(before[0].device, 'mac', 'direct device report has priority over its MA mirror')
+    assert.ok(before.every(device => !JSON.stringify(device).includes('same-mac')), 'raw device identities stay private')
+    now += 10_000
+    await ingestEndpoint(context(metadataRequest(batch[3]), { database }))
+    assert.deepEqual((await readSources(database)).map(device => device.id), before.map(device => device.id), 'heartbeats cannot switch the selected card')
+    now += 1_000
+    await ingestEndpoint(context(metadataRequest({ sources: [
+      { ...batch[1], playing: false }, { ...batch[2], playing: false }, { ...batch[3], playing: false },
+    ] }), { database }))
+    const after = await readSources(database)
+    assert.equal(after.find(device => device.id === before[0].id)?.device, 'music-assistant', 'MA takes over the same card when direct playback stops')
+  } finally { Date.now = original }
+})
+
+test('invalid batches cannot partially publish and metadata labels are validated', async () => {
+  const database = new FakeD1()
+  for (const body of [
+    { sources: [source('mac:valid'), source('bad-id')] },
+    { sources: [source('mac:valid'), source('mac:valid')] },
+    { sources: [] }, source('mac:valid', 'id', { sourceLabel: 3 }),
+    source('mac:valid', 'id', { sourceLabel: 'Bad\nlabel' }),
+  ]) assert.equal((await ingestEndpoint(context(metadataRequest(body), { database }))).status, 400)
+  assert.equal(database.db.prepare('SELECT count(*) AS n FROM now_playing_sources').get().n, 0)
 })

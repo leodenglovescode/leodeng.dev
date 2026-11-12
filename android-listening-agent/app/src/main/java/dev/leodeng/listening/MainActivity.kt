@@ -92,6 +92,7 @@ class MainActivity : Activity() {
                 body.addView(this, LinearLayout.LayoutParams(-1, dp(52)))
             }
         }
+        val deviceName = input("Public device name", "Leo's Android")
         website = input("Website origin", "https://your.site")
         nowToken = input("Now-playing token", "Not configured", true)
         server = input("History server origin", "http://private-ip:port")
@@ -99,7 +100,7 @@ class MainActivity : Activity() {
         message = text("", 13f)
         button(body, "Save connections") {
             val candidate = Config(enabled.isChecked, website.text.toString(), nowToken.text.toString().ifBlank { loaded.nowToken },
-                server.text.toString(), historyToken.text.toString().ifBlank { loaded.historyToken })
+                server.text.toString(), historyToken.text.toString().ifBlank { loaded.historyToken }, deviceName.text.toString())
             io.execute {
                 val result = runCatching { app.settings.save(candidate); app.config() }
                 handler.post {
@@ -128,7 +129,7 @@ class MainActivity : Activity() {
         io.execute {
             val config = app.config()
             handler.post {
-                if (!isDestroyed) { loaded = config; enabled.isChecked = config.enabled; website.setText(config.website); server.setText(config.historyOrigin); tokenHints(); message.text = app.configError }
+                if (!isDestroyed) { loaded = config; enabled.isChecked = config.enabled; deviceName.setText(config.deviceName); website.setText(config.website); server.setText(config.historyOrigin); tokenHints(); message.text = app.configError }
             }
         }
     }

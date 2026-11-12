@@ -27,6 +27,9 @@ type configuration struct {
 	historyDirectory string
 	historyServers   string
 	historyTokenFile string
+	sourceID         string
+	deviceID         string
+	deviceName       string
 }
 
 func main() {
@@ -87,6 +90,9 @@ func parseConfiguration(name string, args []string) (configuration, error) {
 		historyDirectory: filepath.Join(stateDirectory, "listening-history"),
 		historyServers:   environmentOr("LISTENING_SERVERS", "http://100.64.0.2:8791,http://192.168.3.61:8791"),
 		historyTokenFile: filepath.Join(stateDirectory, "history-token"),
+		sourceID:         environmentOr("NOW_PLAYING_SOURCE_ID", ""),
+		deviceID:         environmentOr("NOW_PLAYING_DEVICE_ID", ""),
+		deviceName:       environmentOr("NOW_PLAYING_DEVICE_NAME", "Leo's Mac"),
 	}
 
 	flags := flag.NewFlagSet(name, flag.ContinueOnError)
@@ -100,6 +106,9 @@ func parseConfiguration(name string, args []string) (configuration, error) {
 	flags.StringVar(&defaults.historyDirectory, "history-directory", defaults.historyDirectory, "durable local listening queue")
 	flags.StringVar(&defaults.historyTokenFile, "history-token-file", defaults.historyTokenFile, "separate SuperServer history token")
 	flags.BoolVar(&defaults.includeArtwork, "artwork", defaults.includeArtwork, "publish album artwork")
+	flags.StringVar(&defaults.sourceID, "source-id", defaults.sourceID, "stable Mac publisher ID; generated locally when omitted")
+	flags.StringVar(&defaults.deviceID, "device-id", defaults.deviceID, "physical device identity shared with an MA alias")
+	flags.StringVar(&defaults.deviceName, "device-name", defaults.deviceName, "public device label")
 	if err := flags.Parse(args); err != nil {
 		return configuration{}, err
 	}
@@ -123,6 +132,9 @@ func run(args []string, once bool) error {
 	}
 	client, err := newAPIClient(config.server, token)
 	if err != nil {
+		return err
+	}
+	if err := client.configureSource(config); err != nil {
 		return err
 	}
 	var history *listeningHistory
@@ -220,6 +232,9 @@ func clear(args []string) error {
 	if err != nil {
 		return err
 	}
+	if err := client.configureSource(config); err != nil {
+		return err
+	}
 	if err := client.Clear(context.Background()); err != nil {
 		return err
 	}
@@ -234,6 +249,12 @@ func status(args []string) error {
 	}
 	fmt.Printf("server:     %s\n", config.server)
 	fmt.Printf("token file: %s\n", config.tokenFile)
+	identity, err := localSourceID(config.sourceID)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("source ID:  %s\n", identity)
+	fmt.Printf("device:     %s\n", config.deviceName)
 	if _, err := readToken(config.tokenFile); err != nil {
 		fmt.Printf("token:      invalid (%v)\n", err)
 	} else {

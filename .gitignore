@@ -55,6 +55,8 @@ token-agent/.cache/
 # macOS publisher source is tracked; generated binaries and build caches stay local.
 now-playing-agent/bin/
 now-playing-agent/.cache/
+now-playing-agent/*.env
+now-playing-agent/*-token
 
 # Legacy uploads from the former local-only media mode. Never commit.
 .local-admin/

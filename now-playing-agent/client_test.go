@@ -35,9 +35,15 @@ func TestClientPublishesClearsAndUploadsArtwork(t *testing.T) {
 			if payload.Title != "Dreams" {
 				t.Errorf("unexpected title: %q", payload.Title)
 			}
+			if payload.SourceID != "mac:test" || payload.DeviceID != "mac:test" || payload.SourceLabel != "Mac" {
+				t.Error("missing source identity")
+			}
 			response.Header().Set("Content-Type", "application/json")
 			_, _ = io.WriteString(response, `{"ok":true}`)
 		case request.Method == http.MethodDelete && request.URL.Path == "/api/internal/now-playing":
+			if request.URL.Query().Get("sourceId") != "mac:test" {
+				t.Error("clear was not source scoped")
+			}
 			clearCount++
 			response.WriteHeader(http.StatusNoContent)
 		case request.Method == http.MethodPut && request.URL.Path == "/api/internal/now-playing/artwork/"+artHash:
@@ -59,6 +65,9 @@ func TestClientPublishesClearsAndUploadsArtwork(t *testing.T) {
 		t.Fatal(err)
 	}
 	client.client = server.Client()
+	if err := client.configureSource(configuration{sourceID: "mac:test", deviceName: "Mac"}); err != nil {
+		t.Fatal(err)
+	}
 	if err := client.Publish(context.Background(), publishPayload{TrackKey: "key", Title: "Dreams", Artist: "Fleetwood Mac", DurationMS: 1000}); err != nil {
 		t.Fatal(err)
 	}

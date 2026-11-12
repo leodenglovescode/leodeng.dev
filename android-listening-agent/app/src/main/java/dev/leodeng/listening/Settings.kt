@@ -12,7 +12,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 data class Config(val enabled: Boolean = false, val website: String = "https://leodeng.dev", val nowToken: String = "",
-    val historyOrigin: String = "", val historyToken: String = "")
+    val historyOrigin: String = "", val historyToken: String = "", val deviceName: String = "Leo's Android")
 
 class Settings(context: Context) {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -38,15 +38,17 @@ class Settings(context: Context) {
         return String(cipher.doFinal(data.copyOfRange(12, data.size)), Charsets.UTF_8)
     }
     @Synchronized fun load(): Config = Config(prefs.getBoolean("enabled", false), prefs.getString("website", "https://leodeng.dev")!!,
-        decrypt(prefs.getString("nowToken", null)), prefs.getString("historyOrigin", "")!!, decrypt(prefs.getString("historyToken", null)))
+        decrypt(prefs.getString("nowToken", null)), prefs.getString("historyOrigin", "")!!, decrypt(prefs.getString("historyToken", null)),
+        prefs.getString("deviceName", "Leo's Android")!!)
     @Synchronized fun save(c: Config) {
         require(c.nowToken.length <= 1024 && c.historyToken.length <= 1024) { "Token is too long." }
+        require(c.deviceName.trim().length in 1..64 && c.deviceName.none { it.code < 32 || it.code == 127 }) { "Enter a device name between 1 and 64 characters." }
         if (c.nowToken.isNotBlank()) Endpoint.origin(c.website, false)
         if (c.historyToken.isNotBlank()) Endpoint.origin(c.historyOrigin, true)
         require(!c.enabled || c.nowToken.isNotBlank() || c.historyToken.isNotBlank()) { "Configure at least one destination first." }
         check(prefs.edit().putBoolean("enabled", c.enabled).putString("website", c.website.trim().trimEnd('/'))
             .putString("historyOrigin", c.historyOrigin.trim().trimEnd('/')).putString("nowToken", encrypt(c.nowToken.trim()))
-            .putString("historyToken", encrypt(c.historyToken.trim())).commit()) { "Could not save settings." }
+            .putString("historyToken", encrypt(c.historyToken.trim())).putString("deviceName", c.deviceName.trim()).commit()) { "Could not save settings." }
     }
 }
 

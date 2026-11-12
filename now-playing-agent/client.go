@@ -21,9 +21,12 @@ type publisher interface {
 }
 
 type apiClient struct {
-	baseURL string
-	token   string
-	client  *http.Client
+	baseURL     string
+	token       string
+	client      *http.Client
+	sourceID    string
+	deviceID    string
+	sourceLabel string
 }
 
 type responseError struct {
@@ -73,6 +76,7 @@ func isLoopbackHost(host string) bool {
 }
 
 func (client *apiClient) Publish(ctx context.Context, payload publishPayload) error {
+	payload.SourceID, payload.DeviceID, payload.SourceLabel = client.sourceID, client.deviceID, client.sourceLabel
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode playback: %w", err)
@@ -87,7 +91,10 @@ func (client *apiClient) Publish(ctx context.Context, payload publishPayload) er
 }
 
 func (client *apiClient) Clear(ctx context.Context) error {
-	request, err := client.request(ctx, http.MethodDelete, "/api/internal/now-playing", nil)
+	if client.sourceID == "" {
+		return fmt.Errorf("cannot clear without a source ID")
+	}
+	request, err := client.request(ctx, http.MethodDelete, "/api/internal/now-playing?sourceId="+url.QueryEscape(client.sourceID), nil)
 	if err != nil {
 		return err
 	}
