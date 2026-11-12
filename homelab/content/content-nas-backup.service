@@ -1,5 +1,5 @@
 [Unit]
-Description=Back up website Markdown and shelf to NAS over temporary SMB mount
+Description=Back up website Markdown and shelf to NAS over explicit FTPS
 Wants=network-online.target
 After=network-online.target
 StartLimitIntervalSec=12h
@@ -14,6 +14,10 @@ RestartSec=1h
 RuntimeDirectory=leodeng-content-nas
 RuntimeDirectoryMode=0700
 UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
