@@ -6,6 +6,8 @@ import { currentLyricIndex, parseSyncedLyrics } from '../utils/lyrics.js'
 const props = defineProps({ track: { type: Object, required: true }, positionMs: { type: Number, required: true } })
 const { t } = useLocale('common')
 const lines = ref([])
+const source = ref(null)
+const credit = computed(() => t(source.value === 'lrclib' ? 'lyricsViaLrclib' : source.value === 'local' ? 'lyricsFromSelfHosted' : 'syncedLyrics'))
 const activeIndex = computed(() => currentLyricIndex(lines.value, props.positionMs))
 const signature = computed(() => JSON.stringify([props.track.title, props.track.artist, props.track.album, props.track.durationMs]))
 
@@ -13,9 +15,11 @@ const signature = computed(() => JSON.stringify([props.track.title, props.track.
 const cache = new Map()
 watch(signature, async (_, __, onCleanup) => {
   lines.value = []
+  source.value = null
   const key = signature.value
   const cached = cache.get(key)
   if (cached && cached.expiresAt > Date.now()) {
+    source.value = cached.source
     lines.value = cached.lines
     return
   }
@@ -44,9 +48,11 @@ watch(signature, async (_, __, onCleanup) => {
       const parsed = result && !result.instrumental && Number.isFinite(result.duration)
         && Math.abs(result.duration * 1000 - track.durationMs) <= 2000
         ? parseSyncedLyrics(result.syncedLyrics) : []
+      const upstream = response.headers.get('X-Lyrics-Source')
+      source.value = upstream === 'local' || upstream === 'lrclib' ? upstream : null
       lines.value = parsed.some(line => line.text) ? parsed : []
       cache.delete(key)
-      cache.set(key, { lines: lines.value, expiresAt: Date.now() + (lines.value.length ? 86_400_000 : 600_000) })
+      cache.set(key, { lines: lines.value, source: source.value, expiresAt: Date.now() + (lines.value.length ? 86_400_000 : 600_000) })
       if (cache.size > 20) cache.delete(cache.keys().next().value)
     } catch {
       // Optional lyrics do not interrupt playback. One bounded retry timer per track.
@@ -68,7 +74,8 @@ watch(signature, async (_, __, onCleanup) => {
         <div class="lyric-line" aria-hidden="true" />
       </div>
     </div>
-    <a href="https://lrclib.net" target="_blank" rel="noopener noreferrer" class="mt-1 block text-right font-mono text-[10px] text-muted hover:text-accent">{{ t('lyricsViaLrclib') }}</a>
+    <a v-if="source === 'lrclib'" href="https://lrclib.net" target="_blank" rel="noopener noreferrer" class="mt-1 block text-right font-mono text-[10px] text-muted hover:text-accent">{{ credit }}</a>
+    <span v-else class="mt-1 block text-right font-mono text-[10px] text-muted">{{ credit }}</span>
   </section>
 </template>
 

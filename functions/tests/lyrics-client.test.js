@@ -25,6 +25,7 @@ function player() {
   return {
     requests, timers,
     lines: () => vm.runInContext('lines.value', context),
+    source: () => vm.runInContext('source.value', context),
     respond: async (index, data, status = 200, headers = {}) => { requests[index].resolve(Response.json(data, { status, headers })); await flush() },
     advance: async delta => {
       const until = now + delta
@@ -74,4 +75,19 @@ test('a confirmed miss is cached, while unmount cancels pending retry timers', a
   app.destroy()
   await app.advance(60000)
   assert.equal(app.requests.length, 2)
+})
+
+
+test('lyrics attribution follows the response source and survives track cache switches', async () => {
+  const app = player()
+  await app.respond(0, { duration: 180, syncedLyrics: '[00:00]Local' }, 200, { 'X-Lyrics-Source': 'local' })
+  assert.equal(app.source(), 'local')
+  app.change('Next')
+  assert.equal(app.source(), null)
+  await app.respond(1, { duration: 180, syncedLyrics: '[00:00]Public' }, 200, { 'X-Lyrics-Source': 'lrclib' })
+  assert.equal(app.source(), 'lrclib')
+  app.change('Song')
+  assert.equal(app.source(), 'local')
+  assert.equal(app.lines()[0].text, 'Local')
+  app.destroy()
 })

@@ -32,6 +32,7 @@
   "songProgress": "播放进度",
   "syncedLyrics": "同步歌词",
   "lyricsViaLrclib": "歌词来自 LRCLIB",
+  "lyricsFromSelfHosted": "歌词由我的自托管 LRCLIB 提供",
   "time": "时间",
   "terminal": "终端",
   "shelf": "收藏架",

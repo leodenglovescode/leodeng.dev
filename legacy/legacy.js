@@ -313,7 +313,7 @@
   function setupPlayer(element) {
     var content = document.getElementById('now-playing-content');
     var track = null, key = '', lines = [], cache = [], poll = null, ticker = null, request = null, lyricRequest = null, lyricRetry = null, generation = 0, lastSuccess = null;
-    var title, artist, album, image, fill, progress, elapsed, total, lyrics, lyricRows, lyricStatus, lastLine = -999;
+    var title, artist, album, image, fill, progress, elapsed, total, lyrics, lyricRows, lyricStatus, lyricCredit, lastLine = -999;
     var deviceHeading, deviceSelect, selectedDevice = '';
     var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     function hide() {
@@ -339,6 +339,15 @@
         lastLine = active;
       }
     }
+    function creditLyrics(source) {
+      clear(lyricCredit);
+      var credit = node(source === 'lrclib' ? 'a' : 'span', source === 'lrclib'
+        ? (zh ? '歌词来自 LRCLIB' : 'Lyrics from LRCLIB')
+        : source === 'local' ? (zh ? '歌词由我的自托管 LRCLIB 提供' : 'Lyrics from my self-hosted LRCLIB')
+        : (zh ? '同步歌词' : 'Synced lyrics'));
+      if (source === 'lrclib') { credit.href = 'https://lrclib.net'; }
+      lyricCredit.appendChild(credit);
+    }
     function loadLyrics(signature) {
       var version = ++generation;
       window.clearTimeout(lyricRetry);
@@ -347,7 +356,7 @@
       function status(message) { lyricStatus.textContent = message; if (message) lyricStatus.removeAttribute('hidden'); else lyricStatus.setAttribute('hidden', 'hidden'); }
       status(zh ? '正在查找歌词...' : 'Loading lyrics...');
       for (var c = 0; c < cache.length; c++) if (cache[c].key === signature && cache[c].expires > Date.now()) {
-        lines = cache[c].lines; if (lines.length) lyrics.removeAttribute('hidden');
+        lines = cache[c].lines; creditLyrics(cache[c].source); if (lines.length) lyrics.removeAttribute('hidden');
         status(lines.length ? '' : (zh ? '此版本暂无同步歌词。' : 'No synced lyrics for this recording.')); tick(); return;
       }
       var query = 'track_name=' + encodeURIComponent(track.title) + '&artist_name=' + encodeURIComponent(track.artist) + '&duration=' + encodeURIComponent(track.durationMs / 1000);
@@ -371,7 +380,9 @@
         var nonempty = false;
         for (var l = 0; l < lines.length; l++) if (lines[l].words) nonempty = true;
         if (!nonempty) lines = [];
-        cache.push({ key: signature, lines: lines, expires: Date.now() + (lines.length ? 86400000 : 600000) });
+        var source = response && response.getResponseHeader('X-Lyrics-Source');
+        creditLyrics(source);
+        cache.push({ key: signature, lines: lines, source: source, expires: Date.now() + (lines.length ? 86400000 : 600000) });
         if (cache.length > 20) cache.shift();
         if (lines.length) lyrics.removeAttribute('hidden');
         status(lines.length ? '' : (zh ? '此版本暂无同步歌词。' : 'No synced lyrics for this recording.'));
@@ -402,7 +413,7 @@
         var cell = node('span', ''); cell.className = 'lyric-cell';
         var words = node('span', ''); cell.appendChild(words); row.appendChild(cell); lyricRows.push(words); lyrics.appendChild(row);
       }
-      var credit = node('a', zh ? '歌词来自 LRCLIB' : 'Lyrics via LRCLIB'); credit.href = 'https://lrclib.net'; credit.className = 'lyrics-credit'; lyrics.appendChild(credit); content.appendChild(lyrics);
+      lyricCredit = node('div', ''); lyricCredit.className = 'lyrics-credit'; lyrics.appendChild(lyricCredit); content.appendChild(lyrics);
     }
     function refresh() {
       if (document.hidden) return;
