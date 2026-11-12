@@ -25,7 +25,7 @@
   "switchToChinese": "切换到中文",
   "toggleMenu": "Toggle menu",
   "leoIsNowPlaying": "Leo is now playing",
-  "deviceIsNowPlaying": "{device} is now playing",
+  "deviceIsNowPlaying": "{device} is playing",
   "playingDevices": "{count} devices",
   "choosePlayingDevice": "Choose a playing device",
   "musicDevice": "Music",

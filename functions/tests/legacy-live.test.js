@@ -88,13 +88,13 @@ test('classic player names devices and switches among simultaneous sources', () 
   const app = harness('now-playing')
   const sources = [track(app.now(), { id: 'mac', device: "Leo's Mac" }), track(app.now(), { id: 'speaker', device: "Leo's speaker", title: 'Another song' })]
   app.pending('/api/now-playing').respond({ ...sources[0], sources, serverNow: app.now() })
-  assert.equal(app.find('player-device-heading')[0].textContent, "Leo's Mac is now playing")
+  assert.equal(app.find('player-device-heading')[0].textContent, "Leo's Mac is playing")
   const select = app.find('player-device-select')[0]
   assert.equal(select.children.length, 2)
   select.value = 'speaker'
   select.onchange()
   app.pending('/api/now-playing').respond({ ...sources[0], sources, serverNow: app.now() })
-  assert.equal(app.find('player-device-heading')[0].textContent, "Leo's speaker is now playing")
+  assert.equal(app.find('player-device-heading')[0].textContent, "Leo's speaker is playing")
 })
 
 test('classic player advances progress, highlights three lines, handles seeks and rejects late lyrics', () => {

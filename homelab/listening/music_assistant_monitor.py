@@ -82,7 +82,7 @@ def streams(players, aliases=None, allowed=None, now=None):
                 and player.get('enabled', True) and player.get('playback_state') == 'playing'}
     groups = {}
     for player_id, player in sorted(eligible.items()):
-        if allowed and player_id not in allowed:
+        if allowed is not None and player_id not in allowed:
             continue
         group = player.get('active_group') or player.get('synced_to') or player_id
         if group not in groups or player_id == group:
@@ -103,11 +103,13 @@ def streams(players, aliases=None, allowed=None, now=None):
             position += milliseconds(max(0, now-updated))
         identity = hashlib.sha256(str(group).encode()).hexdigest()[:32]
         source_id = 'music-assistant:' + identity
+        device_id = aliases.get(player['player_id'], aliases.get(group, source_id))
+        label = "Leo's Mac" if device_id.startswith('mac:') else "Leo's Phone" if device_id.startswith('android:') else 'Music Assistant'
         # Transport URLs may contain credentials and must never leave this service.
         track = json.dumps([media.get('uri'), title, media.get('artist'), duration], sort_keys=True)
         result.append({
-            'sourceId': source_id, 'deviceId': aliases.get(player['player_id'], aliases.get(group, source_id)),
-            'sourceLabel': re.sub(r'[\x00-\x1f\x7f]', ' ', str(player.get('name') or 'Music Assistant')).strip()[:64] or 'Music Assistant',
+            'sourceId': source_id, 'deviceId': device_id,
+            'sourceLabel': label,
             'playing': True, 'trackKey': 'ma:' + hashlib.sha256(track.encode()).hexdigest(),
             'title': title[:256], 'artist': str(media.get('artist') or 'Unknown Artist')[:256],
             'album': str(media.get('album') or '')[:256] or None,
@@ -195,6 +197,8 @@ class Monitor:
         players = self.http.rpc(self.ma_url, self.ma_token, 'players/all')
         if not isinstance(players, list):
             raise MonitorError('Invalid Music Assistant player list')
+        if self.allowed is not None:
+            players = [player for player in players if player.get('player_id') in self.allowed]
         # Some transports expose only a stream URL. Resolve metadata through
         # MA's active queue, without treating an external native source as MA.
         queues = None

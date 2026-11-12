@@ -306,11 +306,11 @@ test('three simultaneous publishers keep independent leases, rate limits and cle
     assert.equal((await readSources(database)).length, 3, 'old clients cannot erase new devices')
     const clear = new Request('https://example.test/api/internal/now-playing?sourceId=mac:one', { method: 'DELETE', headers: { authorization: `Bearer ${token}` } })
     assert.equal((await ingestEndpoint(context(clear, { database }))).status, 204)
-    assert.deepEqual((await readSources(database)).map(device => device.device), ['android', 'music-assistant'])
+    assert.deepEqual((await readSources(database)).map(device => device.device), ["Leo's Phone", 'Music Assistant'])
     now += 20_000
     await ingestEndpoint(context(metadataRequest(devices[1]), { database }))
     now += 11_000
-    assert.deepEqual((await readSources(database)).map(device => device.device), ['android'], 'expiry belongs to each device')
+    assert.deepEqual((await readSources(database)).map(device => device.device), ["Leo's Phone"], 'expiry belongs to each device')
   } finally { Date.now = original }
 })
 
@@ -320,13 +320,13 @@ test('coordinator deduplicates physical devices, caps cards at three, and keeps 
   let now = 1_800_000_000_000
   Date.now = () => now
   try {
-    const batch = [source('music-assistant:mac', 'same-mac'), source('mac:one', 'same-mac'),
+    const batch = [source('music-assistant:mac', 'mac:same-mac'), source('mac:one', 'mac:same-mac'),
       source('music-assistant:a'), source('music-assistant:b'), source('music-assistant:c')]
     assert.equal((await ingestEndpoint(context(metadataRequest({ sources: batch }), { database }))).status, 200)
     const before = await readSources(database)
     assert.equal(before.length, 3)
-    assert.equal(before[0].device, 'mac', 'direct device report has priority over its MA mirror')
-    assert.ok(before.every(device => !JSON.stringify(device).includes('same-mac')), 'raw device identities stay private')
+    assert.equal(before[0].device, "Leo's Mac", 'direct device report has priority over its MA mirror')
+    assert.ok(before.every(device => !JSON.stringify(device).includes('mac:same-mac')), 'raw device identities stay private')
     now += 10_000
     await ingestEndpoint(context(metadataRequest(batch[3]), { database }))
     assert.deepEqual((await readSources(database)).map(device => device.id), before.map(device => device.id), 'heartbeats cannot switch the selected card')
@@ -335,7 +335,7 @@ test('coordinator deduplicates physical devices, caps cards at three, and keeps 
       { ...batch[1], playing: false }, { ...batch[2], playing: false }, { ...batch[3], playing: false },
     ] }), { database }))
     const after = await readSources(database)
-    assert.equal(after.find(device => device.id === before[0].id)?.device, 'music-assistant', 'MA takes over the same card when direct playback stops')
+    assert.equal(after.find(device => device.id === before[0].id)?.device, "Leo's Mac", 'MA takes over the same card when direct playback stops')
   } finally { Date.now = original }
 })
 
@@ -348,4 +348,15 @@ test('invalid batches cannot partially publish and metadata labels are validated
     source('mac:valid', 'id', { sourceLabel: 'Bad\nlabel' }),
   ]) assert.equal((await ingestEndpoint(context(metadataRequest(body), { database }))).status, 400)
   assert.equal(database.db.prepare('SELECT count(*) AS n FROM now_playing_sources').get().n, 0)
+})
+
+test('public device labels never expose reporter-supplied hostnames', async () => {
+  const database = new FakeD1()
+  const write = await ingestEndpoint(context(metadataRequest(source('music-assistant:owned', 'mac:owned', {
+    sourceLabel: 'Private-Family-Computer-Hostname',
+  })), { database }))
+  assert.equal(write.status, 200)
+  const sources = await readSources(database)
+  assert.equal(sources[0].device, "Leo's Mac")
+  assert.ok(!JSON.stringify(sources).includes('Private-Family'))
 })

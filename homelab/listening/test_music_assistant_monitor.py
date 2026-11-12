@@ -39,6 +39,17 @@ class FakeHTTP:
 
 
 class MonitorTests(unittest.TestCase):
+    def test_only_allowlisted_devices_are_tracked_and_hostnames_stay_private(self):
+        http = FakeHTTP()
+        http.players[0]['name'] = 'Private-Family-Computer-Hostname'
+        http.players[1]['current_media'] = None
+        monitor = self.monitor(http, aliases={'Mac': 'mac:owned'}, allowed={'Mac'})
+        tracks = monitor.snapshot()
+        self.assertEqual(len(tracks), 1)
+        self.assertEqual(tracks[0]['sourceLabel'], "Leo's Mac")
+        self.assertNotIn('Private-Family', json.dumps(tracks))
+        self.assertEqual(m.streams(http.players, allowed=set()), [], 'empty allowlist must not discover everyone')
+
     def test_lan_rpc_bypasses_proxy_while_website_uses_configured_proxy(self):
         http = m.HTTP()
         http.opener, http.direct_opener = MagicMock(), MagicMock()

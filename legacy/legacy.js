@@ -431,7 +431,7 @@
               var changed = signature !== key;
               track = { title: data.title, artist: data.artist, album: data.album || '', durationMs: data.durationMs, position: Math.max(0, Math.min(data.durationMs, data.positionMs + age)), at: monotonic() };
               if (!title) build();
-              deviceHeading.textContent = data.device ? (zh ? data.device + ' 正在播放' : data.device + ' is now playing') : '';
+              deviceHeading.textContent = data.device ? (zh ? data.device + ' 正在播放' : data.device + ' is playing') : '';
               clear(deviceSelect);
               for (var optionIndex = 0; optionIndex < devices.length; optionIndex++) {
                 var option = node('option', devices[optionIndex].device || (zh ? '音乐' : 'Music'));
