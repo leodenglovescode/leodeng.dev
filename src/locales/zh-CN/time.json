@@ -39,5 +39,10 @@
   "meterNote": "设备时间减去 GPS 时间。阴影范围为网络往返时间的一半，这是估算值，不代表准确度保证。",
   "syncNow": "立即同步",
   "syncing": "正在同步…",
-  "retryIn": "{seconds} 秒后重试"
+  "retryIn": "{seconds} 秒后重试",
+  "satelliteTitle": "卫星接收状态",
+  "satellitesUsed": "参与接收器解算",
+  "satellitesVisible": "可见卫星",
+  "satellitesUnavailable": "暂无数据",
+  "satelliteNote": "接收器统计随时钟同步刷新。单颗卫星的观测数据不公开。"
 }

@@ -1,11 +1,44 @@
 import datetime
+import json
 import time
 import unittest
 from unittest.mock import patch
-from clock import ClockApplication, TokenBucket, tracking_is_healthy
+from clock import ClockApplication, TokenBucket, satellite_counts, tracking_is_healthy
 
 
 class ClockTests(unittest.TestCase):
+    def test_satellites_are_deduplicated_and_location_is_discarded(self):
+        report = {'class': 'SKY', 'lat': 31, 'lon': 121, 'satellites': [
+            {'gnssid': 0, 'svid': 1, 'sigid': 1, 'used': False, 'az': 100, 'el': 40},
+            {'gnssid': 0, 'svid': 1, 'sigid': 2, 'used': True},
+            {'gnssid': 2, 'svid': 1, 'used': False},
+        ]}
+        self.assertEqual(satellite_counts(report), {'used': 1, 'visible': 2})
+        self.assertEqual(satellite_counts({'class': 'SKY', 'satellites': [
+            {'PRN': 1, 'used': True}, {'PRN': 1, 'used': False},
+        ]}), {'used': 1, 'visible': 1})
+        for report in ({'class': 'SKY'}, {'class': 'TPV', 'satellites': []},
+                       {'class': 'SKY', 'satellites': [{'PRN': 1}]},
+                       {'class': 'SKY', 'satellites': [{'used': True}]}):
+            self.assertIsNone(satellite_counts(report))
+        self.assertEqual(satellite_counts({'class': 'SKY', 'satellites': []}),
+                         {'used': 0, 'visible': 0})
+
+    def test_missing_or_stale_satellites_do_not_break_clock(self):
+        app = ClockApplication()
+        app.healthy = True
+        app.checked_at = time.monotonic()
+        def request():
+            return json.loads(b''.join(app(
+                {'PATH_INFO': '/time', 'REQUEST_METHOD': 'GET'},
+                lambda status, headers: self.assertEqual(status, '200 OK'))))
+        self.assertNotIn('satellites', request())
+        app.satellites = {'used': 6, 'visible': 10}
+        app.satellites_at = time.monotonic()
+        self.assertEqual(request()['satellites'], app.satellites)
+        app.satellites_at -= 31
+        self.assertNotIn('satellites', request())
+
     def test_health_requires_pps_stratum_and_recent_reference(self):
         now = 1791379451
         date = datetime.datetime.fromtimestamp(now, datetime.timezone.utc).strftime('%a %b %d %H:%M:%S %Y')

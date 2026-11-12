@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useLocale } from '../utils/i18n.js'
-import { estimateClockSample } from '../../lib/clock.js'
+import { estimateClockSample, satelliteCounts } from '../../lib/clock.js'
 
 defineProps({ expanded: Boolean })
 const { isZh, t, localePath } = useLocale('home')
@@ -20,6 +20,7 @@ let stopped = false
 const busy = ref(false)
 const uncertaintyMs = ref(null)
 const samples = ref(0)
+const satellites = ref(null)
 const retrySeconds = ref(0)
 let retryAt = 0
 let reducedMotion = null
@@ -74,6 +75,7 @@ function fallback() {
   deviceOffsetMs.value = null
   uncertaintyMs.value = null
   samples.value = 0
+  satellites.value = null
   now.value = Date.now()
 }
 
@@ -120,7 +122,9 @@ async function synchronize() {
         const received = performance.now()
         const sample = estimateClockSample(body, startedAtMs, received - started)
         if (!sample) throw new Error('Invalid clock sample')
-        if (!best || sample.networkMs < best.networkMs) best = { ...sample, monotonic: received }
+        if (!best || sample.networkMs < best.networkMs) best = {
+          ...sample, monotonic: received, satellites: satelliteCounts(body.satellites),
+        }
       } finally {
         clearTimeout(timeout)
       }
@@ -133,6 +137,7 @@ async function synchronize() {
     deviceOffsetMs.value = best.offsetMs
     uncertaintyMs.value = best.networkMs / 2
     samples.value = 3
+    satellites.value = best.satellites
     retryAt = performance.now() + 10000
   } catch {
     retryAt = Math.max(retryAt, performance.now() + 60000)
@@ -218,6 +223,16 @@ onBeforeUnmount(() => {
           <div><dt class="text-xs text-muted mb-2">{{ timeText('samples') }}</dt><dd class="font-mono text-sm">{{ samples ? `${samples} · ${timeText('lowestLatency')}` : timeText('unavailable') }}</dd></div>
         </dl>
         <p class="text-[11px] text-muted mt-5">{{ timeText('meterNote') }}</p>
+      </section>
+      <section class="rounded-xl border border-fg/8 p-5" aria-labelledby="satellite-heading">
+        <h2 id="satellite-heading" class="text-sm font-semibold">{{ timeText('satelliteTitle') }}</h2>
+        <dl class="grid grid-cols-2 gap-5 mt-5">
+          <div v-for="kind in ['used', 'visible']" :key="kind">
+            <dt class="text-xs text-muted mb-2">{{ timeText(kind === 'used' ? 'satellitesUsed' : 'satellitesVisible') }}</dt>
+            <dd class="font-mono text-2xl tabular-nums" :class="satellites ? 'text-accent' : 'text-muted'">{{ satellites ? satellites[kind] : timeText('satellitesUnavailable') }}</dd>
+          </div>
+        </dl>
+        <p class="text-xs text-muted mt-4">{{ timeText('satelliteNote') }}</p>
       </section>
       <div class="rounded-xl border border-fg/8 p-5">
         <p class="flex items-start gap-2 text-sm font-mono">

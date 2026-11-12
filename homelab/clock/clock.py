@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import re
+import socket
 import subprocess
 import threading
 import time
@@ -43,12 +44,58 @@ def tracking_is_healthy(output, pps_refid, now=None):
         return False
 
 
+def satellite_counts(report):
+    """Discard geometry and identity; count each satellite once across signals."""
+    rows = report.get('satellites')
+    if report.get('class') != 'SKY' or not isinstance(rows, list) or len(rows) > 512:
+        return None
+    satellites = {}
+    for row in rows:
+        if not isinstance(row, dict) or type(row.get('used')) is not bool:
+            return None
+        if all(type(row.get(k)) is int and row[k] >= 0 for k in ('gnssid', 'svid')):
+            key = ('gnss', row['gnssid'], row['svid'])
+        elif type(row.get('PRN')) is int and row['PRN'] > 0:
+            key = ('prn', row['PRN'])
+        else:
+            return None
+        satellites[key] = satellites.get(key, False) or row['used']
+    return {'used': sum(satellites.values()), 'visible': len(satellites)}
+
+
 class ClockApplication:
     def __init__(self):
         self.limiter = TokenBucket()
         self.health_lock = threading.Lock()
         self.healthy = False
         self.checked_at = 0
+        self.satellites = None
+        self.satellites_at = 0
+
+    def observe_satellites(self):
+        # Read-only local gpsd subscription, independent of clock health/requests.
+        while True:
+            try:
+                with socket.create_connection(('127.0.0.1', 2947), timeout=2) as connection:
+                    connection.settimeout(15)
+                    connection.sendall(b'?WATCH={"enable":true,"json":true};\n')
+                    with connection.makefile('rb') as stream:
+                        while True:
+                            line = stream.readline(65537)
+                            if not line or len(line) > 65536:
+                                break
+                            report = json.loads(line)
+                            if not isinstance(report, dict) or report.get('class') != 'SKY':
+                                continue
+                            counts = satellite_counts(report)
+                            with self.health_lock:
+                                self.satellites = counts
+                                self.satellites_at = time.monotonic()
+            except (OSError, ValueError):
+                pass
+            with self.health_lock:
+                self.satellites = None
+            time.sleep(5)
 
     def monitor(self):
         # A fixed command and locally configured refid; no request data enters it.
@@ -88,6 +135,8 @@ class ClockApplication:
             return respond('400 Bad Request', {'error': 'Invalid request'})
         with self.health_lock:
             healthy = self.healthy and time.monotonic() - self.checked_at <= 30
+            satellites = (self.satellites if time.monotonic() - self.satellites_at <= 30
+                          else None)
         if not healthy:
             return respond('503 Service Unavailable', {'error': 'Clock unavailable'})
         sent = time.time_ns() / 1_000_000
@@ -96,6 +145,7 @@ class ClockApplication:
         return respond('200 OK', {
             'receivedAtMs': received, 'sentAtMs': sent,
             'synchronized': True, 'source': 'gps-pps', 'stratum': 1,
+            **({'satellites': satellites} if satellites is not None else {}),
         })
 
 
@@ -103,6 +153,7 @@ if __name__ == '__main__':
     from waitress import serve
     app = ClockApplication()
     threading.Thread(target=app.monitor, daemon=True).start()
+    threading.Thread(target=app.observe_satellites, daemon=True).start()
     serve(app, host='127.0.0.1', port=8099, threads=4, connection_limit=16,
           backlog=16, channel_timeout=5, cleanup_interval=1,
           max_request_header_size=4096, max_request_body_size=0,

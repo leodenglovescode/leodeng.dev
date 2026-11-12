@@ -58,6 +58,25 @@ test('unhealthy, oversized, non-JSON, and failing origins all fail closed', asyn
   }
 })
 
+test('only valid aggregate satellite counts cross the public boundary', async t => {
+  for (const satellites of [
+    { used: 6, visible: 10, lat: 31, lon: 121, observations: [{ PRN: 1, az: 100 }] },
+    { used: 0, visible: 0 }, { used: -1, visible: 10 }, { used: 11, visible: 10 },
+    { used: 1.5, visible: 10 }, { used: '6', visible: 10 }, { used: 1, visible: 513 },
+    null,
+  ]) {
+    const mock = t.mock.method(globalThis, 'fetch', async () => Response.json({
+      ...sample, satellites, latitude: 31, longitude: 121,
+    }))
+    const response = await onRequest(context())
+    assert.equal(response.status, 200)
+    const expected = satellites?.used === 6 ? { used: 6, visible: 10 }
+      : satellites?.visible === 0 ? { used: 0, visible: 0 } : null
+    assert.deepEqual(await response.json(), { ...sample, ...(expected ? { satellites: expected } : {}) })
+    mock.mock.restore()
+  }
+})
+
 test('busy origin retains bounded retry advice and absent secrets never fetch', async t => {
   let calls = 0
   t.mock.method(globalThis, 'fetch', async () => {

@@ -39,5 +39,10 @@
   "meterNote": "Device minus GPS time. Shaded band: ± half the network round trip, an estimate rather than guaranteed accuracy.",
   "syncNow": "Synchronize now",
   "syncing": "Synchronizing…",
-  "retryIn": "Retry in {seconds}s"
+  "retryIn": "Retry in {seconds}s",
+  "satelliteTitle": "Satellite reception",
+  "satellitesUsed": "Used in receiver solution",
+  "satellitesVisible": "In view",
+  "satellitesUnavailable": "Unavailable",
+  "satelliteNote": "Receiver counts refresh with clock synchronization. Individual satellite observations stay private."
 }
