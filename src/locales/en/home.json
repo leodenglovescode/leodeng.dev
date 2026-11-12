@@ -30,5 +30,11 @@
   "clockPrecision": "Milliseconds show display precision. Network delay limits clock accuracy.",
   "clockYourTime": "Your time",
   "clockLeoTime": "Leo's time",
-  "clockPage": "About this clock"
+  "clockPage": "About this clock",
+  "xRecentPosts": "Recent posts on X",
+  "xTimelineTitle": "Posts by Leo Deng on X",
+  "xLoading": "Loading posts from X…",
+  "xUnavailable": "The X feed couldn't load. You can still catch up on my profile.",
+  "xViewProfile": "View my posts on X",
+  "xRetry": "Try again"
 }

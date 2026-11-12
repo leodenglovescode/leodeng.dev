@@ -30,5 +30,11 @@
   "clockPrecision": "毫秒表示显示精度。网络延迟会限制时钟准确度。",
   "clockYourTime": "你的时间",
   "clockLeoTime": "Leo 的时间",
-  "clockPage": "关于这个时钟"
+  "clockPage": "关于这个时钟",
+  "xRecentPosts": "最近在 X 上发的动态",
+  "xTimelineTitle": "Leo Deng 在 X 上的动态",
+  "xLoading": "正在加载 X 动态…",
+  "xUnavailable": "X 动态暂时加载不了，可以去我的主页看看。",
+  "xViewProfile": "去 X 看我的动态",
+  "xRetry": "重试"
 }
