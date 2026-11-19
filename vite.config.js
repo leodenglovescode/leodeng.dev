@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import { localAdminPlugin } from './scripts/local-admin.js'
 import { nowApiPlugin } from './scripts/now-api-dev.js'
+import { clockDevPlugin } from './scripts/clock-dev.js'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { templateCompilerOptions } from '@tresjs/core'
@@ -29,7 +30,7 @@ export default defineConfig(async ({ isSsrBuild, command }) => {
     ? [(await import(new URL('./scripts/legacy-dev.js', import.meta.url).href)).legacyPreviewPlugin()]
     : []
   return {
-    plugins: [nowApiPlugin(), ...previewPlugins, localAdminPlugin(), vue({ ...templateCompilerOptions }), tailwindcss()],
+    plugins: [clockDevPlugin(), nowApiPlugin(), ...previewPlugins, localAdminPlugin(), vue({ ...templateCompilerOptions }), tailwindcss()],
     server: {
       // Plain Vite does not run Pages Functions. Proxy the public, read-only
       // endpoints so the clock and now-playing data can be previewed locally.

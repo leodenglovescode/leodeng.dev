@@ -111,36 +111,30 @@ function retryDelay(response) {
 async function synchronize() {
   if (busy.value || stopped || document.hidden || performance.now() < retryAt) return
   busy.value = true
-  let best = null
+  const controller = new AbortController()
+  requestController = controller
+  const timeout = setTimeout(() => controller.abort(), 3000)
   try {
-    for (let i = 0; i < 3; i++) {
-      requestController = new AbortController()
-      const controller = requestController
-      const timeout = setTimeout(() => controller.abort(), 3000)
-      try {
-        const startedAtMs = Date.now()
-        const started = performance.now()
-        const response = await fetch('/api/time', {
-          cache: 'no-store', credentials: 'omit', signal: controller.signal,
-        })
-        if (!response.ok) {
-          retryAt = performance.now() + retryDelay(response)
-          throw new Error('Clock unavailable')
-        }
-        const body = await response.json()
-        const received = performance.now()
-        const sample = estimateClockSample(body, startedAtMs, received - started)
-        if (!sample) throw new Error('Invalid clock sample')
-        if (!best || sample.networkMs < best.networkMs) best = {
-          ...sample, monotonic: received, satellites: satelliteCounts(body.satellites),
-          diagnostics: clockDiagnostics(body),
-          stability: clockStability(body.stability, body.sentAtMs),
-        }
-      } finally {
-        clearTimeout(timeout)
+    // Independent samples share one deadline so synchronization takes one round trip.
+    const readings = await Promise.all(Array.from({ length: 3 }, async () => {
+      const startedAtMs = Date.now()
+      const started = performance.now()
+      const response = await fetch('/api/time', {
+        cache: 'no-store', credentials: 'omit', signal: controller.signal,
+      })
+      if (!response.ok) {
+        retryAt = Math.max(retryAt, performance.now() + retryDelay(response))
+        throw new Error('Clock unavailable')
       }
-      if (stopped || document.hidden) return
-    }
+      const body = await response.json()
+      const received = performance.now()
+      const sample = estimateClockSample(body, startedAtMs, received - started)
+      if (!sample) throw new Error('Invalid clock sample')
+      return { ...sample, monotonic: received, satellites: satelliteCounts(body.satellites),
+        diagnostics: clockDiagnostics(body), stability: clockStability(body.stability, body.sentAtMs) }
+    }))
+    if (stopped || document.hidden) return
+    const best = readings.reduce((best, sample) => sample.networkMs < best.networkMs ? sample : best)
     anchor = best
     synchronized.value = true
     roundTripMs.value = Math.round(best.roundTripMs)
@@ -159,6 +153,8 @@ async function synchronize() {
     retryAt = Math.max(retryAt, performance.now() + 60000)
     if (!stopped) fallback()
   } finally {
+    clearTimeout(timeout)
+    controller.abort()
     busy.value = false
     requestController = null
   }
