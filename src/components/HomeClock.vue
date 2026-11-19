@@ -194,9 +194,9 @@ onBeforeUnmount(() => {
 <template>
   <div :class="expanded ? 'space-y-6' : 'text-muted text-sm font-mono mb-6'">
     <template v-if="expanded">
-      <section class="rounded-xl border border-accent/25 bg-accent/[0.035] overflow-hidden" :aria-label="timeText('referenceClock')">
+      <section class="rounded-xl border border-accent/25 bg-accent/[0.035] overflow-hidden" :aria-label="t('clockYourTime')">
         <div class="px-5 sm:px-7 py-4 border-b border-accent/10 flex flex-wrap justify-between items-center gap-2">
-          <p class="text-xs font-mono text-muted">{{ timeText('referenceClock') }}</p>
+          <p class="text-xs font-mono text-muted">{{ t('clockYourTime') }}</p>
           <p class="text-[11px] font-mono flex items-center gap-2" :class="synchronized ? 'text-accent' : 'text-highlight'" role="status">
             <span class="size-1.5 rounded-full bg-current" aria-hidden="true" />
             {{ synchronized ? timeText('liveReference') : timeText('deviceFallback') }}
@@ -204,16 +204,17 @@ onBeforeUnmount(() => {
         </div>
         <div class="p-5 sm:p-7">
           <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-            <p class="text-[clamp(1.9rem,7vw,3.7rem)] font-mono tabular-nums text-fg tracking-tight leading-none" aria-live="off">{{ displayedUtc }}</p>
-            <span class="font-mono text-sm text-accent">UTC</span>
+            <p class="text-[clamp(1.9rem,7vw,3.7rem)] font-mono tabular-nums text-fg tracking-tight leading-none" aria-live="off">{{ displayedLocalTime }}</p>
+            <span class="font-mono text-sm text-accent">{{ localOffset }}</span>
           </div>
+          <p class="text-[11px] font-mono text-muted mt-3 break-all">{{ localTimeZone }} · {{ localDate }}</p>
           <p class="text-xs text-muted mt-4 leading-relaxed">{{ timeText('referenceNote') }}</p>
         </div>
         <div class="grid grid-cols-1 min-[440px]:grid-cols-2 border-t border-accent/10">
           <div class="p-5 sm:px-7">
-            <p class="text-xs text-muted mb-2">{{ t('clockYourTime') }} <span class="font-mono ml-1 text-[11px]">{{ localOffset }}</span></p>
-            <p class="text-xl font-mono tabular-nums" aria-live="off">{{ displayedLocalTime }}</p>
-            <p class="text-[11px] font-mono text-muted mt-2 break-all">{{ localTimeZone }} · {{ localDate }}</p>
+            <p class="text-xs text-muted mb-2">UTC</p>
+            <p class="text-xl font-mono tabular-nums" aria-live="off">{{ displayedUtc }}</p>
+            <p class="text-[11px] font-mono text-muted mt-2">UTC+00:00</p>
           </div>
           <div class="p-5 sm:px-7 border-t min-[440px]:border-t-0 min-[440px]:border-l border-accent/10">
             <p class="text-xs text-muted mb-2">{{ t('clockLeoTime') }} <span class="font-mono ml-1 text-[11px]">UTC+08:00</span></p>
