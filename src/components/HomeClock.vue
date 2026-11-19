@@ -1,9 +1,10 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useLocale } from '../utils/i18n.js'
-import { estimateClockSample, satelliteCounts } from '../../lib/clock.js'
+import { clockDiagnostics, clockStability, estimateClockSample, satelliteCounts } from '../../lib/clock.js'
+import ClockTelemetry from './ClockTelemetry.vue'
 
-defineProps({ expanded: Boolean })
+const props = defineProps({ expanded: Boolean })
 const { isZh, t, localePath } = useLocale('home')
 const { t: timeText } = useLocale('time')
 const now = ref(null)
@@ -21,6 +22,11 @@ const busy = ref(false)
 const uncertaintyMs = ref(null)
 const samples = ref(0)
 const satellites = ref(null)
+const diagnostics = ref({})
+const history = ref([])
+const stability = ref(null)
+const deviceNow = ref(null)
+const elapsedSeconds = computed(() => lastSync.value == null || now.value == null ? 0 : Math.max(0, (now.value - lastSync.value) / 1000))
 const retrySeconds = ref(0)
 let retryAt = 0
 let reducedMotion = null
@@ -38,6 +44,7 @@ const localOffsetFormatter = computed(() => new Intl.DateTimeFormat('en-GB', {
   timeZone: localTimeZone.value, timeZoneName: 'longOffset',
 }))
 const displayedLocalTime = computed(() => now.value == null ? '--:--:--.---' : localFormatter.value.format(now.value))
+const displayedDeviceTime = computed(() => deviceNow.value == null ? '--:--:--.---' : localFormatter.value.format(deviceNow.value))
 const localOffset = computed(() => {
   if (now.value == null) return ''
   const name = localOffsetFormatter.value.formatToParts(now.value)
@@ -76,12 +83,14 @@ function fallback() {
   uncertaintyMs.value = null
   samples.value = 0
   satellites.value = null
+  diagnostics.value = {}
   now.value = Date.now()
 }
 
 function tick() {
   if (stopped || document.hidden) return
   retrySeconds.value = Math.max(0, Math.ceil((retryAt - performance.now()) / 1000))
+  deviceNow.value = Date.now()
   now.value = anchor ? anchor.nowMs + performance.now() - anchor.monotonic : Date.now()
   animation = reducedMotion.matches ? setTimeout(tick, 1000) : requestAnimationFrame(tick)
 }
@@ -124,6 +133,8 @@ async function synchronize() {
         if (!sample) throw new Error('Invalid clock sample')
         if (!best || sample.networkMs < best.networkMs) best = {
           ...sample, monotonic: received, satellites: satelliteCounts(body.satellites),
+          diagnostics: clockDiagnostics(body),
+          stability: clockStability(body.stability, body.sentAtMs),
         }
       } finally {
         clearTimeout(timeout)
@@ -138,6 +149,11 @@ async function synchronize() {
     uncertaintyMs.value = best.networkMs / 2
     samples.value = 3
     satellites.value = best.satellites
+    diagnostics.value = best.diagnostics
+    stability.value = best.stability
+    if (props.expanded && best.diagnostics.tracking?.lastOffsetSeconds != null) {
+      history.value = [...history.value, { time: best.nowMs, offset: best.diagnostics.tracking.lastOffsetSeconds }].slice(-60)
+    }
     retryAt = performance.now() + 10000
   } catch {
     retryAt = Math.max(retryAt, performance.now() + 60000)
@@ -183,24 +199,35 @@ onBeforeUnmount(() => {
 <template>
   <div :class="expanded ? 'space-y-6' : 'text-muted text-sm font-mono mb-6'">
     <template v-if="expanded">
-      <div class="rounded-xl border border-accent/25 bg-accent/5 p-5 sm:p-7">
-        <p class="text-xs font-mono text-muted uppercase tracking-widest mb-3">{{ t('clockYourTime') }}</p>
-        <p class="text-3xl sm:text-5xl font-mono tabular-nums text-fg tracking-tight" aria-live="off">{{ displayedLocalTime }}</p>
-        <p class="text-sm text-muted font-mono mt-3">{{ localTimeZone }} · {{ localOffset }}</p>
-        <p class="text-xs text-muted mt-1">{{ localDate }}</p>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="rounded-xl border border-fg/8 p-5">
-          <p class="text-xs font-mono text-muted uppercase tracking-widest mb-3">{{ t('clockLeoTime') }}</p>
-          <p class="text-2xl font-mono tabular-nums text-fg" aria-live="off">{{ displayedTime }}</p>
-          <p class="text-xs text-muted font-mono mt-2">Asia/Shanghai · UTC+08:00</p>
+      <section class="rounded-xl border border-accent/25 bg-accent/[0.035] overflow-hidden" :aria-label="timeText('referenceClock')">
+        <div class="px-5 sm:px-7 py-4 border-b border-accent/10 flex flex-wrap justify-between items-center gap-2">
+          <p class="text-xs font-mono text-muted">{{ timeText('referenceClock') }}</p>
+          <p class="text-[11px] font-mono flex items-center gap-2" :class="synchronized ? 'text-accent' : 'text-highlight'" role="status">
+            <span class="size-1.5 rounded-full bg-current" aria-hidden="true" />
+            {{ synchronized ? timeText('liveReference') : timeText('deviceFallback') }}
+          </p>
         </div>
-        <div class="rounded-xl border border-fg/8 p-5">
-          <p class="text-xs font-mono text-muted uppercase tracking-widest mb-3">UTC</p>
-          <p class="text-2xl font-mono tabular-nums text-fg" aria-live="off">{{ displayedUtc }}</p>
-          <p class="text-xs text-muted font-mono mt-2">UTC+00:00</p>
+        <div class="p-5 sm:p-7">
+          <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+            <p class="text-[clamp(1.9rem,7vw,3.7rem)] font-mono tabular-nums text-fg tracking-tight leading-none" aria-live="off">{{ displayedUtc }}</p>
+            <span class="font-mono text-sm text-accent">UTC</span>
+          </div>
+          <p class="text-xs text-muted mt-4 leading-relaxed">{{ timeText('referenceNote') }}</p>
         </div>
-      </div>
+        <div class="grid grid-cols-1 min-[440px]:grid-cols-2 border-t border-accent/10">
+          <div class="p-5 sm:px-7">
+            <p class="text-xs text-muted mb-2">{{ t('clockYourTime') }} <span class="font-mono ml-1 text-[11px]">{{ localOffset }}</span></p>
+            <p class="text-xl font-mono tabular-nums" aria-live="off">{{ displayedLocalTime }}</p>
+            <p class="text-[11px] font-mono text-muted mt-2 break-all">{{ localTimeZone }} · {{ localDate }}</p>
+          </div>
+          <div class="p-5 sm:px-7 border-t min-[440px]:border-t-0 min-[440px]:border-l border-accent/10">
+            <p class="text-xs text-muted mb-2">{{ t('clockLeoTime') }} <span class="font-mono ml-1 text-[11px]">UTC+08:00</span></p>
+            <p class="text-xl font-mono tabular-nums" aria-live="off">{{ displayedTime }}</p>
+            <p class="text-[11px] font-mono text-muted mt-2">Asia/Shanghai</p>
+          </div>
+        </div>
+      </section>
+      <ClockTelemetry :synchronized="synchronized" :satellites="satellites" :diagnostics="diagnostics" :history="history" :elapsed-seconds="elapsedSeconds" :stability="stability" :now-ms="now" />
       <section class="rounded-xl border border-fg/10 bg-fg/[0.02] p-5 sm:p-7" aria-labelledby="offset-heading">
         <div class="flex flex-wrap justify-between gap-3 items-center">
           <h2 id="offset-heading" class="text-sm font-semibold">{{ timeText('meterTitle') }}</h2>
@@ -208,6 +235,7 @@ onBeforeUnmount(() => {
         </div>
         <p class="font-mono tabular-nums text-3xl sm:text-4xl mt-6" :class="synchronized ? 'text-accent' : 'text-muted'">{{ displayedOffset }}</p>
         <p class="text-xs text-muted mt-2" role="status">{{ offsetStatus }}</p>
+        <p class="text-xs text-muted font-mono mt-3">{{ timeText('rawDeviceClock') }}: <span class="text-fg tabular-nums">{{ displayedDeviceTime }}</span> {{ localOffset }}</p>
         <div class="relative h-10 mt-6" aria-hidden="true">
           <div class="absolute top-4 inset-x-0 h-1 rounded bg-fg/10" />
           <div class="absolute top-1 bottom-1 left-1/2 w-px bg-fg/30" />
@@ -223,16 +251,6 @@ onBeforeUnmount(() => {
           <div><dt class="text-xs text-muted mb-2">{{ timeText('samples') }}</dt><dd class="font-mono text-sm">{{ samples ? `${samples} · ${timeText('lowestLatency')}` : timeText('unavailable') }}</dd></div>
         </dl>
         <p class="text-[11px] text-muted mt-5">{{ timeText('meterNote') }}</p>
-      </section>
-      <section class="rounded-xl border border-fg/8 p-5" aria-labelledby="satellite-heading">
-        <h2 id="satellite-heading" class="text-sm font-semibold">{{ timeText('satelliteTitle') }}</h2>
-        <dl class="grid grid-cols-2 gap-5 mt-5">
-          <div v-for="kind in ['used', 'visible']" :key="kind">
-            <dt class="text-xs text-muted mb-2">{{ timeText(kind === 'used' ? 'satellitesUsed' : 'satellitesVisible') }}</dt>
-            <dd class="font-mono text-2xl tabular-nums" :class="satellites ? 'text-accent' : 'text-muted'">{{ satellites ? satellites[kind] : timeText('satellitesUnavailable') }}</dd>
-          </div>
-        </dl>
-        <p class="text-xs text-muted mt-4">{{ timeText('satelliteNote') }}</p>
       </section>
       <div class="rounded-xl border border-fg/8 p-5">
         <p class="flex items-start gap-2 text-sm font-mono">

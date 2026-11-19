@@ -6,9 +6,10 @@ const { t } = useLocale('time')
 
 <template>
   <div class="pt-16 sm:pt-24 pb-20 space-y-6">
-    <header class="flex flex-wrap items-center justify-between gap-3">
+    <header>
+      <p class="text-xs font-mono text-accent mb-3">{{ t('dashboardEyebrow') }}</p>
       <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">{{ t('dashboardTitle') }}</h1>
-      <span class="text-xs font-mono text-accent rounded border border-accent/20 bg-accent/5 px-3 py-1.5">GPS / PPS · Stratum 1</span>
+      <p class="text-sm text-muted leading-relaxed mt-3 max-w-xl">{{ t('dashboardIntro') }}</p>
     </header>
     <HomeClock expanded />
     <section :aria-label="t('sourceTitle')" class="rounded-xl border border-fg/8 p-5">
@@ -19,5 +20,6 @@ const { t } = useLocale('time')
         </li>
       </ol>
     </section>
+    <p class="text-xs text-muted leading-relaxed">{{ t('privacyNote') }}</p>
   </div>
 </template>

@@ -6,6 +6,8 @@ After=network.target chrony.service
 Type=simple
 User=pi-clock
 Group=pi-clock
+StateDirectory=pi-clock
+StateDirectoryMode=0750
 Environment=CLOCK_PPS_REFID=PPS
 EnvironmentFile=-/etc/pi-clock.env
 ExecStart=/opt/pi-clock/venv/bin/python /opt/pi-clock/clock.py

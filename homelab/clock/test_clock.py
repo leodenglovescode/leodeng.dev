@@ -1,12 +1,144 @@
 import datetime
 import json
 import time
+import tempfile
+import os
+import sqlite3
 import unittest
 from unittest.mock import MagicMock, patch
-from clock import ClockApplication, TokenBucket, satellite_counts, tracking_is_healthy
+from clock import ClockApplication, ClockHistory, TokenBucket, satellite_counts, tracking_is_healthy, tracking_metrics
+
+
+def tracking_report(now):
+    date = datetime.datetime.fromtimestamp(now, datetime.timezone.utc).strftime('%a %b %d %H:%M:%S %Y')
+    return (f'Reference ID : 50505300 (PPS)\nStratum : 1\nRef time (UTC) : {date}\n'
+            'Leap status : Normal\nSystem time : 0.000001656 seconds fast of NTP time\n'
+            'Last offset : +0.000001791 seconds\nRMS offset : 0.000002664 seconds\n'
+            'Frequency : 9.923 ppm fast\nResidual freq : +0.022 ppm\nSkew : 0.138 ppm\n'
+            'Root delay : 0.000000001 seconds\nRoot dispersion : 0.000014253 seconds\n'
+            'Update interval : 16.0 seconds\n')
 
 
 class ClockTests(unittest.TestCase):
+    def test_history_storage_failure_does_not_stop_healthy_clock(self):
+        app = ClockApplication()
+        app.history = MagicMock()
+        app.history.record.side_effect = sqlite3.OperationalError('database or disk is full')
+        report = tracking_report(time.time())
+        with patch('clock.subprocess.run', return_value=MagicMock(stdout=report)), \
+                patch('clock.time.sleep', side_effect=RuntimeError('end monitor test')):
+            with self.assertRaisesRegex(RuntimeError, 'end monitor test'):
+                app.monitor()
+        self.assertTrue(app.healthy)
+        self.assertIsNone(app.stability)
+        result = b''.join(app({'PATH_INFO': '/time', 'REQUEST_METHOD': 'GET'},
+                             lambda status, headers: self.assertEqual(status, '200 OK')))
+        self.assertTrue(json.loads(result)['synchronized'])
+
+    def test_stability_persists_and_counts_missing_time_as_unobserved(self):
+        with tempfile.TemporaryDirectory() as directory:
+            history = ClockHistory(directory + '/history.sqlite')
+            midnight = datetime.datetime(2026, 11, 18, tzinfo=datetime.timezone.utc).timestamp()
+            history.record(True, midnight)
+            history.record(True, midnight + 1)  # Same slot is never counted twice.
+            history.record(False, midnight + 10)
+            result = ClockHistory(history.path).record(True, midnight + 50)
+            self.assertEqual(result, {'days': [{'date': '2026-11-18', 'observed': 3, 'locked': 2}], 'intervalSeconds': 10})
+            # A same-slot failure replaces the successful check conservatively.
+            result = history.record(False, midnight + 51)
+            self.assertEqual(result['days'][0]['locked'], 1)
+            # Backward time does not add observations to earlier slots.
+            self.assertEqual(history.record(True, midnight + 20), result)
+            result = history.record(False, midnight + 86400)
+            self.assertEqual(result['days'][1], {'date': '2026-11-19', 'observed': 1, 'locked': 0})
+            # The retention window is bounded to today and the trailing 90 days.
+            result = history.record(True, midnight + 92 * 86400)
+            self.assertEqual(len(result['days']), 1)
+
+    def test_stability_retention_remains_bounded_as_days_accumulate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            history = ClockHistory(directory + '/history.sqlite')
+            start = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc).timestamp()
+            for day in range(180):
+                result = history.record(day % 2 == 0, start + day * 86400)
+                self.assertLessEqual(len(result['days']), 91)
+            self.assertEqual(len(result['days']), 91)
+            self.assertEqual(result['days'][0]['date'], '2026-03-31')
+            self.assertLessEqual(os.path.getsize(history.path), 1048576)
+
+    def test_tracking_metrics_preserve_units_signs_and_strip_strings(self):
+        now = 1791379451
+        report = tracking_report(now)
+        metrics = tracking_metrics(report, now + 2)
+        self.assertEqual(len(metrics), 10)
+        self.assertEqual(metrics['systemOffsetSeconds'], 0.000001656)
+        self.assertEqual(metrics['frequencyPpm'], 9.923)
+        self.assertEqual(metrics['referenceAgeSeconds'], 2)
+        self.assertEqual(metrics['lastOffsetSeconds'], 0.000001791)
+        self.assertEqual(metrics['rootDispersionSeconds'], 0.000014253)
+        self.assertEqual(metrics['updateIntervalSeconds'], 16)
+        slow = tracking_metrics(report.replace('fast', 'slow'), now)
+        self.assertEqual(slow['systemOffsetSeconds'], -metrics['systemOffsetSeconds'])
+        self.assertEqual(slow['frequencyPpm'], -metrics['frequencyPpm'])
+        invalid = report.replace('0.000002664', '-1').replace('9.923', 'NaN').replace('+0.022', '9999999')
+        result = tracking_metrics(invalid, now)
+        for key in ('rmsOffsetSeconds', 'frequencyPpm', 'residualFrequencyPpm'):
+            self.assertNotIn(key, result)
+        self.assertNotIn('Reference ID', metrics)
+
+    def test_observed_pps_lock_resets_on_failed_or_missed_checks(self):
+        now = 1791379451
+        report = tracking_report(now)
+        app = ClockApplication()
+        with patch('clock.time.time', return_value=now), patch('clock.time.monotonic', return_value=100) as monotonic:
+            app.update_tracking(report, 'PPS')
+            self.assertEqual(app.locked_since, 100)
+            monotonic.return_value = 110
+            app.update_tracking(report, 'PPS')
+            self.assertEqual(app.locked_since, 100)
+            app.update_tracking('', 'PPS')
+            self.assertFalse(app.healthy)
+            self.assertEqual(app.tracking, {})
+            self.assertIsNone(app.locked_since)
+            monotonic.return_value = 120
+            app.update_tracking(report, 'PPS')
+            self.assertEqual(app.locked_since, 120)
+            monotonic.return_value = 151
+            app.update_tracking(report, 'PPS')
+            self.assertEqual(app.locked_since, 151)
+
+    def test_receiver_fields_expire_independently_and_never_publish_position(self):
+        app = ClockApplication()
+        with patch('clock.time.monotonic', return_value=100) as monotonic:
+            app.limiter = TokenBucket()
+            app.healthy = True
+            app.checked_at = 100
+            app.update_receiver({'class': 'TPV', 'mode': 3, 'lat': 1, 'lon': 2, 'alt': 3})
+            app.update_receiver({'class': 'SKY', 'tdop': 1.12, 'satellites': [
+                {'PRN': 5, 'used': True, 'ss': 31},
+                {'PRN': 6, 'used': False, 'ss': 0},
+                {'PRN': 5, 'used': False, 'ss': 35},
+            ]})
+            def request():
+                return json.loads(b''.join(app(
+                    {'PATH_INFO': '/time', 'REQUEST_METHOD': 'GET'},
+                    lambda status, headers: self.assertEqual(status, '200 OK'))))
+            first = request()
+            self.assertEqual(first['receiver'], {'fixMode': 3, 'tdop': 1.12})
+            self.assertEqual(first['satellites'], {'used': 1, 'visible': 2, 'tracked': 1})
+            monotonic.return_value = 120
+            app.checked_at = 120
+            app.update_receiver({'class': 'SKY', 'tdop': 1.2})
+            app.update_receiver({'class': 'TPV', 'mode': True})
+            self.assertEqual(request()['satellites'], first['satellites'])
+            monotonic.return_value = 131
+            final = request()
+            self.assertNotIn('satellites', final)
+            self.assertEqual(final['receiver'], {'tdop': 1.2})
+            monotonic.return_value = 151
+            app.checked_at = 151
+            self.assertNotIn('receiver', request())
+
     def test_partial_sky_reports_preserve_counts_without_refreshing_age(self):
         app = ClockApplication()
         connection = MagicMock()

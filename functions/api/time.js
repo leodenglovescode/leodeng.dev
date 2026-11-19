@@ -1,7 +1,7 @@
-import { satelliteCounts, validClockSample } from '../../lib/clock.js'
+import { clockDiagnostics, clockStability, satelliteCounts, validClockSample } from '../../lib/clock.js'
 
 const ORIGIN = 'https://clock-origin.leodeng.dev/time'
-const MAX_BYTES = 2048
+const MAX_BYTES = 16384
 
 function json(body, status, extra = {}) {
   return Response.json(body, { status, headers: {
@@ -68,10 +68,13 @@ export async function onRequest({ request, env }) {
     if (!validClockSample(body)) throw new Error('Unhealthy clock')
     // Reconstruct fields; never forward raw receiver reports or location data.
     const satellites = satelliteCounts(body.satellites)
+    const stability = clockStability(body.stability, body.sentAtMs)
     return json({
       receivedAtMs: body.receivedAtMs, sentAtMs: body.sentAtMs,
       synchronized: true, source: 'gps-pps', stratum: 1,
       ...(satellites ? { satellites } : {}),
+      ...clockDiagnostics(body),
+      ...(stability ? { stability } : {}),
     }, 200)
   } catch (error) {
     // Fixed metadata only: never log upstream bodies, headers or exception text.
