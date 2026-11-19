@@ -25,8 +25,8 @@
       "body": "Three samples estimate the time correction. The browser advances that clock locally between synchronizations."
     }
   ],
-  "accuracyTitle": "Milliseconds, with context",
-  "accuracyBody": "The digits show milliseconds, but they do not promise millisecond accuracy. I subtract the Pi's processing time from the round trip and estimate the return journey as half the remaining delay. Unequal travel times still introduce error.",
+  "accuracyTitle": "Accuracy and network delay",
+  "accuracyBody": "I subtract the Pi's processing time from the round trip and estimate the return journey as half the remaining delay. Unequal travel times still introduce error.",
   "fallbackBody": "If the request fails, times out, or reports an unhealthy clock, every display immediately uses Your Device Clock (Fallback). Your timezone comes from your browser settings; it does not decide the synchronized time.",
   "dashboardTitle": "A little closer to on time.",
   "meterTitle": "Your device vs. GPS time",

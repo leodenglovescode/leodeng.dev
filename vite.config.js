@@ -17,6 +17,11 @@ const audioProxy = {
   rewrite: path => path.replace(/^\/api\/terminal-audio\//, '/voice/'),
 }
 
+const clockProxy = {
+  target: 'https://leodeng.dev',
+  changeOrigin: true,
+}
+
 export default defineConfig(async ({ isSsrBuild, command }) => {
   // Load preview tooling only at dev-server startup. A static import would
   // make Vite's config bundler resolve the CLI's not-yet-built SSR artifact.
@@ -31,17 +36,14 @@ export default defineConfig(async ({ isSsrBuild, command }) => {
       proxy: {
         '/gallery-media': galleryProxy,
         '/api/terminal-audio': audioProxy,
-        '/api/time': {
-          target: 'https://leodeng.dev',
-          changeOrigin: true,
-        },
+        '/api/time': clockProxy,
         '/api/now-playing': {
           target: 'https://leodeng.dev',
           changeOrigin: true,
         },
       },
     },
-    preview: { proxy: { '/api/terminal-audio': audioProxy, '/gallery-media': galleryProxy } },
+    preview: { proxy: { '/api/time': clockProxy, '/api/terminal-audio': audioProxy, '/gallery-media': galleryProxy } },
     build: {
       rollupOptions: {
         output: isSsrBuild ? {} : {

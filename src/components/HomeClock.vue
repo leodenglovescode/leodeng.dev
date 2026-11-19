@@ -14,7 +14,7 @@ const roundTripMs = ref(null)
 const lastSync = ref(null)
 const deviceOffsetMs = ref(null)
 let anchor = null
-let animation = null
+let clockTimer = null
 let refreshTimer = null
 let requestController = null
 let stopped = false
@@ -26,27 +26,26 @@ const diagnostics = ref({})
 const history = ref([])
 const stability = ref(null)
 const deviceNow = ref(null)
-// Keep the statistics at one update per second while the clock renders milliseconds.
+// Clock and telemetry displays use whole seconds.
 const telemetryNow = computed(() => now.value == null ? null : Math.floor(now.value / 1000) * 1000)
 const elapsedSeconds = computed(() => lastSync.value == null || now.value == null ? 0 : Math.max(0, Math.floor((now.value - lastSync.value) / 1000)))
 const retrySeconds = ref(0)
 let retryAt = 0
-let reducedMotion = null
 
 const formatter = computed(() => new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 'en-GB', {
   timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', second: '2-digit',
-  fractionalSecondDigits: 3, hourCycle: 'h23',
+  hourCycle: 'h23',
 }))
-const displayedTime = computed(() => now.value == null ? '--:--:--.---' : formatter.value.format(now.value))
+const displayedTime = computed(() => now.value == null ? '--:--:--' : formatter.value.format(now.value))
 const localFormatter = computed(() => new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 'en-GB', {
   timeZone: localTimeZone.value, hour: '2-digit', minute: '2-digit', second: '2-digit',
-  fractionalSecondDigits: 3, hourCycle: 'h23',
+  hourCycle: 'h23',
 }))
 const localOffsetFormatter = computed(() => new Intl.DateTimeFormat('en-GB', {
   timeZone: localTimeZone.value, timeZoneName: 'longOffset',
 }))
-const displayedLocalTime = computed(() => now.value == null ? '--:--:--.---' : localFormatter.value.format(now.value))
-const displayedDeviceTime = computed(() => deviceNow.value == null ? '--:--:--.---' : localFormatter.value.format(deviceNow.value))
+const displayedLocalTime = computed(() => now.value == null ? '--:--:--' : localFormatter.value.format(now.value))
+const displayedDeviceTime = computed(() => deviceNow.value == null ? '--:--:--' : localFormatter.value.format(deviceNow.value))
 const localOffset = computed(() => {
   if (now.value == null) return ''
   const name = localOffsetFormatter.value.formatToParts(now.value)
@@ -56,9 +55,9 @@ const localOffset = computed(() => {
 const synchronizedAt = computed(() => lastSync.value == null ? '' : formatter.value.format(lastSync.value))
 const utcFormatter = computed(() => new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 'en-GB', {
   timeZone: 'UTC', hour: '2-digit', minute: '2-digit', second: '2-digit',
-  fractionalSecondDigits: 3, hourCycle: 'h23',
+  hourCycle: 'h23',
 }))
-const displayedUtc = computed(() => now.value == null ? '--:--:--.---' : utcFormatter.value.format(now.value))
+const displayedUtc = computed(() => now.value == null ? '--:--:--' : utcFormatter.value.format(now.value))
 // Device minus reference: positive means the device is ahead of GPS time.
 const offset = computed(() => deviceOffsetMs.value == null ? null : -deviceOffsetMs.value)
 const displayedOffset = computed(() => offset.value == null ? timeText('unavailable')
@@ -94,12 +93,11 @@ function tick() {
   retrySeconds.value = Math.max(0, Math.ceil((retryAt - performance.now()) / 1000))
   deviceNow.value = Date.now()
   now.value = anchor ? anchor.nowMs + performance.now() - anchor.monotonic : Date.now()
-  animation = reducedMotion.matches ? setTimeout(tick, 1000) : requestAnimationFrame(tick)
+  clockTimer = setTimeout(tick, Math.max(1, 1000 - (now.value % 1000)))
 }
 
-function stopAnimation() {
-  cancelAnimationFrame(animation)
-  clearTimeout(animation)
+function stopTick() {
+  clearTimeout(clockTimer)
 }
 
 function retryDelay(response) {
@@ -167,7 +165,7 @@ async function synchronize() {
 }
 
 function visibilityChanged() {
-  stopAnimation()
+  stopTick()
   if (document.hidden) {
     requestController?.abort()
     fallback()
@@ -181,7 +179,6 @@ onMounted(() => {
   // Read the visitor's timezone, while both rows use the same corrected instant.
   // Resolve only in the browser so prerendering never adopts the build server's zone.
   localTimeZone.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-  reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
   fallback()
   tick()
   void synchronize()
@@ -191,7 +188,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopped = true
-  stopAnimation()
+  stopTick()
   clearInterval(refreshTimer)
   requestController?.abort()
   document.removeEventListener('visibilitychange', visibilityChanged)

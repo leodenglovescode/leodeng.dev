@@ -27,7 +27,7 @@
   "clockDetails": "Clock details",
   "clockRoundTrip": "Round trip: {p0} ms",
   "clockLastSync": "Last synchronization: {p0}",
-  "clockPrecision": "Milliseconds show display precision. Network delay limits clock accuracy.",
+  "clockPrecision": "Network delay limits clock accuracy.",
   "clockYourTime": "Your time",
   "clockLeoTime": "Leo's time",
   "clockPage": "About this clock",

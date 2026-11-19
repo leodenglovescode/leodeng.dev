@@ -27,7 +27,7 @@
   "clockDetails": "时钟详情",
   "clockRoundTrip": "往返延迟：{p0} 毫秒",
   "clockLastSync": "上次同步：{p0}",
-  "clockPrecision": "毫秒表示显示精度。网络延迟会限制时钟准确度。",
+  "clockPrecision": "网络延迟会限制时钟准确度。",
   "clockYourTime": "你的时间",
   "clockLeoTime": "Leo 的时间",
   "clockPage": "关于这个时钟",
