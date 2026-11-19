@@ -26,7 +26,9 @@ const diagnostics = ref({})
 const history = ref([])
 const stability = ref(null)
 const deviceNow = ref(null)
-const elapsedSeconds = computed(() => lastSync.value == null || now.value == null ? 0 : Math.max(0, (now.value - lastSync.value) / 1000))
+// Keep the statistics at one update per second while the clock renders milliseconds.
+const telemetryNow = computed(() => now.value == null ? null : Math.floor(now.value / 1000) * 1000)
+const elapsedSeconds = computed(() => lastSync.value == null || now.value == null ? 0 : Math.max(0, Math.floor((now.value - lastSync.value) / 1000)))
 const retrySeconds = ref(0)
 let retryAt = 0
 let reducedMotion = null
@@ -227,7 +229,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </section>
-      <ClockTelemetry :synchronized="synchronized" :satellites="satellites" :diagnostics="diagnostics" :history="history" :elapsed-seconds="elapsedSeconds" :stability="stability" :now-ms="now" />
+      <ClockTelemetry :synchronized="synchronized" :satellites="satellites" :diagnostics="diagnostics" :history="history" :elapsed-seconds="elapsedSeconds" :stability="stability" :now-ms="telemetryNow" />
       <section class="rounded-xl border border-fg/10 bg-fg/[0.02] p-5 sm:p-7" aria-labelledby="offset-heading">
         <div class="flex flex-wrap justify-between gap-3 items-center">
           <h2 id="offset-heading" class="text-sm font-semibold">{{ timeText('meterTitle') }}</h2>

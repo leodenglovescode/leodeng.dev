@@ -5,7 +5,8 @@ import { useLocale } from '../utils/i18n.js'
 const props = defineProps({ history: { type: Object, default: null }, nowMs: { type: Number, default: null }, synchronized: Boolean })
 const { t, isZh } = useLocale('time')
 const selected = ref(null)
-const percentage = value => new Intl.NumberFormat(isZh.value ? 'zh-CN' : 'en-GB', { style: 'percent', maximumFractionDigits: 2 }).format(value)
+const percentFormatter = computed(() => new Intl.NumberFormat(isZh.value ? 'zh-CN' : 'en-GB', { style: 'percent', maximumFractionDigits: 2 }))
+const percentage = value => percentFormatter.value.format(value)
 const grades = ['good', 'fair', 'poor', 'bad']
 const cells = computed(() => {
   // UTC calendar, Monday at the top, 13 weeks ending with the current week.
