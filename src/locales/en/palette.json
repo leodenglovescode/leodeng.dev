@@ -13,6 +13,7 @@
   "navigate": "Navigate",
   "select": "Select",
   "pages": {
+    "donations": "Donate",
     "daily": "Daily AI",
     "stats": "Personal stats",
     "home": "Home",

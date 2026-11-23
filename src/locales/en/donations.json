@@ -1,0 +1,14 @@
+{
+  "eyebrow": "A little support",
+  "title": "Buy me a coffee, but DOGE.",
+  "intro": "If something here was useful, you can throw a few DOGE my way. Absolutely optional, always appreciated.",
+  "addressLabel": "Dogecoin receiving address",
+  "copy": "Copy address",
+  "copied": "Address copied!",
+  "copyFailed": "Could not copy automatically. Select and copy the address above.",
+  "openWallet": "Open in wallet",
+  "scan": "Scan with your Dogecoin wallet",
+  "qrAlt": "QR code for the Dogecoin receiving address shown on this page",
+  "network": "Dogecoin (DOGE)",
+  "thanks": "Thanks for stopping by, with or without the DOGE."
+}

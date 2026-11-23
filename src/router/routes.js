@@ -48,6 +48,7 @@ const publicRoutes = [
   { path: '/terminal', component: () => import('../pages/Terminal.vue'), meta: routeMeta('terminal') },
   { path: '/changelog', component: Changelog, meta: routeMeta('changelog') },
   { path: '/stack', component: Stack, meta: routeMeta('stack') },
+  { path: '/donations', component: () => import('../pages/Donations.vue'), meta: routeMeta('donations') },
   { path: '/feed', component: Feed, meta: routeMeta('feed') },
   { path: '/blog', component: Blog, meta: routeMeta('blog') },
   { path: '/blog/:slug', component: BlogPost, meta: routeMeta('blog') },

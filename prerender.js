@@ -30,6 +30,7 @@ const staticRoutes = [
   { path: '/time', key: 'time' },
   { path: '/terminal', key: 'terminal' },
   { path: '/stack', key: 'stack' },
+  { path: '/donations', key: 'donations' },
   { path: '/feed', key: 'feed' },
   { path: '/blog', key: 'blog' },
   { path: '/contact', key: 'contact' },
