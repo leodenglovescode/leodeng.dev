@@ -1,6 +1,134 @@
 {
   "projects": [
     {
+      "id": "carbonpanel",
+      "title": {
+        "en": "CarbonPanel",
+        "zh": "CarbonPanel"
+      },
+      "description": {
+        "en": "Lightweight self-hosted server monitoring panel. Real-time metrics and 2FA security. Built because I needed something simple to keep an eye on my home server.",
+        "zh": "轻量级的自托管服务器监控面板，提供实时指标和双重身份验证。因为想找个简单的办法看一眼家里的服务器状态，所以干脆自己做了一个。"
+      },
+      "url": "https://github.com/leodenglovescode/CarbonPanel",
+      "linkLabel": {
+        "en": "github",
+        "zh": "GitHub"
+      },
+      "tags": [
+        "python",
+        "self-hosting",
+        "monitoring",
+        "docker"
+      ],
+      "images": [
+        {
+          "url": "/projects_screenshots/carbonpanel_screenshot.png",
+          "alt": {
+            "en": "CarbonPanel screenshot",
+            "zh": "CarbonPanel 截图"
+          }
+        }
+      ]
+    },
+    {
+      "id": "llmgps",
+      "title": {
+        "en": "llmgps",
+        "zh": "llmgps"
+      },
+      "description": {
+        "en": "Multi-LLM chat workspace. Debate mode makes models argue and synthesize answers. Self-hosted, Docker, Ollama, streaming, auth and more.",
+        "zh": "多模型聊天工作区。辩论模式会让多个模型先互相讨论，再整理出答案。支持自托管、Docker、Ollama、流式输出和登录验证等功能。"
+      },
+      "url": "https://github.com/leodenglovescode/llmgps",
+      "linkLabel": {
+        "en": "github",
+        "zh": "GitHub"
+      },
+      "tags": [
+        "next.js",
+        "typescript",
+        "ollama",
+        "docker"
+      ],
+      "images": [
+        {
+          "url": "/projects_screenshots/llmgps_screenshot.png",
+          "alt": {
+            "en": "llmgps screenshot",
+            "zh": "llmgps 截图"
+          }
+        }
+      ]
+    },
+    {
+      "id": "piwatch",
+      "title": {
+        "en": "PiWatch",
+        "zh": "PiWatch"
+      },
+      "description": {
+        "en": "A Raspberry Pi watchdog for my home network. Checks services, internet access, DNS, and power, with a local dashboard and OLED status display. With a battery supply and Meshtastic radio, it can keep monitoring and send alerts during internet or mains outages. Also integrates with Home Assistant.",
+        "zh": "给家庭网络做的树莓派监控系统，检查服务、互联网连接、DNS 和供电状态，通过本地仪表盘和 OLED 显示运行情况。搭配电池供电与 Meshtastic 无线电，即使断网或停电也能继续监控并发送告警，还能接入 Home Assistant。"
+      },
+      "url": "https://github.com/leodenglovescode/PiWatch",
+      "linkLabel": {
+        "en": "github",
+        "zh": "GitHub"
+      },
+      "tags": [
+        "python",
+        "raspberry-pi",
+        "meshtastic",
+        "homeassistant",
+        "monitoring"
+      ],
+      "images": [
+        {
+          "url": "https://media.leodeng.dev/project-piwatch-dashboard-6b4e36a77291.webp",
+          "objectName": "project-piwatch-dashboard-6b4e36a77291.webp",
+          "alt": {
+            "en": "PiWatch dashboard showing service health, system metrics, and heartbeat reporting",
+            "zh": "PiWatch 仪表盘，展示服务健康状态、系统指标和心跳上报情况"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ultimateims",
+      "title": {
+        "en": "UltimateIMS",
+        "zh": "UltimateIMS"
+      },
+      "description": {
+        "en": "An Android 13+ app for managing IMS and network settings per SIM. Brings VoLTE, Wi-Fi calling, VoNR, and 5G controls into a Material 3 interface, with original-value backups and recovery. Still in development, primarily for Tensor Pixels; support depends on firmware, modem, and carrier.",
+        "zh": "面向 Android 13 及以上版本的 IMS 与网络配置应用，按 SIM 卡管理 VoLTE、Wi-Fi 通话、VoNR 和 5G 设置，采用 Material 3 界面，并提供原值备份与恢复。目前仍在开发中，主要面向 Tensor Pixel，实际支持情况取决于固件、基带和运营商。"
+      },
+      "url": "https://github.com/leodenglovescode/UltimateIMS",
+      "linkLabel": {
+        "en": "github",
+        "zh": "GitHub"
+      },
+      "tags": [
+        "java",
+        "android",
+        "material-3",
+        "ims",
+        "shizuku"
+      ],
+      "images": [
+        {
+          "url": "https://media.leodeng.dev/project-ultimateims-logo-9ada6604b821.webp",
+          "objectName": "project-ultimateims-logo-9ada6604b821.webp",
+          "alt": {
+            "en": "UltimateIMS app logo from the repository",
+            "zh": "UltimateIMS 仓库中的应用标志"
+          }
+        }
+      ]
+    },
+    {
       "id": "finstalgia",
       "title": {
         "en": "Finstalgia",
@@ -36,6 +164,47 @@
           "alt": {
             "en": "Finstalgia retro library design preview",
             "zh": "Finstalgia 复古模式媒体库设计预览"
+          }
+        }
+      ]
+    },
+    {
+      "id": "disccue360",
+      "title": {
+        "en": "DiscCue 360",
+        "zh": "DiscCue 360"
+      },
+      "description": {
+        "en": "An audio CD player for RGH Xbox 360 consoles. Plays physical discs offline, while a Python helper on the local network looks up track names and cover art through MusicBrainz and Cover Art Archive. Includes track selection, repeat, and tray controls, with no Xbox Live account needed.",
+        "zh": "给 RGH Xbox 360 做的音频 CD 播放器，可离线播放实体光盘。局域网中的 Python 辅助服务通过 MusicBrainz 和 Cover Art Archive 获取曲目名称与封面，支持选曲、循环播放和光驱托盘控制，无需 Xbox Live 账号。"
+      },
+      "url": "https://github.com/leodenglovescode/DiscCue360",
+      "linkLabel": {
+        "en": "github",
+        "zh": "GitHub"
+      },
+      "tags": [
+        "c",
+        "python",
+        "xbox-360",
+        "audio",
+        "musicbrainz"
+      ],
+      "images": [
+        {
+          "url": "https://media.leodeng.dev/project-disccue360-playing-aa6e7def4875.webp",
+          "objectName": "project-disccue360-playing-aa6e7def4875.webp",
+          "alt": {
+            "en": "DiscCue 360 playback UI rendered from app code with a sample album, track list, and controls",
+            "zh": "DiscCue 360 从应用代码渲染的播放界面，展示示例专辑、曲目列表和控制按钮"
+          }
+        },
+        {
+          "url": "https://media.leodeng.dev/project-disccue360-tray-open-4e129145f7f9.webp",
+          "objectName": "project-disccue360-tray-open-4e129145f7f9.webp",
+          "alt": {
+            "en": "DiscCue 360 tray-open screen rendered from app code",
+            "zh": "DiscCue 360 从应用代码渲染的光驱托盘开启界面"
           }
         }
       ]
@@ -101,68 +270,6 @@
           "alt": {
             "en": "ZenithTick satellite and timing dashboard",
             "zh": "ZenithTick 卫星与授时仪表盘"
-          }
-        }
-      ]
-    },
-    {
-      "id": "llmgps",
-      "title": {
-        "en": "llmgps",
-        "zh": "llmgps"
-      },
-      "description": {
-        "en": "Multi-LLM chat workspace. Debate mode makes models argue and synthesize answers. Self-hosted, Docker, Ollama, streaming, auth and more.",
-        "zh": "多模型聊天工作区。辩论模式会让多个模型先互相讨论，再整理出答案。支持自托管、Docker、Ollama、流式输出和登录验证等功能。"
-      },
-      "url": "https://github.com/leodenglovescode/llmgps",
-      "linkLabel": {
-        "en": "github",
-        "zh": "GitHub"
-      },
-      "tags": [
-        "next.js",
-        "typescript",
-        "ollama",
-        "docker"
-      ],
-      "images": [
-        {
-          "url": "/projects_screenshots/llmgps_screenshot.png",
-          "alt": {
-            "en": "llmgps screenshot",
-            "zh": "llmgps 截图"
-          }
-        }
-      ]
-    },
-    {
-      "id": "carbonpanel",
-      "title": {
-        "en": "CarbonPanel",
-        "zh": "CarbonPanel"
-      },
-      "description": {
-        "en": "Lightweight self-hosted server monitoring panel. Real-time metrics and 2FA security. Built because I needed something simple to keep an eye on my home server.",
-        "zh": "轻量级的自托管服务器监控面板，提供实时指标和双重身份验证。因为想找个简单的办法看一眼家里的服务器状态，所以干脆自己做了一个。"
-      },
-      "url": "https://github.com/leodenglovescode/CarbonPanel",
-      "linkLabel": {
-        "en": "github",
-        "zh": "GitHub"
-      },
-      "tags": [
-        "python",
-        "self-hosting",
-        "monitoring",
-        "docker"
-      ],
-      "images": [
-        {
-          "url": "/projects_screenshots/carbonpanel_screenshot.png",
-          "alt": {
-            "en": "CarbonPanel screenshot",
-            "zh": "CarbonPanel 截图"
           }
         }
       ]
